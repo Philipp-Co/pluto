@@ -1,0 +1,1 @@
+{"work_dir": "/Users/philippkroll/Repositories/pluto/build/test_workdir/","name_of_input_queue": "input_2","names_of_output_queues": ["output_2"]}

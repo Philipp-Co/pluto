@@ -1,0 +1,89 @@
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+# https://docs.docker.com/build/building/multi-stage/
+from ubuntu:20.04
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+#RUN echo "Europe/Berlin" > /etc/timezone
+#RUN export LD_LIBRARY_PATH=lib/aarch64-linux-gnu/:$LS_LIBRARY_PATH
+RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+RUN apt-get update
+RUN apt install software-properties-common -y
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+#
+# Copy Helper-Binaries from the Pluto Baseimage.
+#
+COPY --from=pluto:latest /bin/pluto_info /bin/pluto_info 
+COPY --from=pluto:latest /bin/pluto_rw /bin/pluto_rw
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+# pluto-0 -- pluto_node_pt
+
+COPY --from=pluto:latest /bin/pluto_node_pt /bin/pluto_node_pt 
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"names_of_output_queues\":[\"pluto-0_oq_0\"]} > /pluto-0-config.txt
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+#pluto-1 -- pluto_node_py
+#
+# python3.8 and python3.8-dev must be available
+#
+#RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get install python3.8-dev -y
+COPY --from=pluto:latest /bin/pluto_node_py /bin/pluto_node_py 
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"python_path\":\"/pluto/\",\"name_of_input_queue\":\"pluto-0_oq_0\",\"names_of_output_queues\":[\"pluto-1_oq_0\"]} > /pluto-1-config.txt
+COPY docker/demo/pluto_python_demo/pluto_event_handler.py /pluto/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+# pluto-2 -- pluto_node_sh
+
+RUN apt-get update && apt-get install cmake -y
+COPY --from=pluto:latest /bin/pluto_node_sh /bin/pluto_node_sh 
+COPY --from=pluto:latest /usr/include/pluto/ /usr/include/pluto/
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-1_oq_0\",\"names_of_output_queues\":[\"pluto-2_oq_0\"]} > /pluto-2-config.txt
+COPY docker/demo/pluto_shared_library_demo/ /pluto_shared_library_demo/
+RUN cd /pluto_shared_library_demo/ && rm -r build/ && mkdir build/ && cd build/ && cmake -G "Unix Makefiles" ../ && make
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+COPY --from=pluto:latest /bin/pluto_core /bin/pluto_core
+ENV PLUTO_BINARY_DIR=/bin/
+RUN echo {\"nodes\":[\
+    {\"type\":\"passthrough\",\"name\":\"pluto-0\",\"configuration-file\":\"/pluto-0-config.txt\",\"executable\":\"\"},\
+    {\"type\":\"python\",\"name\":\"pluto-1\",\"configuration-file\":\"/pluto-1-config.txt\",\"executable\":\"pluto_event_handler\"}\
+  ]\
+} > /pluto-core.txt
+
+#{\"type\":\"shared\",\"name\":\"pluto-2\",\"configuration-file\":\"/pluto-2-config.txt\",\"executable\":\"/pluto_shared_library_demo/\"},\
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+#
+# Entrypoint.
+#
+COPY docker/demo/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+#
+# Finish...
+#
+CMD ["/entrypoint.sh"]
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#

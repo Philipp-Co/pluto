@@ -1,0 +1,8 @@
+#ifndef __PLUTO_TEST_OS_ABSTRACTION_MESSAGE_QUEUE_H__
+#define __PLUTO_TEST_OS_ABSTRACTION_MESSAGE_QUEUE_H__
+
+
+void PLUTO_TEST_MessageQueueInitialCreate(void);
+void PLUTO_TEST_MessageQueueInitialGet(void);
+
+#endif

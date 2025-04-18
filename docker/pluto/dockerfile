@@ -1,0 +1,42 @@
+# https://docs.docker.com/build/building/multi-stage/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+from ubuntu:20.04 as builder
+
+RUN echo "Europe/Berlin" > /etc/timezone
+RUN apt-get update && apt-get upgrade -y
+RUN apt install software-properties-common -y
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get install python3.8-dev -y
+RUN apt-get install cmake -y
+#RUN apt-get install python3-dev -y
+RUN apt-get install git -y
+
+COPY ../pluto_event/ /pluto_event/
+COPY ../pluto_config/ /pluto_config/
+COPY ../pluto_os_abstraction/ /pluto_os_abstraction/
+COPY ../pluto_node/ /pluto_node/
+COPY ../pluto_rw/ /pluto_rw/
+COPY ../pluto_info/ /pluto_info/
+COPY ../pluto_edge/ /pluto_edge/
+COPY ../pluto_core/ /pluto_core/
+COPY ../CMakeLists.txt /
+RUN cd / && mkdir /external/ && cd /external/ && git clone https://github.com/zserge/jsmn.git && git clone https://github.com/ThrowTheSwitch/Unity.git
+  
+
+RUN mkdir /build/ && cd /build/ && cmake -G "Unix Makefiles" ../ && make
+RUN cp /build/pluto_node/pluto_node_* /bin/
+RUN cp /build/pluto_rw/pluto_rw /bin/
+RUN cp /build/pluto_info/pluto_info /bin/
+RUN cp /build/pluto_core/pluto_core /bin/
+RUN mkdir -p /lib/pluto/ && cp /build/pluto_edge/lib* /lib/pluto/
+
+RUN mkdir -p /usr/include/pluto/inc/pluto/application_layer/ && mkdir /usr/include/pluto/inc/pluto/application_layer/shared_library/ && mkdir /usr/include/pluto/inc/pluto/types/
+RUN cp /pluto_node/inc/pluto/application_layer/shared_library/pluto_shared_library_header.h /usr/include/pluto/inc/pluto/application_layer/shared_library/
+RUN cp /pluto_node/inc/pluto/types/pluto_types.h /usr/include/pluto/inc/pluto/types/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#

@@ -1,0 +1,5 @@
+{
+    "work_dir":"/tmp/pluto/ipc/",
+    "name_of_input_queue":"pluto-0_iq",
+    "names_of_output_queues":["pluto-0_oq_0"]
+}
