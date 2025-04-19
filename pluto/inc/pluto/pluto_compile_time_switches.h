@@ -6,7 +6,12 @@
 #define PLUTO_CTS_RTM_SHARED_LIB 1
 #define PLUTO_CTS_RTM_PYTHON 2
 
+#ifndef PLUTO_CTS_RUNTIME_MODE
+// 
+// If not defined use a default.
+//
 #define PLUTO_CTS_RUNTIME_MODE (PLUTO_CTS_RTM_PYTHON) 
+#endif
 
 
 #endif
