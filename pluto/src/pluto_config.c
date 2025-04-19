@@ -1,3 +1,19 @@
+/**
+ *
+ * \brief   Schema of Configuration:
+ *              {
+ *                  "manage_inputqueue": bool,
+ *                  "manage_outputqueues": bool,
+ *                  "base_path": str,
+ *                  "name": str,
+ *                  "name_of_inputqueue": str,
+ *                  "name_of_outputqueues": [
+ *                      str
+ *                  ],
+ *                  "dll_path": str
+ *              }
+ *
+ */
 
 #include <pluto/pluto_config.h>
 
@@ -11,8 +27,11 @@
 PLUTO_Config_t PLUTO_CreateConfig(const char *name)
 {
     PLUTO_Config_t config = (PLUTO_Config_t)malloc(sizeof(struct PLUTO_Config));
-
-    config->base_path = "/Users/philippkroll/Repositories/pluto/build/.pluto/ipc/";
+    
+    config->manage_inputqueue = true;
+    config->manage_outputqueues = true;
+    char *config_base = getenv("PLUTO_CONFIG_BASE_PATH");
+    config->base_path = config_base;
 
     config->name = malloc(strlen(name) + 1);
     memset(config->name, '\0', strlen(name) + 1);

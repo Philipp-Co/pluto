@@ -3,6 +3,7 @@
 #include "pluto/pluto_message_queue.h"
 #include "pluto/pluto_types.h"
 #include <pluto/pluto_processor.h>
+#include <pluto/pluto_compile_time_switches.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,9 +20,11 @@
 #define PLUTO_PROC_MAX_N_HEADER (32)
 #define PLUTO_PROC_MAX_N_QUERY_PARAMETER (32)
 
-PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config)
+PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback)
 {
     PLUTO_Processor_t processor = (PLUTO_Processor_t)malloc(sizeof(struct PLUTO_Processor));
+
+    processor->callback = callback;
 
     processor->info = PLUTO_CreateInfo(config->base_path, config->name);
     
@@ -112,15 +115,18 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         else
         {
             // process...
-            printf("Receuved a Request!\n");
-            // check running transactions...
-           
-            // send Response.
             PLUTO_Response_t response = alloca(sizeof(struct PLUTO_Response));
             response->body = malloc(processor->request->max_bytes_body);
             memcpy(response->body, processor->request->body, strlen(processor->request->body) + 1);
             response->id = processor->request->id;
-            printf("Write \"%s\" to Outputqueue\n", response->body);
+            PLUTO_ProcessorCallbackInput_t input = {
+                .input_buffer = processor->request->body,
+                .output_buffer = response->body,
+                .input_buffer_size = processor->request->max_bytes_body,
+                .output_buffer_size = processor->request->max_bytes_body
+            };
+            PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
+            (void)output;
             PLUTO_MessageQueueWrite(
                 processor->output_queues[processor->request->queue],
                 response

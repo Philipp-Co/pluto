@@ -1,10 +1,19 @@
+
+#include <pluto/pluto_compile_time_switches.h>
 #include "pluto/pluto_config.h"
 #include <pluto/pluto_processor.h>
+#include <pluto/python/pluto_python.h>
+
+#include <string.h>
 #include <signal.h>
 #include <stdatomic.h>
 
 
 void PLUTO_SignalHandler(int signum);
+
+#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT
+static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args);
+#endif
 
 static atomic_int PLUTO_Terminate;
 
@@ -15,12 +24,31 @@ int main(int argc, char **argv)
     
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
-    
+  
+#if PLUTO_CTS_RTM_PYTHON
+    // Initialize Python.
+    if(!PLUTO_InitializePython())
+    {
+        return -1;
+    }
+#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
+    // Initialize Shared Library.
+#endif
+
     const char *name = "pluto-0";
     PLUTO_Config_t config = PLUTO_CreateConfig(name);
     if(!config) return -1;
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
-        config
+        config,
+#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT
+        PLUTO_ProcessCallback
+#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
+#error "Not Implemented!"
+#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
+        PLUTO_PY_ProcessCallback
+#else
+#error "Unknown Runtime Mode!"
+#endif
     );
     PLUTO_DestroyConfig(&config);
     if(!processor)
@@ -33,6 +61,14 @@ int main(int argc, char **argv)
     }
     PLUTO_DestroyProcessor(&processor);
 
+
+#if PLUTO_CTS_RTM_PYTHON
+    // Deinitialize Python.
+    PLUTO_DeinitializePython();
+#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
+    // Deinitialize Shared Library.
+#endif
+
     return 0;
 }
 
@@ -41,3 +77,20 @@ void PLUTO_SignalHandler(int signum)
     (void)signum;
     atomic_store(&PLUTO_Terminate, 1);
 }
+
+#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT
+static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
+{
+    printf(
+        "Process:\n"
+        "  Request: %s\n",
+        args->input_buffer
+    );
+    memcpy(args->output_buffer, args->input_buffer, args->input_buffer_size);
+    PLUTO_ProcessorCallbackOutput_t output = {
+        .return_value = true,
+        .output_size = args->input_buffer_size
+    };
+    return output;
+}
+#endif

@@ -29,9 +29,7 @@
 
 #define PLUTO_PARSER_TOKEN_ID 1
 #define PLUTO_PARSER_TOKEN_QUEUE 2
-#define PLUTO_PARSER_TOKEN_HEADER 4
-#define PLUTO_PARSER_TOKEN_PARAMETER 8
-#define PLUTO_PARSER_TOKEN_BODY 16
+#define PARSER_TOKEN_PAYLOAD 16
 
 
 static void PLUTO_PrintRequest(const PLUTO_Request_t request);
@@ -71,11 +69,10 @@ void PLUTO_MessageParserDumpResponse(const PLUTO_Response_t response, char *buff
     assert(NULL != buffer);
     assert(size > 0);
 
-    snprintf(buffer, size, "{\"id\":%u,\"body\":\"%s\"}", response->id, response->body);
+    snprintf(buffer, size, "{\"id\":%u,\"payload\":\"%s\"}", response->id, response->body);
 } 
 
 static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data);
-static bool PLUTO_ReadStringArray(const jsmntok_t *array, const jsmntok_t *tokens, const char *message, PLUTO_Parameter_t *parameter, size_t *n);
 
 bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLUTO_Request_t request)
 {
@@ -103,20 +100,6 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
         const unsigned int obj = PLUTO_ReadKey(&token[i], data);
         switch(obj)
         {
-            case PLUTO_PARSER_TOKEN_HEADER:
-                if(!PLUTO_ReadStringArray(&token[i+1], &token[i + 2], data, request->header, &request->n_header))
-                {
-                    return false;
-                }
-                i += max(1, 2 + token[i+1].size);
-                break;
-            case PLUTO_PARSER_TOKEN_PARAMETER:
-                if(!PLUTO_ReadStringArray(&token[i+1], &token[i + 2], data, request->query_parameter, &request->n_query_parameter))
-                {
-                    return false;
-                }
-                i += max(1, 2 + token[i+1].size);
-                break;
             case PLUTO_PARSER_TOKEN_ID:
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
@@ -129,7 +112,7 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
                 request->queue = (uint8_t)atoi(buffer);
                 i += 2;
                 break;
-            case PLUTO_PARSER_TOKEN_BODY:
+            case PARSER_TOKEN_PAYLOAD:
                 memcpy(request->body, data + token[i + 1].start, token[i + 1].end - token[i + 1].start);
                 request->body[token[i + 1].end - token[i + 1].start] = '\0';
                 i += 2;
@@ -157,30 +140,24 @@ static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data)
     memcpy(key_buffer, data + key->start, strl); 
     key_buffer[strl] = '\0';
         
-    static const size_t N = 5;
+    static const size_t N = 3;
     static const char *expected_keys[N] = 
     {
         "id",
         "queue",
-        "header",
-        "parameter",
-        "body"
+        "payload"
     };
     static const unsigned int expected_strl[N] =
     {
         2U,
         5U,
-        6U,
-        9U,
-        4U
+        7U
     };
     static const unsigned int result_values[N] =
     {
         PLUTO_PARSER_TOKEN_ID,
         PLUTO_PARSER_TOKEN_QUEUE,
-        PLUTO_PARSER_TOKEN_HEADER,
-        PLUTO_PARSER_TOKEN_PARAMETER,
-        PLUTO_PARSER_TOKEN_BODY
+        PARSER_TOKEN_PAYLOAD
     };
     
     for(size_t i=0U;i<N;++i)
@@ -198,25 +175,6 @@ static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data)
     return 0U;
 }
 
-static bool PLUTO_ReadStringArray(const jsmntok_t *array, const jsmntok_t *tokens, const char *message, PLUTO_Parameter_t *parameter, size_t *n)
-{
-    char buffer[4096];
-    for(int j=0;j<array->size;++j)
-    {
-        if(JSMN_STRING != tokens[j].type)
-        {
-            return false;
-        }
-        const size_t len = tokens[j].end - tokens[j].start;
-        memcpy(buffer, message + tokens[j].start, len);
-        buffer[len] = '\0'; 
-        memcpy(parameter[j].name, buffer, len);
-        parameter[j].name[len] = '\0';
-    }
-    *n = array->size;
-    return true;
-}
-
 static void PLUTO_PrintRequest(const PLUTO_Request_t request)
 {
     printf(
@@ -231,45 +189,7 @@ static void PLUTO_PrintRequest(const PLUTO_Request_t request)
         request->queue
     );
     printf(
-        "  \"header\": [\n"
-    );
-    for(size_t i=0;i<request->n_header;++i)
-    {
-        printf(
-            "    \"%s\"",
-            request->header[i].name
-        );
-        if(i < request->n_header - 1)
-        {
-            printf(",\n");
-        }
-        else
-        {
-            printf("\n");
-        }
-    }
-    printf("  ],\n");
-    printf(
-        "  \"query_parameter\": [\n"
-    );
-    for(size_t i=0;i<request->n_query_parameter;++i)
-    {
-        printf(
-            "    \"%s\"",
-            request->query_parameter[i].name
-        );
-        if(i < request->n_query_parameter - 1)
-        {
-            printf(",\n");
-        }
-        else
-        {
-            printf("\n");
-        }
-    }
-    printf("  ],\n");
-    printf(
-        "  \"body\": \"%s\"\n",
+        "  \"payload\": \"%s\"\n",
         request->body
     );
     printf(

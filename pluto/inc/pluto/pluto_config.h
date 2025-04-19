@@ -1,7 +1,14 @@
+/**
+ * \brief   Configuration for Pluto.
+ *          Tell Pluto to Create/Destroy Messagequeues or use existing ones.
+ *          Set the Name of the Input- and Outputqueues.
+ */
 #ifndef __PLUTO_CONFIG_H__
 #define __PLUTO_CONFIG_H__
 
 #include <stdint.h>
+#include <stdbool.h>
+
 
 struct PLUTO_Config 
 {
@@ -11,6 +18,8 @@ struct PLUTO_Config
     char *name_of_input_queue;
     int32_t number_of_output_queues; 
     char **names_of_output_queues;
+    bool manage_inputqueue;
+    bool manage_outputqueues;
 };
 
 typedef struct PLUTO_Config* PLUTO_Config_t;

@@ -22,6 +22,8 @@ add_subdirectory(
 #
 # Find required Packages.
 #
+# https://cmake.org/cmake/help/latest/module/FindPython3.html
+find_package (Python3 COMPONENTS Interpreter Development)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
@@ -48,6 +50,7 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/pluto/src/pluto_message_queue.c
     ${CMAKE_CURRENT_LIST_DIR}/pluto/src/pluto_message_parser.c
     ${CMAKE_CURRENT_LIST_DIR}/pluto/src/pluto_processor.c
+    ${CMAKE_CURRENT_LIST_DIR}/pluto/src/python/pluto_python.c
 )
 
 target_include_directories(
@@ -55,8 +58,14 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/pluto/inc/
     ${CMAKE_CURRENT_LIST_DIR}/external/
+    ${Python3_INCLUDE_DIRS}
 )
 
+target_link_libraries(
+    pluto
+    PUBLIC
+    Python3::Python
+)
 #
 # Configure libahr.
 #
@@ -67,7 +76,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         "-fsanitize=address"
         "-fno-omit-frame-pointer"
         "-Wno-unused-function"
-        "-fPIC"
         "-Wall"
         "-Wextra"
         "-Werror"
@@ -86,8 +94,9 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         pluto
         PUBLIC
         "-O2"
+        "-fdata-sections"
+        "-ffunction-sections"
         "-Wno-unused-function"
-        "-fPIC"
         "-Wall"
         "-Wextra"
         "-Werror"
