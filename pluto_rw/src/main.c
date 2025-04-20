@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 
 struct PLUTO_RW_CmdArgs
@@ -58,8 +59,20 @@ static bool PLUTO_RW_ParseArgs(int argc, char **argv, struct PLUTO_RW_CmdArgs *a
 {
     bool rw = false;
     char c;
+    opterr = 0;
+    optopt = 0;
     while((c = getopt(argc, argv, "n:rwd:")) != -1)
     {
+        //
+        // TODO: Why is this neccessary on Ubuntu!?
+        //       On Macos this is not needed -.-'
+        //
+        if(((char)-1) == (char)c)
+        {
+            break;
+        }
+        //
+ 
         switch(c)
         {
             case 'n':
@@ -68,6 +81,7 @@ static bool PLUTO_RW_ParseArgs(int argc, char **argv, struct PLUTO_RW_CmdArgs *a
             case 'w':
                 if(rw)
                 {
+                    printf("A mode was already specified!\n");
                     PLUTO_RW_PrintHelp();
                     return false;
                 }
@@ -77,6 +91,7 @@ static bool PLUTO_RW_ParseArgs(int argc, char **argv, struct PLUTO_RW_CmdArgs *a
             case 'r':
                 if(rw)
                 {
+                    printf("A mode was already specified!\n");
                     PLUTO_RW_PrintHelp();
                     return false;
                 }
@@ -84,20 +99,41 @@ static bool PLUTO_RW_ParseArgs(int argc, char **argv, struct PLUTO_RW_CmdArgs *a
                 rw = true;
                 break;
             case 'd':
+                printf("%s given to program.\n", optarg);
                 args->data = optarg;
                 break;
+            case '?':
+                if(optopt == 'n' || optopt == 'd')
+                {
+                    printf("n / d failed...\n");
+                    PLUTO_RW_PrintHelp();
+                }
+                else if(isprint(optopt))
+                {
+                    printf("Unknown Argument! %i -> %c\n", optopt, c);
+                    PLUTO_RW_PrintHelp();
+                }
+                else 
+                {
+                    printf("Unknown Argument! 0x%i\n", (int)optopt);
+                    PLUTO_RW_PrintHelp();
+                }
+                return false;
             default:
+                printf("Error, unexpected Opt Char 0x%i, %s.\n", c, optarg);
                 PLUTO_RW_PrintHelp();
                 return false;
         }
     }
     if(!args->data && args->write)
     {
+        printf("No data given to Write!\n");
         PLUTO_RW_PrintHelp();
         return false;
     }
     if(!args->name)
     {
+        printf("No Name given!\n");
         PLUTO_RW_PrintHelp();
         return false;
     }

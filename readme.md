@@ -38,3 +38,23 @@ Externe Abhaengigkeiten werden um Verzeichnis unter external/ gesammelt.
 ### jsmn
 
 jsmn ist ein JSON Parser der von Pluto genutzt wird. Siehe dazu auch https://github.com/zserge/jsmn .
+
+## Das Projekt bauen
+
+    mkdir build/ && cd build/
+    cmake -G "Unix Makefiles" ../
+    make
+
+## Einen Node starten
+
+Terminal 1
+
+    cd build/
+    ./pluto_node/pluto_node_pt
+
+Terminal 2
+    
+    cd build/
+    ./pluto_rw/pluto_rw -n /Pfad/zu/Key/File/pluto-0_iq -w -d '{"id":0,"queue":0,"payload":"test"}'
+    ./pluto_rw/pluto_rw -n /Pfad/zu/Key/File/pluto-0_oq_1 -r
+

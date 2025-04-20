@@ -1,0 +1,39 @@
+# https://docs.docker.com/build/building/multi-stage/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+from ubuntu:20.04 as builder
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install cmake -y
+RUN apt-get install python3-dev -y
+RUN apt-get install git -y
+
+COPY ../pluto_node/ /pluto_node/
+COPY ../pluto_rw/ /pluto_rw/
+COPY ../pluto_info/ /pluto_info/
+COPY ../CMakeLists.txt /
+RUN cd / && mkdir /external/ && cd /external/ && git clone https://github.com/zserge/jsmn.git  
+
+RUN mkdir /build/ && cd /build/ && cmake -G "Unix Makefiles" ../ && make
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+#from alpine:3.14
+from ubuntu:20.04
+
+ARG PYTHON_PATHS
+
+COPY --from=builder /build/pluto_node/pluto_node_pt /pluto_node_pt 
+COPY --from=builder /build/pluto_info/pluto_info /pluto_info 
+COPY --from=builder /build/pluto_rw/pluto_rw /pluto_rw
+
+ENV PLUTO_CONFIG_BASE_PATH /Users/philippkroll/Repositories/pluto/build/.pluto/ipc/
+ENV PLUTO_PYTHON_PATH ${PYTHON_PATHS}
+
+CMD ["/pluto_node_pt"]
+#
+# ---------------------------------------------------------------------------------------------------------------------
+

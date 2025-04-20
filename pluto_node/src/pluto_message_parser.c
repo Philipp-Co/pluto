@@ -140,27 +140,27 @@ static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data)
     memcpy(key_buffer, data + key->start, strl); 
     key_buffer[strl] = '\0';
         
-    static const size_t N = 3;
-    static const char *expected_keys[N] = 
+    #define PLUTO_PARSER_N_KEYS 3
+    static const char *expected_keys[PLUTO_PARSER_N_KEYS] = 
     {
         "id",
         "queue",
         "payload"
     };
-    static const unsigned int expected_strl[N] =
+    static const unsigned int expected_strl[PLUTO_PARSER_N_KEYS] =
     {
         2U,
         5U,
         7U
     };
-    static const unsigned int result_values[N] =
+    static const unsigned int result_values[PLUTO_PARSER_N_KEYS] =
     {
         PLUTO_PARSER_TOKEN_ID,
         PLUTO_PARSER_TOKEN_QUEUE,
         PARSER_TOKEN_PAYLOAD
     };
     
-    for(size_t i=0U;i<N;++i)
+    for(size_t i=0U;i<PLUTO_PARSER_N_KEYS;++i)
     {
         if(strl == expected_strl[i])
         {

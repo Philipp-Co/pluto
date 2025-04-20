@@ -2,7 +2,10 @@
 #include <pluto/pluto_compile_time_switches.h>
 #include "pluto/pluto_config.h"
 #include <pluto/pluto_processor.h>
+
+#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
 #include <pluto/python/pluto_python.h>
+#endif
 
 #include <string.h>
 #include <signal.h>
@@ -25,7 +28,7 @@ int main(int argc, char **argv)
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
   
-#if PLUTO_CTS_RTM_PYTHON
+#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
     // Initialize Python.
     if(!PLUTO_InitializePython())
     {
@@ -62,7 +65,7 @@ int main(int argc, char **argv)
     PLUTO_DestroyProcessor(&processor);
 
 
-#if PLUTO_CTS_RTM_PYTHON
+#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
     // Deinitialize Python.
     PLUTO_DeinitializePython();
 #elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
