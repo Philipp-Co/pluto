@@ -63,14 +63,38 @@ Diese Variante implementiert eine Moeglichkeit die Fachlogik ueber eine Shared L
 
 ## Laufzeit
 
+### Konfiguration
+
+Die Konfigurationsdatei muss diesem Schema entsprechen.
+
+    {
+        "work_dir": str,                // Ein Pfad zu einem Verzeichnis.
+        "name": str,                    // Der Name dieser Instanz.
+        Optional["python_path": str]    // Eine durch ";" getrennte Liste aus Pfaden.
+    }
+
 ### Umgebungsvariablen
 
-Alle Varianten:
+-
 
-    PLUTO_CONFIG_BASE_PATH: Ein Pfad zu einem Verzeichnis.
+### Ausfuehren
+   
+Konfiguration unter /var/pluto_example/config-pluto-0.txt erstellt.
 
-Python:
+    {
+        "work_dir": "/var/pluto_example/pluto-0/",
+        "name": "pluto-0" 
+    }
 
-    PLUTO_PYTHON_PATH: Eine durch ";" getrennte Liste aus Pfaden 
-        die dem eingebetteten Interpreter hinzugefuegt werden sollen.
+Mit dem Kommando starten.
+ 
+    ./pluto_node_pt -c /var/pluto_example/config-pluto-0.txt
+
+Eingabe schreiben.
+
+    ./pluto_rw -n /var/pluto_example/pluto-0/pluto-0_iq -w -d '{"id":0, "payload":"test"}'
+
+Eingabe lesen.
+
+    ./pluto_rw -n /var/pluto_example/pluto-0/pluto-0_oq_0 -r    // Gibt '{"id":0, "payload":test}'
 
