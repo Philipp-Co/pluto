@@ -61,3 +61,16 @@ Diese Variante integriert einen Pythoninterpreter und ermoeglicht so, dass Fachl
 
 Diese Variante implementiert eine Moeglichkeit die Fachlogik ueber eine Shared Library einzubinden.
 
+## Laufzeit
+
+### Umgebungsvariablen
+
+Alle Varianten:
+
+    PLUTO_CONFIG_BASE_PATH: Ein Pfad zu einem Verzeichnis.
+
+Python:
+
+    PLUTO_PYTHON_PATH: Eine durch ";" getrennte Liste aus Pfaden 
+        die dem eingebetteten Interpreter hinzugefuegt werden sollen.
+
