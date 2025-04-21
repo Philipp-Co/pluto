@@ -25,7 +25,7 @@ struct PLUTO_Config
 typedef struct PLUTO_Config* PLUTO_Config_t;
 
 
-PLUTO_Config_t PLUTO_CreateConfig(const char *name);
+PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name);
 void PLUTO_DestroyConfig(PLUTO_Config_t *config);
 
 #endif

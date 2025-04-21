@@ -38,9 +38,14 @@ int main(int argc, char **argv)
     // Initialize Shared Library.
 #endif
 
+    printf("Start.\n");
     const char *name = "pluto-0";
-    PLUTO_Config_t config = PLUTO_CreateConfig(name);
-    if(!config) return -1;
+    PLUTO_Config_t config = PLUTO_CreateConfig("default_config.txt", name);
+    if(!config)
+    {
+        printf("Unable to read Config from file.\n");
+        return -1;
+    }
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         config,
 #if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT

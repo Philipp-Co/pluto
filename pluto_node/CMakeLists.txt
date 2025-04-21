@@ -33,6 +33,7 @@ set(
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_message_queue.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_message_parser.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_processor.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/jsmn.c
 )
 
 #

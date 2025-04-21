@@ -16,6 +16,8 @@
 
 #include "pluto/pluto_types.h"
 #include <pluto/pluto_message_parser.h>
+
+#define JSMN_HEADER
 #include <jsmn/jsmn.h>
 
 #include <stddef.h>
