@@ -68,7 +68,7 @@ Die Konfigurationsdatei muss diesem Schema entsprechen.
 
     {
         "work_dir": str,                // Ein Pfad zu einem Verzeichnis.
-        "name_of_inputqueue": str,      // Der Name der Eingabequeue.
+        "name_of_input_queue": str,     // Der Name der Eingabequeue.
         "names_of_output_queues": [str],// Eine Liste mit Namen von Ausgabequeues.
         Optional["python_path": str]    // Eine durch ";" getrennte Liste aus Pfaden.
     }
