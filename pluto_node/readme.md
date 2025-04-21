@@ -8,7 +8,6 @@ Pluto definiert Events als Textnachrichten in folgendem Schema.
 
     {
         "id": int,
-        "queue": int,
         "payload": str
     }
 
@@ -69,7 +68,8 @@ Die Konfigurationsdatei muss diesem Schema entsprechen.
 
     {
         "work_dir": str,                // Ein Pfad zu einem Verzeichnis.
-        "name": str,                    // Der Name dieser Instanz.
+        "name_of_inputqueue": str,      // Der Name der Eingabequeue.
+        "names_of_output_queues": [str],// Eine Liste mit Namen von Ausgabequeues.
         Optional["python_path": str]    // Eine durch ";" getrennte Liste aus Pfaden.
     }
 
