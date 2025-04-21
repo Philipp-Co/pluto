@@ -16,6 +16,7 @@
 
 #include "pluto/pluto_types.h"
 #include <pluto/pluto_message_parser.h>
+#include <time.h>
 
 #define JSMN_HEADER
 #include <jsmn/jsmn.h>
@@ -30,8 +31,9 @@
 #define max(x, y)((x) < (y) ? (y) : (x))
 
 #define PLUTO_PARSER_TOKEN_ID 1
-#define PLUTO_PARSER_TOKEN_QUEUE 2
-#define PARSER_TOKEN_PAYLOAD 16
+#define PLUTO_PARSER_TOKEN_EVENT 2
+#define PLUTO_PARSER_TOKEN_TIMESTAMP 4
+#define PARSER_TOKEN_PAYLOAD 8
 
 
 static void PLUTO_PrintRequest(const PLUTO_Request_t request);
@@ -42,12 +44,10 @@ bool PLUTO_MessageParserLoadRequest(const char *message, PLUTO_Request_t request
 {
     assert(NULL != message);
     assert(NULL != request);
-    assert(NULL != request->body && request->max_bytes_body > 0);
-    assert(NULL != request->header && request->max_n_header);
-    assert(NULL != request->query_parameter && request->max_n_query_parameter);
 
-    snprintf(request->body, request->max_bytes_body, "%s", message);
-    request->queue = 0U;
+    snprintf(request->payload, request->max_bytes_payload, "%s", message);
+    request->event = 0U;
+    request->id = 0U;
     
     jsmntok_t token[128];
     jsmn_parser parser;
@@ -83,11 +83,8 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
     assert(NULL != data);
     assert(NULL != request);
 
-    request->n_header = 0;
-    request->n_query_parameter = 0;
     request->id = 0U;
-    request->queue = 0xFFU;
-    memset(request->body, '\0', request->max_bytes_body);
+    memset(request->payload, '\0', request->max_bytes_payload);
 
     if(JSMN_OBJECT != token[0].type)
     {
@@ -95,7 +92,8 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
         return false;
     }
     
-   char buffer[1024]; 
+    struct tm tm;
+    char buffer[1024]; 
     unsigned int result = 0U; 
     for(size_t i=1U;i<size;)
     {
@@ -105,18 +103,29 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
             case PLUTO_PARSER_TOKEN_ID:
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
-                request->id = (uint8_t)atoi(buffer);
+                request->id = (int)atoi(buffer);
                 i += 2;
                 break;
-            case PLUTO_PARSER_TOKEN_QUEUE:
+            case PLUTO_PARSER_TOKEN_EVENT:
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
-                request->queue = (uint8_t)atoi(buffer);
+                request->event = (int)atoi(buffer);
+                i += 2;
+                break;
+            case PLUTO_PARSER_TOKEN_TIMESTAMP:
+                printf("Timestamp %s\n", buffer);
+                memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
+                buffer[token[i+1].end - token[i+1].start] = '\0';
+                if(!strptime(buffer, "%Y-%m-%dT%H:%M:%S", &tm))
+                {
+                    return false;
+                }
+                request->timestamp = mktime(&tm);
                 i += 2;
                 break;
             case PARSER_TOKEN_PAYLOAD:
-                memcpy(request->body, data + token[i + 1].start, token[i + 1].end - token[i + 1].start);
-                request->body[token[i + 1].end - token[i + 1].start] = '\0';
+                memcpy(request->payload, data + token[i + 1].start, token[i + 1].end - token[i + 1].start);
+                request->payload[token[i + 1].end - token[i + 1].start] = '\0';
                 i += 2;
                 break;
             default:
@@ -142,23 +151,26 @@ static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data)
     memcpy(key_buffer, data + key->start, strl); 
     key_buffer[strl] = '\0';
         
-    #define PLUTO_PARSER_N_KEYS 3
+    #define PLUTO_PARSER_N_KEYS 4
     static const char *expected_keys[PLUTO_PARSER_N_KEYS] = 
     {
         "id",
-        "queue",
+        "event",
+        "time",
         "payload"
     };
     static const unsigned int expected_strl[PLUTO_PARSER_N_KEYS] =
     {
         2U,
         5U,
+        4U,
         7U
     };
     static const unsigned int result_values[PLUTO_PARSER_N_KEYS] =
     {
         PLUTO_PARSER_TOKEN_ID,
-        PLUTO_PARSER_TOKEN_QUEUE,
+        PLUTO_PARSER_TOKEN_EVENT,
+        PLUTO_PARSER_TOKEN_TIMESTAMP,
         PARSER_TOKEN_PAYLOAD
     };
     
@@ -187,12 +199,16 @@ static void PLUTO_PrintRequest(const PLUTO_Request_t request)
         request->id
     );
     printf(
-        "  \"queue\": %u,\n",
-        request->queue
+        "  \"event\": %u,\n",
+        request->event
+    );
+    printf(
+        "  \"time\": %lu,\n",
+        request->timestamp
     );
     printf(
         "  \"payload\": \"%s\"\n",
-        request->body
+        request->payload
     );
     printf(
         "}\n"

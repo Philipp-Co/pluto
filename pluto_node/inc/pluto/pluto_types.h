@@ -6,6 +6,8 @@
 #include <sys/ipc.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
+
 
 typedef struct
 {
@@ -22,18 +24,11 @@ typedef struct
 
 struct PLUTO_Request
 {
-    size_t max_n_header;
-    size_t max_n_query_parameter;
-    size_t max_size_parameter_name;
-    size_t max_size_parameter_value;
-    size_t max_bytes_body;
-    size_t n_header;
-    size_t n_query_parameter;
-    PLUTO_Parameter_t *query_parameter;
-    PLUTO_Parameter_t *header;
-    char *body;
-    uint32_t id;
-    uint8_t queue;
+    time_t timestamp;
+    size_t max_bytes_payload;
+    char *payload;
+    int id;
+    int event;
 };
 
 typedef struct PLUTO_Request* PLUTO_Request_t;

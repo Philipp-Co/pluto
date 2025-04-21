@@ -181,6 +181,7 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
                 else if(0 == strcmp("names_of_output_queues", key))
                 {
                     printf("  output_queue_names: %s\n", value);
+                    printf("  number_of_output_queues: %i\n", token[i + 1].size);
                     config->number_of_output_queues = token[i + 1].size;
                     for(int j=0;j<token[i + 1].size;++j)
                     {

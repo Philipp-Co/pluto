@@ -34,6 +34,7 @@ PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCall
     );    
     for(int32_t i=0;i<config->number_of_output_queues;++i)
     {
+        printf("Create Output Queue %s\n", config->names_of_output_queues[i]);
         processor->output_queues[i] = PLUTO_CreateMessageQueue(
             config->base_path,
             config->names_of_output_queues[i],
@@ -51,26 +52,9 @@ PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCall
     ); 
 
     PLUTO_Request_t request = malloc(sizeof(struct PLUTO_Request));
-    request->body = malloc(PLUTO_PROC_MAX_BYTES_BODY);
-    request->max_bytes_body = PLUTO_PROC_MAX_BYTES_BODY;
-    request->max_size_parameter_name = PLUTO_PROC_MAX_BYTES_TUPLE_NAME;
-    request->max_size_parameter_value = PLUTO_PROC_MAX_BYTES_TUPLE_VALUE;
-    request->max_n_header = PLUTO_PROC_MAX_N_HEADER;
-    request->max_n_query_parameter = PLUTO_PROC_MAX_N_QUERY_PARAMETER;
-    request->header = malloc(sizeof(PLUTO_Parameter_t) * PLUTO_PROC_MAX_N_HEADER); 
-    request->n_header = PLUTO_PROC_MAX_N_HEADER;
-    request->query_parameter = malloc(sizeof(PLUTO_Parameter_t) * PLUTO_PROC_MAX_N_QUERY_PARAMETER);
-    request->n_query_parameter = PLUTO_PROC_MAX_N_QUERY_PARAMETER;
-    for(size_t i=0;i<PLUTO_PROC_MAX_N_HEADER;++i)
-    {
-        request->header[i].name = malloc(PLUTO_PROC_MAX_BYTES_TUPLE_NAME);
-        request->header[i].value = malloc(PLUTO_PROC_MAX_BYTES_TUPLE_VALUE);
-    }
-    for(size_t i=0;i<PLUTO_PROC_MAX_N_QUERY_PARAMETER;++i)
-    {
-        request->query_parameter[i].name = malloc(PLUTO_PROC_MAX_BYTES_TUPLE_NAME);
-        request->query_parameter[i].value = malloc(PLUTO_PROC_MAX_BYTES_TUPLE_VALUE);
-    }
+    request->payload = malloc(PLUTO_PROC_MAX_BYTES_BODY);
+    request->max_bytes_payload = PLUTO_PROC_MAX_BYTES_BODY;
+    
     processor->request = request;
 
     PLUTO_InfoValues_t values = {
@@ -108,30 +92,27 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         )
     )
     {
-        if(processor->request->queue >= processor->number_of_output_queues)
+        // process...
+        PLUTO_Response_t response = alloca(sizeof(struct PLUTO_Response));
+        response->body = malloc(processor->request->max_bytes_payload);
+        memcpy(response->body, processor->request->payload, strlen(processor->request->payload) + 1);
+        response->id = processor->request->id;
+        PLUTO_ProcessorCallbackInput_t input = {
+            .input_buffer = processor->request->payload,
+            .output_buffer = response->body,
+            .input_buffer_size = processor->request->max_bytes_payload,
+            .output_buffer_size = processor->request->max_bytes_payload
+        };
+        PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
+        (void)output;
+        for(int i=0;i<processor->number_of_output_queues;++i)
         {
-            printf("Error! Requested Output Queue does not exist!\n");
-        }
-        else
-        {
-            // process...
-            PLUTO_Response_t response = alloca(sizeof(struct PLUTO_Response));
-            response->body = malloc(processor->request->max_bytes_body);
-            memcpy(response->body, processor->request->body, strlen(processor->request->body) + 1);
-            response->id = processor->request->id;
-            PLUTO_ProcessorCallbackInput_t input = {
-                .input_buffer = processor->request->body,
-                .output_buffer = response->body,
-                .input_buffer_size = processor->request->max_bytes_body,
-                .output_buffer_size = processor->request->max_bytes_body
-            };
-            PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
-            (void)output;
+            printf("Write output to Queue %i\n", i);
             PLUTO_MessageQueueWrite(
-                processor->output_queues[processor->request->queue],
+                processor->output_queues[i],
                 response
             ); 
-            free(response->body);
         }
+        free(response->body);
     }
 }
