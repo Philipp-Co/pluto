@@ -31,7 +31,6 @@ static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename
 PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
 {
     (void)filename;
-    printf("Create Config.\n");
     PLUTO_Config_t config = (PLUTO_Config_t)malloc(sizeof(struct PLUTO_Config));
     
     config->manage_inputqueue = true;
@@ -95,16 +94,13 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes);
 
 static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename)
 {
-    printf("Read Config from file...\n");
     bool return_value = false;
     char *files_content = PLUTO_ReadyConfigFromFile1(filename);
     if(!files_content)
     {
         return false;
     }
-    printf("Parse Config..\n");
     return_value = PLUTO_ParseConfig(config, files_content);
-    printf("Free mem.\n");
     free(files_content);
     return return_value;
 }
@@ -155,14 +151,13 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
         sizeof(token)
     );
 
-    printf("Parse Config, %i tokens found...\n", result);
+    printf("Parse Config...\n");
     if(result > 0)
     {
         char *key = malloc(1024);
         char *value = malloc(4096);
         for(int i=1;i<result;)
         {
-            printf("Parse Token %i\n", i);
             memcpy(key, bytes + token[i].start, token[i].end - token[i].start);
             key[token[i].end - token[i].start] = '\0';
             if(JSMN_STRING == token[i].type)
@@ -171,21 +166,21 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
                 value[token[i + 1].end - token[i + 1].start] = '\0';
                 if(0 == strcmp("work_dir", key))
                 {
-                    printf("Read work_dir: %s\n", value);
+                    printf("  work_dir: %s\n", value);
                     memcpy(config->base_path, value, strlen(value) + 1);
                     flags |= 0x1U;
                     i += 2;
                 }
                 else if(0 == strcmp("name_of_input_queue", key))
                 {
-                    printf("Read input_queue_name: %s\n", value);
+                    printf("  input_queue_name: %s\n", value);
                     memcpy(config->name_of_input_queue, value, strlen(value) + 1);
                     flags |= 0x2U;
                     i += 2;
                 }
                 else if(0 == strcmp("names_of_output_queues", key))
                 {
-                    printf("Read output_queue_names (%i): %s\n", token[i + 1].size, value);
+                    printf("  output_queue_names: %s\n", value);
                     config->number_of_output_queues = token[i + 1].size;
                     for(int j=0;j<token[i + 1].size;++j)
                     {
@@ -195,10 +190,10 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
                             token[i + j + 2].end - token[i + j + 2].start
                         );
                         config->names_of_output_queues[j][token[i + j + 2].end - token[i + j + 2].start] = '\0'; 
-                        printf("  Oq name. %s\n", config->names_of_output_queues[j]);
+                        printf("    Outputqueue Name: %s\n", config->names_of_output_queues[j]);
                     }
                     flags |= 0x4U;
-                    i += token[i + 1].size;
+                    i += token[i + 1].size + 2;
                 }
                 else
                 {
