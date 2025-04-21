@@ -8,6 +8,8 @@ Pluto definiert Events als Textnachrichten in folgendem Schema.
 
     {
         "id": int,
+        "event": int,
+        "time": datetime, # %Y-%m-%dT%H:%M:%S.%f%z
         "payload": str
     }
 
@@ -75,7 +77,7 @@ Die Konfigurationsdatei muss diesem Schema entsprechen.
 
 ### Umgebungsvariablen
 
--
+Aktuell keine.
 
 ### Ausfuehren
    
@@ -88,7 +90,7 @@ Konfiguration unter /var/pluto_example/config-pluto-0.txt erstellt.
 
 Mit dem Kommando starten.
  
-    ./pluto_node_pt -c /var/pluto_example/config-pluto-0.txt
+    ./pluto_node_pt -n name -c /var/pluto_example/config-pluto-0.txt
 
 Eingabe schreiben.
 
