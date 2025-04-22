@@ -90,11 +90,11 @@ Konfiguration unter /var/pluto_example/config-pluto-0.txt erstellt.
 
 Mit dem Kommando starten.
  
-    ./pluto_node_pt -n name -c /var/pluto_example/config-pluto-0.txt
+    ./pluto_node_pt -n pluto-0 -c /var/pluto_example/config-pluto-0.txt
 
 Eingabe schreiben.
 
-    ./pluto_rw -n /var/pluto_example/pluto-0/pluto-0_iq -w -d '{"id":0, "payload":"test"}'
+    ./pluto_rw -n /var/pluto_example/pluto-0/pluto-0_iq -w -d '{"id":0, "event":0,  "time": """payload":"test"}'
 
 Eingabe lesen.
 

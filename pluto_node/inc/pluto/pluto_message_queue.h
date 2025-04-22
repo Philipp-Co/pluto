@@ -2,6 +2,7 @@
 #define __PLUTO_MESSAGE_QUEUE_H__
 
 #include <pluto/pluto_types.h>
+#include <pluto/pluto_semaphore.h>
 
 #include <stdbool.h>
 #include <sys/msg.h>
@@ -11,6 +12,7 @@
 struct PLUTO_MessageQueue
 {
     PLUTO_Key_t key;
+    PLUTO_Semaphore_t semaphore;
     int filedescriptor;
 };
 typedef struct PLUTO_MessageQueue* PLUTO_MessageQueue_t;

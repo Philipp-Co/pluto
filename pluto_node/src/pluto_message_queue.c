@@ -1,4 +1,5 @@
 
+#include "pluto/pluto_semaphore.h"
 #include <pluto/pluto_message_queue.h>
 #include <pluto/pluto_message_parser.h>
 
@@ -26,6 +27,22 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(const char *path, const char *name
     PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)malloc(
         sizeof(struct PLUTO_MessageQueue)
     );
+
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "%s-sem", name);
+    queue->semaphore = PLUTO_CreateSemaphore(path, buffer);
+    if(!queue->semaphore)
+    {
+        free(queue);
+        return NULL;
+    }
+    if(PLUTO_SEM_OK != PLUTO_SemaphoreSignal(queue->semaphore))
+    {
+        free(queue);
+        PLUTO_DestroySemaphore(&queue->semaphore);
+        return NULL;
+    }
+
     if(!PLUTO_CreateKey(path, name, &queue->key))
     {
         printf("Unable to create System V Key for Name: %s - %s\n", name, strerror(errno));
@@ -50,10 +67,25 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
     assert(NULL != *queue);
     if(*queue)
     {
-        if(msgctl((*queue)->filedescriptor, IPC_RMID, NULL) < 0)
+        //
+        // Decrement Reference Count.
+        //
+        PLUTO_SemaphoreWait((*queue)->semaphore);
+        const int32_t semaphore_value = PLUTO_SemaphoreValue((*queue)->semaphore);
+        printf("Queue %s Ref. Count %i\n", (*queue)->key.path_to_file, semaphore_value);
+        if(semaphore_value <= 0)
         {
-            printf("Error, unable to delete MQ.\n");
+            printf("Destroy Queue %s\n", (*queue)->key.path_to_file);
+            //
+            // Only destroy Queue if the Reference Count indicates, 
+            // that this is the last Instance which holds a Queue.
+            //
+            if(msgctl((*queue)->filedescriptor, IPC_RMID, NULL) < 0)
+            {
+                printf("Error, unable to delete MQ.\n");
+            }
         }
+        PLUTO_DestroySemaphore(&(*queue)->semaphore);
         PLUTO_DestroyKey((*queue)->key);
         free(*queue);
         *queue = NULL;
