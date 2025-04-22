@@ -18,27 +18,23 @@ RUN cd / && mkdir /external/ && cd /external/ && git clone https://github.com/zs
 
 RUN mkdir /build/ && cd /build/ && cmake -G "Unix Makefiles" ../ && make
 
-COPY docker/default_config.txt /pluto-0-config.txt
-
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
-#from alpine:3.14
 from ubuntu:20.04
 
-ARG PYTHON_PATHS
+RUN apt-get update
+RUN apt-get install python3 -y
 
-COPY --from=builder /build/pluto_node/pluto_node_pt /pluto_node_pt 
-COPY --from=builder /build/pluto_info/pluto_info /pluto_info 
-COPY --from=builder /build/pluto_rw/pluto_rw /pluto_rw
+COPY --from=builder /build/pluto_node/pluto_node_pt /bin/pluto_node_pt 
+COPY --from=builder /build/pluto_info/pluto_info /bin/pluto_info 
+COPY --from=builder /build/pluto_rw/pluto_rw /bin/pluto_rw
 
-COPY --from=builder /pluto-0-config.txt /pluto-0-config.txt
-# RUN echo {\"wor_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"names_of_output_queues\":[\"pluto-0_oq_0\"]} > /pluto-0-config.txt
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"names_of_output_queues\":[\"pluto-0_oq_0\"]} > /pluto-0-config.txt
 
-ENV PLUTO_CONFIG_BASE_PATH /Users/philippkroll/Repositories/pluto/build/.pluto/ipc/
-ENV PLUTO_PYTHON_PATH ${PYTHON_PATHS}
+ENV PLUTO_PYTHON_PATH=/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages
 
-CMD ["/pluto_node_pt"]
+CMD ["/pluto_node_pt", "-n", "pluto-0", "-c", "/pluto-0-config.txt"]
 #
 # ---------------------------------------------------------------------------------------------------------------------
 
