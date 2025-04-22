@@ -1,6 +1,10 @@
 #ifndef __PLUTO_COMPILE_TIME_SWITCHES_H__
 #define __PLUTO_COMPILE_TIME_SWITCHES_H__
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #define PLUTO_CTS_RTM_PASSTHROUGH 0
 #define PLUTO_CTS_RTM_SHARED_LIB 1
 #define PLUTO_CTS_RTM_PYTHON 2
@@ -12,5 +16,8 @@
 #define PLUTO_CTS_RUNTIME_MODE (PLUTO_CTS_RTM_PYTHON) 
 #endif
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #endif

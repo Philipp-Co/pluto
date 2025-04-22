@@ -1,4 +1,6 @@
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 #include <pluto/pluto_compile_time_switches.h>
 #include "pluto/pluto_config.h"
 #include <pluto/pluto_processor.h>
@@ -13,12 +15,19 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 typedef struct
 {
     char name[256];
     char config_path[4096];
 } PLUTO_Arguments_t;
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 void PLUTO_SignalHandler(int signum);
 static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv);
@@ -27,7 +36,15 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args);
 #endif
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 static atomic_int PLUTO_Terminate;
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 int main(int argc, char **argv)
 {
@@ -99,6 +116,10 @@ int main(int argc, char **argv)
     return 0;
 }
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 void PLUTO_SignalHandler(int signum)
 {
     (void)signum;
@@ -150,3 +171,7 @@ static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCall
     return output;
 }
 #endif
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

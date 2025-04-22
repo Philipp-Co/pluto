@@ -1,3 +1,8 @@
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <pluto/pluto_compile_time_switches.h>
 #include "pluto/pluto_processor.h"
 #include <pluto/python/pluto_python.h>
@@ -8,11 +13,18 @@
 #include <Python.h>
 #include <wchar.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #define PLUTO_PYTHON_INTERFACE_CLASS "Main"
 #define PLUTO_PYTHON_SETUP_METHOD "setup"
 #define PLUTO_PYTHON_TEARDOWN_METHOD "teardown"
 #define PLUTO_PYTHON_RUN_METHOD "run"
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 typedef struct
 {
@@ -20,14 +32,26 @@ typedef struct
     size_t n_paths;
 } PLUTO_PY_PythonPath_t;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 static bool PLUTO_PY_ReadPythonPathsFromEnv(PLUTO_PY_PythonPath_t *paths); 
 static PyObject* PyInit_emb_input(void);
 static PyObject* PLUTO_PY_CreateInterface(void);
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static PLUTO_ProcessorCallbackInput_t *PLUTO_PY_current_buffer;
 static PLUTO_ProcessorCallbackOutput_t PLUTO_PY_current_output_buffer;
 static PyObject *PLUTO_PY_interface_object = NULL;
 PyGILState_STATE gstate;
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 bool PLUTO_InitializePython(void)
 {

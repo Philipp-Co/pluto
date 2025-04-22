@@ -14,6 +14,10 @@
  *      }
  */
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include "pluto/pluto_types.h"
 #include <pluto/pluto_message_parser.h>
 #include <time.h>
@@ -27,6 +31,9 @@
 #include <string.h>
 #include <assert.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #define max(x, y)((x) < (y) ? (y) : (x))
 
@@ -35,10 +42,16 @@
 #define PLUTO_PARSER_TOKEN_TIMESTAMP 4
 #define PARSER_TOKEN_PAYLOAD 8
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static void PLUTO_PrintRequest(const PLUTO_Request_t request);
-
 bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLUTO_Request_t request);
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 bool PLUTO_MessageParserLoadRequest(const char *message, PLUTO_Request_t request)
 {
@@ -73,6 +86,10 @@ void PLUTO_MessageParserDumpResponse(const PLUTO_Response_t response, char *buff
 
     snprintf(buffer, size, "{\"id\":%u,\"payload\":\"%s\"}", response->id, response->body);
 } 
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data);
 
@@ -214,3 +231,6 @@ static void PLUTO_PrintRequest(const PLUTO_Request_t request)
         "}\n"
     );
 }
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

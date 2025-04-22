@@ -1,9 +1,17 @@
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <pluto/pluto_semaphore.h>
 
 #include <stdlib.h>
 #include <sys/sem.h>
 #include <errno.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name)
 {
@@ -79,3 +87,7 @@ int32_t PLUTO_SemaphoreValue(PLUTO_Semaphore_t semaphore)
 {
     return semctl(semaphore->filedescriptor, 0, GETVAL);
 } 
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

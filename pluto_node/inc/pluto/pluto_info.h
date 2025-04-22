@@ -1,10 +1,18 @@
 #ifndef __PLUTO_INFO_H__
 #define __PLUTO_INFO_H__
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <pluto/pluto_types.h>
 
 #include <stdint.h>
 #include <fcntl.h>
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 struct PLUTO_Info
 {
@@ -26,10 +34,16 @@ typedef struct
     uint32_t n_query_parameter;
 } PLUTO_InfoValues_t;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name);
 void PLUTO_DestroyInfo(PLUTO_Info_t *info);
-
 void PLUTO_InfoDisplay(const PLUTO_Info_t info, const PLUTO_InfoValues_t *values);
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #endif

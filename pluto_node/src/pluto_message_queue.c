@@ -1,4 +1,8 @@
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include "pluto/pluto_semaphore.h"
 #include <pluto/pluto_message_queue.h>
 #include <pluto/pluto_message_parser.h>
@@ -12,15 +16,26 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #define PLUTO_MAX_BODY_SIZE (1024 * 64)
 #define PLUTO_MQ_INPUT_QUEUE_PERMISSIONS 0700 
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 struct PLUTO_MsgBuf 
 {
     long msgtype;
     char text[PLUTO_MAX_BODY_SIZE];
 };
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(const char *path, const char *name, unsigned int permissions)
 {
@@ -147,3 +162,6 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Response_t respon
     return return_value;
 }
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

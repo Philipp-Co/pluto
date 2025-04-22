@@ -1,10 +1,17 @@
 #ifndef __PLUTO_SEMAPHORE_H__
 #define __PLUTO_SEMAPHORE_H__
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <pluto/pluto_types.h>
 
 #include <stdint.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 struct PLUTO_Semaphore 
 {
@@ -20,10 +27,18 @@ typedef enum
     PLUTO_SEM_ERROR = 2
 } PLUTO_SEM_ReturnValue_t;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name);
 void PLUTO_DestroySemaphore(PLUTO_Semaphore_t *semaphore);
 PLUTO_SEM_ReturnValue_t PLUTO_SemaphoreWait(PLUTO_Semaphore_t semaphore); 
 PLUTO_SEM_ReturnValue_t PLUTO_SemaphoreSignal(PLUTO_Semaphore_t semaphore); 
 int32_t PLUTO_SemaphoreValue(PLUTO_Semaphore_t semaphore); 
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #endif

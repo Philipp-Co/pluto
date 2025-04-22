@@ -1,6 +1,10 @@
 #ifndef __PLUTO_TYPES_H__
 #define __PLUTO_TYPES_H__
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/ipc.h>
@@ -8,6 +12,9 @@
 #include <stdbool.h>
 #include <time.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 typedef struct
 {
@@ -41,8 +48,15 @@ struct PLUTO_Response
 
 typedef struct PLUTO_Response* PLUTO_Response_t;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 bool PLUTO_CreateKey(const char *path, const char *name, PLUTO_Key_t *key);
 void PLUTO_DestroyKey(PLUTO_Key_t key);
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #endif

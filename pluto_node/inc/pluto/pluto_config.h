@@ -6,9 +6,16 @@
 #ifndef __PLUTO_CONFIG_H__
 #define __PLUTO_CONFIG_H__
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <stdint.h>
 #include <stdbool.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 struct PLUTO_Config 
 {
@@ -21,11 +28,17 @@ struct PLUTO_Config
     bool manage_inputqueue;
     bool manage_outputqueues;
 };
-
 typedef struct PLUTO_Config* PLUTO_Config_t;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name);
 void PLUTO_DestroyConfig(PLUTO_Config_t *config);
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #endif

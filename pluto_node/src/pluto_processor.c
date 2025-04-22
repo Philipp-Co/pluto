@@ -1,3 +1,8 @@
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include "pluto/pluto_info.h"
 #include "pluto/pluto_message_parser.h"
 #include "pluto/pluto_message_queue.h"
@@ -10,6 +15,9 @@
 #include <assert.h>
 #include <string.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #define PLUTO_PROC_INPUT_QUEUE_PERMISSIONS 044
 #define PLUTO_PROC_OUTPUT_QUEUE_PERMISSIONS 022
@@ -19,6 +27,10 @@
 #define PLUTO_PROC_MAX_BYTES_TUPLE_VALUE (1024 * 16)
 #define PLUTO_PROC_MAX_N_HEADER (32)
 #define PLUTO_PROC_MAX_N_QUERY_PARAMETER (32)
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback)
 {
@@ -116,3 +128,7 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         free(response->body);
     }
 }
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

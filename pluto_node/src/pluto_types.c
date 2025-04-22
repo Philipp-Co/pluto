@@ -1,4 +1,8 @@
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <pluto/pluto_types.h>
 
 #include <stdlib.h>
@@ -7,8 +11,15 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static int PLUTO_TypesCreateFile(const char *path, const char *name, PLUTO_Key_t *key);
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 bool PLUTO_CreateKey(const char *path, const char *name, PLUTO_Key_t *key)
 {
@@ -25,6 +36,10 @@ void PLUTO_DestroyKey(PLUTO_Key_t key)
     key.path_to_file = NULL;
     key.file = NULL;
 }
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static int PLUTO_TypesCreateFile(const char *path, const char *name, PLUTO_Key_t *key)
 {
@@ -68,3 +83,7 @@ static int PLUTO_TypesCreateFile(const char *path, const char *name, PLUTO_Key_t
 end:
     return return_value;
 }
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
