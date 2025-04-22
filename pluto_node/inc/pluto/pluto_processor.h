@@ -1,3 +1,6 @@
+///
+/// \brief  Implements a Processor. The Processor is the main Structure which drives the Application.
+///
 #ifndef __PLUTO_PROCESSOR_H__
 #define __PLUTO_PROCESSOR_H__
 
@@ -44,8 +47,18 @@ typedef struct PLUTO_Processor* PLUTO_Processor_t;
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+///
+/// \brief  Create a Processor.
+///
 PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback);
+///
+/// \brief  Destroy a Processor.
+///
 void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor);
+///
+/// \brief  Read the next input Event, if there is one, pass it to the Applicationlogic and output the Result as the next
+///         output Event.
+///
 void PLUTO_ProcessorProcess(PLUTO_Processor_t processor);
 
 //

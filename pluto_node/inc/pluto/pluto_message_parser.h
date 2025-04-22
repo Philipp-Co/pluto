@@ -13,7 +13,13 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+///
+/// \brief  Parse the given Message and transform it to a Request.
+///
 bool PLUTO_MessageParserLoadRequest(const char *message, PLUTO_Request_t request);
+///
+/// \brief  Dump a Response to a Message Buffer.
+///
 void PLUTO_MessageParserDumpResponse(const PLUTO_Response_t response, char *buffer, int32_t size);
 
 //

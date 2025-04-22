@@ -52,7 +52,17 @@ typedef struct PLUTO_Response* PLUTO_Response_t;
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+///
+/// \brief  Create a PLUTO_Key_t.
+/// \param[in] path - Path to a Directory.
+/// \param[in] name - Name of a File that is assigned to the Key.
+/// \param[out] key - Output Object. This Function assigned values to this Object. 
+/// \return bool - true on success and false otherwise.
+///
 bool PLUTO_CreateKey(const char *path, const char *name, PLUTO_Key_t *key);
+///
+/// \brief  Destroy a given Key.
+///
 void PLUTO_DestroyKey(PLUTO_Key_t key);
 
 //

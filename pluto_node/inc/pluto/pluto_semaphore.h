@@ -1,3 +1,6 @@
+///
+/// \brief  Implementation of a Semaphore.
+///
 #ifndef __PLUTO_SEMAPHORE_H__
 #define __PLUTO_SEMAPHORE_H__
 
@@ -13,6 +16,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+///
+/// \brief  Structure.
+///
 struct PLUTO_Semaphore 
 {
     PLUTO_Key_t key;
@@ -31,10 +37,26 @@ typedef enum
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+///
+/// \brief  Create a Semaphore.
+///
 PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name);
+///
+/// \brief  Desctroy a Semaphore.
+///
 void PLUTO_DestroySemaphore(PLUTO_Semaphore_t *semaphore);
+///
+/// \brief  Decrement the Value 1.
+///         Blocks if the Value was 0 and this Function was called until this Function is able to decrement the Value by 1.
+///
 PLUTO_SEM_ReturnValue_t PLUTO_SemaphoreWait(PLUTO_Semaphore_t semaphore); 
+///
+/// \brief  Inkrement the Value by 1.
+///
 PLUTO_SEM_ReturnValue_t PLUTO_SemaphoreSignal(PLUTO_Semaphore_t semaphore); 
+///
+/// \brief  Get the current Value.
+///
 int32_t PLUTO_SemaphoreValue(PLUTO_Semaphore_t semaphore); 
 
 //
