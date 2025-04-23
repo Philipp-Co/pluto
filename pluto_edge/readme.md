@@ -48,5 +48,5 @@ pluto_edge liegt nach dem Bauen in pluto_edge/ als statische Bibliothek "pluto_e
         "{\"attr\":\"yiha\",\"a_num\":42}"
     );
     PLUTO_EDGE_QueueWrite(queue, event);
-    PLUTO_DestroyEvent(event);
+    PLUTO_EDGE_DestroyEvent(event);
     ...
