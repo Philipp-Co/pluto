@@ -42,7 +42,11 @@ pluto_edge liegt nach dem Bauen in pluto_edge/ als statische Bibliothek "pluto_e
     ...
     PLUTO_EDGE_Queue_t queue = PLUTO_EDGE_CreateQueue("path/to/some/input_queue");
     PLUTO_EDGE_Event_t event = PLUTO_EDGE_CreateEvent(1024);
-    ...
+    snprintf(
+        PLUTO_EDGE_EventPayload(event),
+        PLUTO_EDGE_EventPayloadBufferSize,
+        "{\"attr\":\"yiha\",\"a_num\":42}"
+    );
     PLUTO_EDGE_QueueWrite(queue, event);
     PLUTO_DestroyEvent(event);
     ...

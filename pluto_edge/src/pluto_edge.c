@@ -30,9 +30,14 @@ uint32_t PLUTO_EDGE_EventEvent(const PLUTO_EDGE_Event_t event)
     return event->event;
 }
 
-const char* PLUTO_EDGE_EventPayload(const PLUTO_EDGE_Event_t event)
+char* PLUTO_EDGE_EventPayload(const PLUTO_EDGE_Event_t event)
 {
     return event->payload;
+}  
+
+size_t PLUTO_EDGE_EventPayloadBufferSize(const PLUTO_EDGE_Event_t event)
+{
+    return event->max_bytes_payload;
 }
 
 time_t PLUTO_EDGE_EventTimestamp(const PLUTO_EDGE_Event_t event)

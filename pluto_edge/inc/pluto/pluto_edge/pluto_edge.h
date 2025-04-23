@@ -18,7 +18,8 @@ PLUTO_EDGE_Event_t PLUTO_EDGE_CreateEvent(uint32_t id, uint32_t event, size_t si
 void PLUTO_EDGE_DestroyEvent(PLUTO_EDGE_Event_t event);
 uint32_t PLUTO_EDGE_EventId(const PLUTO_EDGE_Event_t event);
 uint32_t PLUTO_EDGE_EventEvent(const PLUTO_EDGE_Event_t event);
-const char* PLUTO_EDGE_EventPayload(const PLUTO_EDGE_Event_t event);
+char* PLUTO_EDGE_EventPayload(const PLUTO_EDGE_Event_t event);
+size_t PLUTO_EDGE_EventPayloadBufferSize(const PLUTO_EDGE_Event_t event);
 time_t PLUTO_EDGE_EventTimestamp(const PLUTO_EDGE_Event_t event);
 
 
