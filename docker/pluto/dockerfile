@@ -1,0 +1,28 @@
+# https://docs.docker.com/build/building/multi-stage/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+from ubuntu:20.04 as builder
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install cmake -y
+RUN apt-get install python3-dev -y
+RUN apt-get install git -y
+
+COPY ../pluto_node/ /pluto_node/
+COPY ../pluto_rw/ /pluto_rw/
+COPY ../pluto_info/ /pluto_info/
+COPY ../pluto_edge/ /pluto_edge/
+COPY ../CMakeLists.txt /
+RUN cd / && mkdir /external/ && cd /external/ && git clone https://github.com/zserge/jsmn.git  
+
+RUN mkdir /build/ && cd /build/ && cmake -G "Unix Makefiles" ../ && make
+RUN cp /build/pluto_node/pluto_node_* /bin/
+RUN cp /build/pluto_rw/pluto_rw /bin/
+RUN cp /build/pluto_info/pluto_info /bin/
+RUN mkdir -p /lib/pluto/ && cp /build/pluto_edge/lib* /lib/pluto/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
