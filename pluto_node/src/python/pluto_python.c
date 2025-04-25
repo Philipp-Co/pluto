@@ -17,7 +17,18 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#define PLUTO_PYTHON_INTERFACE_CLASS "Main"
+//
+//  class PlutoEventHandler:
+//      def setup(self):
+//          pass
+//      def teardown(self):
+//          pass
+//      def run(self, id: int, event:int, payload: str) -> Optional[str]:
+//          pass
+//      pass
+//
+
+#define PLUTO_PYTHON_INTERFACE_CLASS "PlutoEventHandler"
 #define PLUTO_PYTHON_SETUP_METHOD "setup"
 #define PLUTO_PYTHON_TEARDOWN_METHOD "teardown"
 #define PLUTO_PYTHON_RUN_METHOD "run"
@@ -37,8 +48,8 @@ typedef struct
 //
 
 static bool PLUTO_PY_ReadPythonPathsFromEnv(PLUTO_PY_PythonPath_t *paths); 
-static PyObject* PyInit_emb_input(void);
-static PyObject* PLUTO_PY_CreateInterface(void);
+//static PyObject* PyInit_emb_input(void);
+static PyObject* PLUTO_PY_CreateInterface(const char *path);
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -53,24 +64,31 @@ PyGILState_STATE gstate;
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-bool PLUTO_InitializePython(void)
+bool PLUTO_InitializePython(const char *executable)
 {
     PyStatus status;
     PyConfig config;
     
-    PyImport_AppendInittab("pluto", &PyInit_emb_input);
+    printf("Start Python configuration.\n");
+    //PyImport_AppendInittab("pluto", &PyInit_emb_input);
     PyConfig_InitIsolatedConfig(&config);
     
     // TODO: Check if venvs are needed...
     //char *env = getenv("VIRTUAL_ENV");
     //
     char *buffer = malloc(4096);
+    if(!buffer) return false;
     // TODO: Memory Management...
     PLUTO_PY_PythonPath_t python_path = {
         .paths=malloc(sizeof(char*) * 64),
         .n_paths=0
     };
+
+    printf("Read Python ENV.\n");
     PLUTO_PY_ReadPythonPathsFromEnv(&python_path);
+    printf("Initialize Python Interpreter with:\n");
+    for(size_t i=0;i<python_path.n_paths;++i)
+        printf("  %s\n", python_path.paths[i]);
 
     for(size_t j=0;j<python_path.n_paths;++j)
     {
@@ -85,15 +103,19 @@ bool PLUTO_InitializePython(void)
     }
     config.module_search_paths_set = 1;
     //
+    printf("Initialize Python Interpreter from Config.\n");
     status = Py_InitializeFromConfig(&config);
     if (PyStatus_Exception(status)) {
         goto exception;
     }
     
+    printf("Read Interface from Script.\n");
+    printf("  %s\n", executable);
     //PyRun_SimpleString("import sys; print(sys.path)");
-    PLUTO_PY_interface_object = PLUTO_PY_CreateInterface();
+    PLUTO_PY_interface_object = PLUTO_PY_CreateInterface(executable);
     if(!PLUTO_PY_interface_object)
     {
+        printf("Error, unable to load Interface from Script %s\n", executable);
         goto error;
     }
     //PyConfig_Clear(&config);
@@ -138,7 +160,14 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     PLUTO_PY_current_output_buffer.return_value = true;
     PLUTO_PY_current_output_buffer.output_size = 0;
 
-    PyObject *result = PyObject_CallMethod(PLUTO_PY_interface_object, PLUTO_PYTHON_RUN_METHOD, NULL);
+    // Prepare Arguments
+    PyObject *id = PyLong_FromLong(1);
+    PyObject *event = PyLong_FromLong(1);
+    PyObject *payload = PyUnicode_FromString(args->input_buffer);
+    
+    // Call Memberfunction on Object
+    PyObject *method = PyUnicode_FromString(PLUTO_PYTHON_RUN_METHOD);
+    PyObject *result = PyObject_CallMethodObjArgs(PLUTO_PY_interface_object, method, id, event, payload, NULL);
     if(!result)
     {
         PyErr_Print();
@@ -147,11 +176,19 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     }
     else
     {
+        memcpy(PLUTO_PY_current_buffer->output_buffer, PyUnicode_AsUTF8(result), strlen(PyUnicode_AsUTF8(result)));
+        PLUTO_PY_current_output_buffer.return_value = true;
+        PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(result));
         Py_DECREF(result);
     }
+    Py_DECREF(method);
+    Py_DECREF(payload);
+    Py_DECREF(event);
+    Py_DECREF(id);
     return PLUTO_PY_current_output_buffer;
 }
 
+/*
 static PyObject* emb_input(PyObject *self, PyObject *args)
 {
     (void)self;
@@ -188,6 +225,7 @@ static PyObject* PyInit_emb_input(void)
 {
     return PyModule_Create(&EmbModule);
 }
+*/
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -195,12 +233,18 @@ static PyObject* PyInit_emb_input(void)
 static bool PLUTO_PY_ReadPythonPathsFromEnv(PLUTO_PY_PythonPath_t *paths)
 {
     char *env = getenv("PLUTO_PYTHON_PATH");
+    if(!env)
+    {
+        printf("Error, unable to read ENV \"PLUTO_PYTHON_PATH\"");
+        return false;
+    }
+    paths->n_paths = 0;
     char *str = strtok(env, ";");
     while(NULL != str)
     {
         paths->paths[paths->n_paths] = str;
         paths->n_paths++;
-        str = strtok(env, ";");
+        str = strtok(NULL, ";");
     }
     return true;
 } 
@@ -240,6 +284,7 @@ static PyObject* PLUTO_PY_GetClass(const char *module_name)
 
     if(!PyCallable_Check(class))
     {
+        fprintf(stderr, "Error, Class is not Callable...\n");
         goto error;
     }
     return class;
@@ -262,19 +307,21 @@ static PyObject* PLUTO_PY_CreateSetupArgs(int argc, char **argv)
         /* pValue reference stolen here: */
         PyTuple_SetItem(pArgv, i, pValue);
     }
+    printf("Python argv created..\n");
     return pArgv;
 
 error:
     return NULL;
 }
 
-static PyObject* PLUTO_PY_CreateInterface(void)
+static PyObject* PLUTO_PY_CreateInterface(const char *path)
 {
     gstate = PyGILState_Ensure();
 
-    PyObject *class = PLUTO_PY_GetClass("main"); 
+    PyObject *class = PLUTO_PY_GetClass(path); 
     if(!class)
     {
+        printf("Unable to find Interface Class.\n");
         goto error;
     }
     //
@@ -305,7 +352,7 @@ static PyObject* PLUTO_PY_CreateInterface(void)
         goto error;
     }
     // Create Pythonobject for calling the Method on our interface Object.
-    PyObject *name = PyUnicode_InternFromString(PLUTO_PYTHON_SETUP_METHOD);
+    PyObject *name = PyUnicode_FromString(PLUTO_PYTHON_SETUP_METHOD);
     if(!name)
     {   
         Py_DECREF(object);
@@ -314,7 +361,9 @@ static PyObject* PLUTO_PY_CreateInterface(void)
         goto error;
     }
     // Call the Objects Method with "argc" and "argv".
+    printf("Call setup...\n");
     PyObject *result = PyObject_CallMethodObjArgs(object, name, pArgc, pArgv, NULL);
+    printf("after Setup, %p.\n", (void*)result);
     Py_DECREF(name);
     Py_DECREF(pArgc);
     Py_DECREF(pArgv);
@@ -330,9 +379,11 @@ static PyObject* PLUTO_PY_CreateInterface(void)
     }
     
     PyGILState_Release(gstate);
+    printf("Python Initialization of Interface Object done...\n");
     return object;
 
 error:
+    PyErr_Print();
     PyGILState_Release(gstate);
     return NULL;
 }

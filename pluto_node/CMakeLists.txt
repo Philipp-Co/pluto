@@ -48,7 +48,7 @@ add_executable(
 target_compile_definitions(
     pluto_node_pt 
     PUBLIC
-    PLUTO_CTS_RUNTIME_MODE=0
+    PLUTO_CTS_RTM_PASSTHROUGH
 )
 
 target_include_directories(
@@ -114,7 +114,7 @@ add_executable(
 target_compile_definitions(
     pluto_node_py 
     PUBLIC
-    PLUTO_CTS_RUNTIME_MODE=2
+    PLUTO_CTS_RTM_PYTHON
 )
 
 target_include_directories(
@@ -157,6 +157,72 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(
         pluto_node_py
+        PUBLIC
+        "-O2"
+        "-fdata-sections"
+        "-ffunction-sections"
+        "-Wno-unused-function"
+        "-Wall"
+        "-Wextra"
+        "-Werror"
+        "-Wincompatible-pointer-types"
+        "-pedantic"
+        "-pedantic-errors"
+    )
+endif()
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+add_executable(
+    pluto_node_sh ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/shared_library/pluto_shared_library.c
+)
+
+target_compile_definitions(
+    pluto_node_sh 
+    PUBLIC
+    PLUTO_CTS_RTM_SHARED_LIB
+)
+
+target_include_directories(
+    pluto_node_sh
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../external/
+    ${Python3_INCLUDE_DIRS}
+)
+
+target_link_libraries(
+    pluto_node_sh PUBLIC ${CMAKE_DL_LIBS}
+)
+
+#
+# Configure libahr.
+#
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(
+        pluto_node_sh
+        PUBLIC
+        "-fsanitize=address"
+        "-fno-omit-frame-pointer"
+        "-Wno-unused-function"
+        "-Wall"
+        "-Wextra"
+        "-Werror"
+        "-Wincompatible-pointer-types"
+        "-pedantic"
+        "-pedantic-errors"
+    )
+    target_link_options(
+        pluto_node_sh
+        PUBLIC
+        "-fsanitize=address"
+        "-fno-omit-frame-pointer"
+    )
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_options(
+        pluto_node_sh
         PUBLIC
         "-O2"
         "-fdata-sections"

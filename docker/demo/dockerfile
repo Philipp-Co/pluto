@@ -2,23 +2,55 @@
 # ---------------------------------------------------------------------------------------------------------------------
 #
 # https://docs.docker.com/build/building/multi-stage/
-
 from ubuntu:20.04
 
 RUN apt-get update
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install cmake -y
 RUN apt-get install python3 -y
-
+RUN apt-get install python3-dev -y
+#
+# Copy Binaries from the Pluto Baseimage.
+#
+COPY --from=pluto:latest /build/pluto_node/pluto_node_py /bin/pluto_node_py 
 COPY --from=pluto:latest /build/pluto_node/pluto_node_pt /bin/pluto_node_pt 
+COPY --from=pluto:latest /build/pluto_node/pluto_node_sh /bin/pluto_node_sh 
 COPY --from=pluto:latest /build/pluto_info/pluto_info /bin/pluto_info 
 COPY --from=pluto:latest /build/pluto_rw/pluto_rw /bin/pluto_rw
+COPY --from=pluto:latest /usr/include/pluto/ /usr/include/pluto/
 
+COPY docker/demo/pluto_shared_library_demo/ /pluto_shared_library_demo/
+RUN cd /pluto_shared_library_demo/ && rm -r build/ && mkdir build/ && cd build/ && cmake -G "Unix Makefiles" ../ && make
+
+#
+# Create a Confg File for the first Instance.
+#
 RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"names_of_output_queues\":[\"pluto-0_oq_0\"]} > /pluto-0-config.txt
+#
+# Create a Config File for the second Instance.
+#
 RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_oq_0\",\"names_of_output_queues\":[\"pluto-1_oq_0\"]} > /pluto-1-config.txt
+#
+# Create a Config File for the third Instance.
+#
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-1_oq_0\",\"names_of_output_queues\":[\"pluto-2_oq_0\"]} > /pluto-2-config.txt
+#
+# Entrypoint.
+#
 COPY docker/demo/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+#
+# Copy Python Source Code.
+#
+COPY docker/demo/pluto_python_demo/pluto_event_handler.py /pluto/
+#
+# Set Python Path Variable for the embedded Interpreter.
+#
+ENV PLUTO_PYTHON_PATH=/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages;/pluto/
 
-ENV PLUTO_PYTHON_PATH=/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages
-
+#
+# Finish...
+#
 CMD ["/entrypoint.sh"]
 
 #

@@ -5,8 +5,10 @@
 #include "pluto/pluto_config.h"
 #include <pluto/pluto_processor.h>
 
-#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
+#if defined(PLUTO_CTS_RTM_PYTHON)
 #include <pluto/python/pluto_python.h>
+#elif defined(PLUTO_CTS_RTM_SHARED_LIB)
+#include <pluto/shared_library/pluto_shared_library.h>
 #endif
 
 #include <string.h>
@@ -23,6 +25,7 @@ typedef struct
 {
     char name[256];
     char config_path[4096];
+    char executable[4096];
 } PLUTO_Arguments_t;
 
 //
@@ -32,7 +35,7 @@ typedef struct
 void PLUTO_SignalHandler(int signum);
 static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv);
 
-#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT
+#if defined(PLUTO_CTS_RTM_PASSTHROUGH)
 static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args);
 #endif
 
@@ -48,27 +51,33 @@ static atomic_int PLUTO_Terminate;
 
 int main(int argc, char **argv)
 {
-    (void)argc;
-    (void)argv;
-    
+    printf("Hello World!\n");
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
   
     PLUTO_Arguments_t *args = malloc(sizeof(PLUTO_Arguments_t));
+    if(!args)
+    {
+        return -1;
+    } 
+    memset(args, '\0', sizeof(*args));
     if(!PLUTO_ParseArguments(args, argc, argv))
     {
         free(args);
         return -1;
     }
 
-#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
+#if defined(PLUTO_CTS_RTM_PYTHON)
     // Initialize Python.
-    if(!PLUTO_InitializePython())
+    if(!PLUTO_InitializePython(args->executable))
     {
+        printf("Unable to Initialize Python.\n");
         return -1;
     }
-#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
+    printf("Python Initialization done.\n");
+#elif defined(PLUTO_CTS_RTM_SHARED_LIB)
     // Initialize Shared Library.
+    PLUTO_SHLIB_Initialize(args->executable);
 #endif
 
     PLUTO_Config_t config = PLUTO_CreateConfig(args->config_path, args->name);
@@ -83,11 +92,11 @@ int main(int argc, char **argv)
     printf("Run main Program...\n");
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         config,
-#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT
+#if defined(PLUTO_CTS_RTM_PASSTHROUGH)
         PLUTO_ProcessCallback
-#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
-#error "Not Implemented!"
-#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
+#elif defined(PLUTO_CTS_RTM_SHARED_LIB)
+        PLUTO_SHLIB_ProcessCallback
+#elif defined(PLUTO_CTS_RTM_PYTHON)
         PLUTO_PY_ProcessCallback
 #else
 #error "Unknown Runtime Mode!"
@@ -96,6 +105,7 @@ int main(int argc, char **argv)
     PLUTO_DestroyConfig(&config);
     if(!processor)
     {
+        printf("Unable to create a Processor.\n");
         return -1;
     }
     while(!atomic_load(&PLUTO_Terminate))
@@ -105,11 +115,12 @@ int main(int argc, char **argv)
     PLUTO_DestroyProcessor(&processor);
 
 
-#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_PYTHON
+#if defined(PLUTO_CTS_RTM_PYTHON)
     // Deinitialize Python.
     PLUTO_DeinitializePython();
-#elif PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_RTM_SHARED_LIB
+#elif defined(PLUTO_CTS_RTM_SHARED_LIB)
     // Deinitialize Shared Library.
+    PLUTO_SHLIB_Destroy();
 #endif
     
     printf("Bye Bye...\n");
@@ -130,9 +141,15 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 {
     memset(args->name, '\0', sizeof(args->name));
     memset(args->config_path, '\0', sizeof(args->config_path));
+    memset(args->executable, '\0', sizeof(args->executable));
 
     char c;
-    while((c = getopt(argc, argv, "n:c:")))
+#if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
+    static const char *optstring = "n:c:e:";
+#else
+    static const char *optstring = "n:c:";
+#endif
+    while((c = getopt(argc, argv, optstring)))
     {
         if(((char)-1) == (char)c)
         {
@@ -141,10 +158,18 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 
         switch(c)
         {
+#if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
+            case 'e':
+                printf("-e %s\n", optarg);
+                memcpy(args->executable, optarg, strlen(optarg));
+                break;
+#endif
             case 'n':
+                printf("-n %s\n", optarg);
                 memcpy(args->name, optarg, strlen(optarg));
                 break;
             case 'c':
+                printf("-c %s\n", optarg);
                 memcpy(args->config_path, optarg, strlen(optarg));
                 break;
             default:
@@ -152,10 +177,17 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
                 return false;
         }
     }
+#if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
+    if(strlen(args->executable) == 0)
+    {
+        printf("No Executable given!\n");
+        return false;
+    }
+#endif
     return true;
 }
 
-#if PLUTO_CTS_RUNTIME_MODE == PLUTO_CTS_PASSTHROUGHT
+#if defined(PLUTO_CTS_RTM_PASSTHROUGH)
 static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
 {
     printf(

@@ -108,6 +108,7 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         PLUTO_Response_t response = alloca(sizeof(struct PLUTO_Response));
         response->body = malloc(processor->request->max_bytes_payload);
         memcpy(response->body, processor->request->payload, strlen(processor->request->payload) + 1);
+        memset(response->body, '\0', processor->request->max_bytes_payload);
         response->id = processor->request->id;
         PLUTO_ProcessorCallbackInput_t input = {
             .input_buffer = processor->request->payload,
@@ -116,14 +117,21 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
             .output_buffer_size = processor->request->max_bytes_payload
         };
         PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
-        (void)output;
-        for(int i=0;i<processor->number_of_output_queues;++i)
+        if(output.return_value)
         {
-            printf("Write output to Queue %i\n", i);
-            PLUTO_MessageQueueWrite(
-                processor->output_queues[i],
-                response
-            ); 
+            memcpy(response->body ,input.output_buffer, output.output_size);
+            for(int i=0;i<processor->number_of_output_queues;++i)
+            {
+                printf("Write output to Queue %i\n", i);
+                PLUTO_MessageQueueWrite(
+                    processor->output_queues[i],
+                    response
+                ); 
+            }
+        }
+        else
+        {
+            printf("Callback returned an Error!\n");
         }
         free(response->body);
     }

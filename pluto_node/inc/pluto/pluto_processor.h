@@ -11,24 +11,11 @@
 #include <pluto/pluto_config.h>
 #include <pluto/pluto_message_queue.h>
 #include <pluto/pluto_info.h>
+#include <pluto/types/pluto_types.h>
 
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
-
-typedef struct 
-{
-      char *input_buffer;
-      char *output_buffer;
-      size_t input_buffer_size;
-      size_t output_buffer_size;
-} PLUTO_ProcessorCallbackInput_t;
-
-typedef struct
-{
-    size_t output_size;
-    bool return_value;
-} PLUTO_ProcessorCallbackOutput_t;
 
 typedef PLUTO_ProcessorCallbackOutput_t (*PLUTO_ProcessCallback_t)(PLUTO_ProcessorCallbackInput_t *args);
 
