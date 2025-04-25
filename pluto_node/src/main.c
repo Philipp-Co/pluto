@@ -26,6 +26,9 @@ typedef struct
     char name[256];
     char config_path[4096];
     char executable[4096];
+#if defined(PLUTO_CTS_RTM_PYTHON)
+    char python_path[8192];
+#endif
 } PLUTO_Arguments_t;
 
 //
@@ -69,7 +72,7 @@ int main(int argc, char **argv)
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
     // Initialize Python.
-    if(!PLUTO_InitializePython(args->executable))
+    if(!PLUTO_InitializePython(args->python_path, args->executable))
     {
         printf("Unable to Initialize Python.\n");
         return -1;
@@ -142,9 +145,14 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
     memset(args->name, '\0', sizeof(args->name));
     memset(args->config_path, '\0', sizeof(args->config_path));
     memset(args->executable, '\0', sizeof(args->executable));
+#if defined(PLUTO_CTS_RTM_PYTHON)
+    memset(args->python_path, '\0', sizeof(args->python_path));
+#endif
 
     char c;
-#if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
+#if defined(PLUTO_CTS_RTM_PYTHON)
+    static const char *optstring = "n:c:e:p:";
+#elif defined(PLUTO_CTS_RTM_SHARED_LIB)
     static const char *optstring = "n:c:e:";
 #else
     static const char *optstring = "n:c:";
@@ -158,6 +166,12 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 
         switch(c)
         {
+#if defined(PLUTO_CTS_RTM_PYTHON)
+            case 'p':
+                printf("-p %s\n", optarg);
+                memcpy(args->python_path, optarg, strlen(optarg));
+                break;
+#endif
 #if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
             case 'e':
                 printf("-e %s\n", optarg);
@@ -177,6 +191,15 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
                 return false;
         }
     }
+
+#if defined(PLUTO_CTS_RTM_PYTHON)
+    if(strlen(args->python_path) == 0)
+    {
+        printf("No Python Path given!\n");
+        return false;
+    }
+#endif
+
 #if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
     if(strlen(args->executable) == 0)
     {
@@ -190,15 +213,10 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #if defined(PLUTO_CTS_RTM_PASSTHROUGH)
 static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
 {
-    printf(
-        "Process:\n"
-        "  Request: %s\n",
-        args->input_buffer
-    );
-    memcpy(args->output_buffer, args->input_buffer, args->input_buffer_size);
+    snprintf(args->output_buffer, args->output_buffer_size, "{\"passthrough\":\"%s\"}", args->input_buffer);
     PLUTO_ProcessorCallbackOutput_t output = {
         .return_value = true,
-        .output_size = args->input_buffer_size
+        .output_size = strlen(args->output_buffer)
     };
     return output;
 }

@@ -25,7 +25,7 @@ Die Header sind unter /usr/include/pluto/ abgelegt (werden zum Erstellen einer s
 
 ## Demo   
 
-In der Demo sind drei pluto_node Instanzen enthalten. Die da sind pluto_node_pt, pluto_node_py und pluto_node_sh.
+In der Demo sind drei pluto_node Instanzen enthalten. Die da sind pluto_node_py, pluto_node_pt und pluto_node_sh.
 Die Instanzen sind auch in dieser Reihenfolge miteinander verbunden.
 
        +---------+    +---------+    +---------+
@@ -49,5 +49,5 @@ Nach dem Bauen muss ein Container mit dem Image pluto_demo gestartet werden.
     docker exec -it d1977fd50ac1 /bin/bash
     pluto_rw -n /pluto/ipc/pluto-0_iq -w -d '{"id":1,"event":1,"time":"2025-01-01T00:00:00.0+0000","payload":"test"}'
     pluto_rw -n /pluto/ipc/pluto-2_oq_0 -r
-    # {"id":0,"payload":"{"shared_lib":{"id":0,"payload":"{"id":0,"payload":"{"python":"test"}"}"}}"}
+    # {"id":0,"payload":"{"shared_lib":{"id":0,"payload":"{"passthrough":"{"id":0,"payload":"{"python":"test"}"}"}"}}"}
 

@@ -47,7 +47,7 @@ typedef struct
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-static bool PLUTO_PY_ReadPythonPathsFromEnv(PLUTO_PY_PythonPath_t *paths); 
+static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_PythonPath_t *paths);
 //static PyObject* PyInit_emb_input(void);
 static PyObject* PLUTO_PY_CreateInterface(const char *path);
 
@@ -64,7 +64,7 @@ PyGILState_STATE gstate;
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-bool PLUTO_InitializePython(const char *executable)
+bool PLUTO_InitializePython(const char *python_path, const char *executable)
 {
     PyStatus status;
     PyConfig config;
@@ -79,20 +79,25 @@ bool PLUTO_InitializePython(const char *executable)
     char *buffer = malloc(4096);
     if(!buffer) return false;
     // TODO: Memory Management...
-    PLUTO_PY_PythonPath_t python_path = {
-        .paths=malloc(sizeof(char*) * 64),
+    PLUTO_PY_PythonPath_t python_path_buffer = {
+        .paths=malloc(sizeof(char*) * 128),
         .n_paths=0
     };
-
-    printf("Read Python ENV.\n");
-    PLUTO_PY_ReadPythonPathsFromEnv(&python_path);
-    printf("Initialize Python Interpreter with:\n");
-    for(size_t i=0;i<python_path.n_paths;++i)
-        printf("  %s\n", python_path.paths[i]);
-
-    for(size_t j=0;j<python_path.n_paths;++j)
+    for(size_t i=0LU;i<128;++i)
     {
-        snprintf(buffer, 4096, "%s", python_path.paths[j]); 
+        python_path_buffer.paths[i] = malloc(256);
+        memset(python_path_buffer.paths[i], '\0', 256);
+    }
+
+    printf("Read Python ENV \"%s\".\n", python_path);
+    PLUTO_PY_ReadPythonPathsFromEnv(python_path, &python_path_buffer);
+    printf("Initialize Python Interpreter with:\n");
+    for(size_t i=0;i<python_path_buffer.n_paths;++i)
+        printf("  %s\n", python_path_buffer.paths[i]);
+
+    for(size_t j=0;j<python_path_buffer.n_paths;++j)
+    {
+        snprintf(buffer, 4096, "%s", python_path_buffer.paths[j]); 
         wchar_t *wcstr = malloc(sizeof(wchar_t) * (strlen(buffer) + 1));
         for(size_t i=0;i<(strlen(buffer)+1);++i)
         {
@@ -230,19 +235,20 @@ static PyObject* PyInit_emb_input(void)
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-static bool PLUTO_PY_ReadPythonPathsFromEnv(PLUTO_PY_PythonPath_t *paths)
+static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_PythonPath_t *paths)
 {
-    char *env = getenv("PLUTO_PYTHON_PATH");
-    if(!env)
+    char buffer[8192];
+    const size_t strl = strlen(python_path);
+    if(strl > sizeof(buffer))
     {
-        printf("Error, unable to read ENV \"PLUTO_PYTHON_PATH\"");
         return false;
     }
+    memcpy(buffer, python_path, strlen(python_path) + 1);
     paths->n_paths = 0;
-    char *str = strtok(env, ";");
+    char *str = strtok(buffer, ";");
     while(NULL != str)
     {
-        paths->paths[paths->n_paths] = str;
+        memcpy(paths->paths[paths->n_paths], str, strlen(str) + 1);
         paths->n_paths++;
         str = strtok(NULL, ";");
     }

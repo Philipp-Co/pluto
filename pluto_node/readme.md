@@ -75,10 +75,6 @@ Die Konfigurationsdatei muss diesem Schema entsprechen.
         Optional["python_path": str]    // Eine durch ";" getrennte Liste aus Pfaden.
     }
 
-### Umgebungsvariablen
-
-Aktuell keine.
-
 ### Ausfuehren
    
 Konfiguration unter /var/pluto_example/config-pluto-0.txt erstellt.

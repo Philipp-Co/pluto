@@ -12,7 +12,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-bool PLUTO_InitializePython(const char *executable);
+bool PLUTO_InitializePython(const char *python_path, const char *executable);
 void PLUTO_DeinitializePython(void);
 PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args);
 

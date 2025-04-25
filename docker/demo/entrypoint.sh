@@ -3,7 +3,7 @@
 echo "Starte Anwendung..."
 echo "Starte Pluto Node 0."
 (
-    /bin/pluto_node_py -n pluto-0 -c /pluto-0-config.txt -e pluto_event_handler
+    /bin/pluto_node_py -n pluto-0 -c /pluto-0-config.txt -e pluto_event_handler -p '/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages;/pluto/'
 ) &
 _pid_0=$!
 echo "Starte Pluto Node 1."

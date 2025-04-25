@@ -43,10 +43,6 @@ RUN chmod +x /entrypoint.sh
 # Copy Python Source Code.
 #
 COPY docker/demo/pluto_python_demo/pluto_event_handler.py /pluto/
-#
-# Set Python Path Variable for the embedded Interpreter.
-#
-ENV PLUTO_PYTHON_PATH=/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages;/pluto/
 
 #
 # Finish...
