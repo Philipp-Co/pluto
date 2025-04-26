@@ -215,6 +215,8 @@ static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCall
 {
     snprintf(args->output_buffer, args->output_buffer_size, "{\"passthrough\":\"%s\"}", args->input_buffer);
     PLUTO_ProcessorCallbackOutput_t output = {
+        .id = args->id,
+        .event = args->event,
         .return_value = true,
         .output_size = strlen(args->output_buffer)
     };

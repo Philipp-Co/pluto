@@ -8,14 +8,18 @@
 
 typedef struct 
 {
-      char *input_buffer;
-      char *output_buffer;
-      size_t input_buffer_size;
-      size_t output_buffer_size;
+    uint32_t id;
+    uint32_t event;
+    char *input_buffer;
+    char *output_buffer;
+    size_t input_buffer_size;
+    size_t output_buffer_size;
 } PLUTO_ProcessorCallbackInput_t;
 
 typedef struct
 {
+    uint32_t id;
+    uint32_t event;
     size_t output_size;
     bool return_value;
 } PLUTO_ProcessorCallbackOutput_t;

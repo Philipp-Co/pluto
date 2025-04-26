@@ -6,50 +6,60 @@ from ubuntu:20.04
 
 RUN apt-get update
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install cmake -y
-RUN apt-get install python3 -y
-RUN apt-get install python3-dev -y
 #
-# Copy Binaries from the Pluto Baseimage.
+# Copy Helper-Binaries from the Pluto Baseimage.
 #
-COPY --from=pluto:latest /build/pluto_node/pluto_node_py /bin/pluto_node_py 
-COPY --from=pluto:latest /build/pluto_node/pluto_node_pt /bin/pluto_node_pt 
-COPY --from=pluto:latest /build/pluto_node/pluto_node_sh /bin/pluto_node_sh 
 COPY --from=pluto:latest /build/pluto_info/pluto_info /bin/pluto_info 
 COPY --from=pluto:latest /build/pluto_rw/pluto_rw /bin/pluto_rw
-COPY --from=pluto:latest /usr/include/pluto/ /usr/include/pluto/
-
-COPY docker/demo/pluto_shared_library_demo/ /pluto_shared_library_demo/
-RUN cd /pluto_shared_library_demo/ && rm -r build/ && mkdir build/ && cd build/ && cmake -G "Unix Makefiles" ../ && make
-
-#
-# Create a Confg File for the first Instance.
-#
-RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"names_of_output_queues\":[\"pluto-0_oq_0\"]} > /pluto-0-config.txt
-#
-# Create a Config File for the second Instance.
-#
-RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_oq_0\",\"names_of_output_queues\":[\"pluto-1_oq_0\"]} > /pluto-1-config.txt
-#
-# Create a Config File for the third Instance.
-#
-RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-1_oq_0\",\"names_of_output_queues\":[\"pluto-2_oq_0\"]} > /pluto-2-config.txt
-#
-# Entrypoint.
-#
-COPY docker/demo/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-#
-# Copy Python Source Code.
-#
-COPY docker/demo/pluto_python_demo/pluto_event_handler.py /pluto/
-
-#
-# Finish...
-#
-CMD ["/entrypoint.sh"]
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
+# pluto-0 -- pluto_node_pt
+
+COPY --from=pluto:latest /build/pluto_node/pluto_node_pt /bin/pluto_node_pt 
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"names_of_output_queues\":[\"pluto-0_oq_0\"]} > /pluto-0-config.txt
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+#pluto-1 -- pluto_node_py
+
+RUN apt-get install python3 -y
+RUN apt-get install python3-dev -y
+
+COPY --from=pluto:latest /build/pluto_node/pluto_node_py /bin/pluto_node_py 
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_oq_0\",\"names_of_output_queues\":[\"pluto-1_oq_0\"]} > /pluto-1-config.txt
+COPY docker/demo/pluto_python_demo/pluto_event_handler.py /pluto/
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+# pluto-2 -- pluto_node_sh
+
+RUN apt-get install cmake -y
+COPY --from=pluto:latest /build/pluto_node/pluto_node_sh /bin/pluto_node_sh 
+COPY --from=pluto:latest /usr/include/pluto/ /usr/include/pluto/
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-1_oq_0\",\"names_of_output_queues\":[\"pluto-2_oq_0\"]} > /pluto-2-config.txt
+COPY docker/demo/pluto_shared_library_demo/ /pluto_shared_library_demo/
+RUN cd /pluto_shared_library_demo/ && rm -r build/ && mkdir build/ && cd build/ && cmake -G "Unix Makefiles" ../ && make
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+#
+# Entrypoint.
+#
+COPY docker/demo/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+#
+# Finish...
+#
+CMD ["/entrypoint.sh"]
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#

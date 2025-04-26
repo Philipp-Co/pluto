@@ -107,10 +107,15 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         // process...
         PLUTO_Response_t response = alloca(sizeof(struct PLUTO_Response));
         response->body = malloc(processor->request->max_bytes_payload);
+        response->id = 0;
+        response->event = 0;
+        gettimeofday(&response->timestamp, NULL);
         memcpy(response->body, processor->request->payload, strlen(processor->request->payload) + 1);
         memset(response->body, '\0', processor->request->max_bytes_payload);
-        response->id = processor->request->id;
+        printf("    Request id: %i, event %i\n", processor->request->id, processor->request->event);
         PLUTO_ProcessorCallbackInput_t input = {
+            .id = processor->request->id,
+            .event = processor->request->event,
             .input_buffer = processor->request->payload,
             .output_buffer = response->body,
             .input_buffer_size = processor->request->max_bytes_payload,
@@ -120,6 +125,8 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         if(output.return_value)
         {
             memcpy(response->body ,input.output_buffer, output.output_size);
+            response->id = output.id;
+            response->event = output.event;
             for(int i=0;i<processor->number_of_output_queues;++i)
             {
                 printf("Write output to Queue %i\n", i);

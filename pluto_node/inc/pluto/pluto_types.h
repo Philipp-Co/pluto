@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/time.h>
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -31,11 +32,11 @@ typedef struct
 
 struct PLUTO_Request
 {
-    time_t timestamp;
+    struct timeval timestamp;
     size_t max_bytes_payload;
     char *payload;
-    int id;
-    int event;
+    uint32_t id;
+    uint32_t event;
 };
 
 typedef struct PLUTO_Request* PLUTO_Request_t;
@@ -43,6 +44,8 @@ typedef struct PLUTO_Request* PLUTO_Request_t;
 struct PLUTO_Response
 {
     uint32_t id;
+    uint32_t event;
+    struct timeval timestamp;
     char *body;
 };
 

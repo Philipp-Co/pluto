@@ -83,8 +83,10 @@ void PLUTO_MessageParserDumpResponse(const PLUTO_Response_t response, char *buff
     assert(NULL != response);
     assert(NULL != buffer);
     assert(size > 0);
-
-    snprintf(buffer, size, "{\"id\":%u,\"payload\":\"%s\"}", response->id, response->body);
+    
+    char time_buffer[4096];
+    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%dT%H:%M:%S", gmtime(&response->timestamp.tv_sec));
+    snprintf(buffer, size, "{\"id\":%i,\"event\":%i,\"time\":\"%s.%i+0000\",\"payload\":\"%s\"}", response->id, response->event, time_buffer, response->timestamp.tv_usec, response->body);
 } 
 
 //
@@ -109,7 +111,6 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
         return false;
     }
     
-    struct tm tm;
     char buffer[1024]; 
     unsigned int result = 0U; 
     for(size_t i=1U;i<size;)
@@ -121,23 +122,19 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
                 request->id = (int)atoi(buffer);
+                printf("  Parse Event Id %u\n", request->id);
                 i += 2;
                 break;
             case PLUTO_PARSER_TOKEN_EVENT:
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
                 request->event = (int)atoi(buffer);
+                printf("  Parse Event Event %u\n", request->id);
                 i += 2;
                 break;
             case PLUTO_PARSER_TOKEN_TIMESTAMP:
                 printf("Timestamp %s\n", buffer);
-                memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
-                buffer[token[i+1].end - token[i+1].start] = '\0';
-                if(!strptime(buffer, "%Y-%m-%dT%H:%M:%S", &tm))
-                {
-                    return false;
-                }
-                request->timestamp = mktime(&tm);
+                gettimeofday(&request->timestamp, NULL);
                 i += 2;
                 break;
             case PARSER_TOKEN_PAYLOAD:
@@ -221,7 +218,7 @@ static void PLUTO_PrintRequest(const PLUTO_Request_t request)
     );
     printf(
         "  \"time\": %lu,\n",
-        request->timestamp
+        request->timestamp.tv_sec
     );
     printf(
         "  \"payload\": \"%s\"\n",

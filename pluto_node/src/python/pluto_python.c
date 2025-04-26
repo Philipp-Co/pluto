@@ -19,11 +19,23 @@
 
 //
 //  class PlutoEventHandler:
-//      def setup(self):
+//      def setup(self, argc, argv):
 //          pass
 //      def teardown(self):
 //          pass
-//      def run(self, id: int, event:int, payload: str) -> Optional[str]:
+//      def run(self, id: int, event:int, payload: str) -> Optional[Tuple[int, int, str]]:
+//          """Is executed for each Event.
+//          
+//          Args:
+//              id: int: Events Id.
+//              event: int: Events Type.
+//              payload: str: A String.
+//
+//          Returns:
+//              Optional[Tuple[int, int, str]]: 
+//                  Returns a Tuple of Event Id, Event Type and Payload on success.
+//                  Returns None on Error.
+//          """
 //          pass
 //      pass
 //
@@ -127,7 +139,6 @@ bool PLUTO_InitializePython(const char *python_path, const char *executable)
     return true;
 
 exception:
-    printf("Exception! %s\n", status.err_msg);
     PyConfig_Clear(&config);
     Py_ExitStatusException(status);
 error:
@@ -166,8 +177,8 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     PLUTO_PY_current_output_buffer.output_size = 0;
 
     // Prepare Arguments
-    PyObject *id = PyLong_FromLong(1);
-    PyObject *event = PyLong_FromLong(1);
+    PyObject *id = PyLong_FromLong(args->id);
+    PyObject *event = PyLong_FromLong(args->event);
     PyObject *payload = PyUnicode_FromString(args->input_buffer);
     
     // Call Memberfunction on Object
@@ -176,61 +187,82 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     if(!result)
     {
         PyErr_Print();
+        PLUTO_PY_current_output_buffer.id = 0U;
+        PLUTO_PY_current_output_buffer.event = 0U;
         PLUTO_PY_current_output_buffer.return_value = false;
         PLUTO_PY_current_output_buffer.output_size = 0LU;
     }
     else
     {
-        memcpy(PLUTO_PY_current_buffer->output_buffer, PyUnicode_AsUTF8(result), strlen(PyUnicode_AsUTF8(result)));
-        PLUTO_PY_current_output_buffer.return_value = true;
-        PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(result));
+        const size_t strl_t = strlen("tuple");
+        const size_t strl_d = strlen(Py_TYPE(result)->tp_name); 
+        if(strl_t != strl_d)
+        {
+            printf("No Tuple!\n");
+        }
+        else
+        {
+            if(0 == memcmp("tuple", Py_TYPE(result)->tp_name, strl_t))
+            {
+                PLUTO_PY_current_output_buffer.return_value = true;
+                PyObject *pyid = PyTuple_GetItem(result, 0LU);
+                PyObject *pyevent = PyTuple_GetItem(result, 1LU);
+                PyObject *pypayload = PyTuple_GetItem(result, 2LU);
+                if(pyid && PyLong_Check(pyid)) 
+                {
+                    PLUTO_PY_current_output_buffer.id = PyLong_AsLong(pyid);
+                    Py_DECREF(pyid);
+                }
+                else
+                {
+                    PLUTO_PY_current_output_buffer.return_value = false;
+                    goto error;
+                }
+                if(pyevent && PyLong_Check(pyevent))
+                {
+                    PLUTO_PY_current_output_buffer.event = PyLong_AsLong(pyevent);
+                    Py_DECREF(pyevent);
+                }
+                else
+                {
+                    PLUTO_PY_current_output_buffer.return_value = false;
+                    goto error;
+                }
+                if(pypayload && PyUnicode_Check(pypayload))
+                {
+                    memcpy(
+                        PLUTO_PY_current_buffer->output_buffer,
+                        PyUnicode_AsUTF8(pypayload), 
+                        strlen(
+                            PyUnicode_AsUTF8(pypayload)
+                        )
+                    );
+                    PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(payload));
+                    Py_DECREF(pypayload);
+                }
+                else
+                {
+                    PLUTO_PY_current_output_buffer.return_value = false;
+                    goto error;
+                }
+                error:
+                PyErr_Print();
+            }
+            else
+            {
+                printf("Result is no Tuple!\n");
+            }
+        }
         Py_DECREF(result);
     }
     Py_DECREF(method);
     Py_DECREF(payload);
     Py_DECREF(event);
     Py_DECREF(id);
+
     return PLUTO_PY_current_output_buffer;
 }
 
-/*
-static PyObject* emb_input(PyObject *self, PyObject *args)
-{
-    (void)self;
-    (void)args;
-    return PyBytes_FromString(PLUTO_PY_current_buffer->input_buffer);
-}
-
-static PyObject* emb_output(PyObject *self, PyObject *args)
-{
-    // https://www.mit.edu/people/amliu/vrut/python/ext/parseTuple.html
-    char *s;
-    if(!PyArg_ParseTuple(args, "s", &s)) 
-        return NULL;
-    memcpy(PLUTO_PY_current_buffer->output_buffer, s, strlen(s));
-    PLUTO_PY_current_output_buffer.output_size = strlen(s);
-    PLUTO_PY_current_output_buffer.return_value = true;
-    return self;
-}
-
-static PyMethodDef EmbMethods[] = {
-    {"current_event", emb_input, METH_VARARGS,
-     "Return the number of arguments received by the process."},
-    {"output_result", emb_output, METH_VARARGS,
-     "Return the number of arguments received by the process."},
-    {NULL, NULL, 0, NULL}
-};
-
-static PyModuleDef EmbModule = {
-    PyModuleDef_HEAD_INIT, "pluto", NULL, -1, EmbMethods,
-    NULL, NULL, NULL, NULL
-};
-
-static PyObject* PyInit_emb_input(void)
-{
-    return PyModule_Create(&EmbModule);
-}
-*/
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

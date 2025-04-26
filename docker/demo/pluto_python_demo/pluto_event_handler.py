@@ -17,7 +17,7 @@ class PlutoEventHandler:
 
     def run(self, id: int, event: int, payload: str) -> str:
         print(f'Hello from run: {id}, {event}, {payload}')
-        return '{' + f'\"python\":\"{payload}\"' + '}'
+        return (id, event, '{' + f'\"python\":\"{payload}\"' + '}')
 
     pass
 
