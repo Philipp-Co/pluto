@@ -20,11 +20,11 @@
 
 #include "pluto/pluto_types.h"
 #include <pluto/pluto_message_parser.h>
-#include <time.h>
 
 #define JSMN_HEADER
 #include <jsmn/jsmn.h>
 
+#include <time.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -39,6 +39,10 @@ Externe Abhaengigkeiten werden um Verzeichnis unter external/ gesammelt.
 
 jsmn ist ein JSON Parser der von Pluto genutzt wird. Siehe dazu auch https://github.com/zserge/jsmn .
 
+### unity
+
+Dieses Projekt wird mit Hilfe von unity getestet. Siehe dazu https://github.com/ThrowTheSwitch/Unity.git .
+
 ## Das Projekt bauen
 
     mkdir build/ && cd build/

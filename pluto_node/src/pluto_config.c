@@ -20,6 +20,7 @@
 //
 
 #include <pluto/pluto_config.h>
+#include <pluto/pluto_malloc.h>
 
 #define JSMN_HEADER
 #include <jsmn/jsmn.h>
@@ -47,27 +48,27 @@ static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename
 PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
 {
     (void)filename;
-    PLUTO_Config_t config = (PLUTO_Config_t)malloc(sizeof(struct PLUTO_Config));
+    PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
     
     config->manage_inputqueue = true;
     config->manage_outputqueues = true;
 
-    config->name = malloc(strlen(name) + 1);
+    config->name = PLUTO_Malloc(strlen(name) + 1);
     memset(config->name, '\0', strlen(name) + 1);
     memcpy(config->name, name, strlen(name));
    
-    config->base_path = malloc(4096);
+    config->base_path = PLUTO_Malloc(4096);
     memset(config->base_path, '\0', 4096);
 
-    char *buffer = malloc(4096);
+    char *buffer = PLUTO_Malloc(4096);
     config->name_of_input_queue = buffer;
     
-    config->names_of_output_queues = (char**)malloc(
+    config->names_of_output_queues = (char**)PLUTO_Malloc(
         sizeof(char*) * PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES
     ); 
     for(size_t i=0;i<PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES;++i)
     {
-        config->names_of_output_queues[i] = malloc(
+        config->names_of_output_queues[i] = PLUTO_Malloc(
             4096
         );
         snprintf(
@@ -81,7 +82,7 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
    
     if(!PLUTO_ReadConfigFromFile(config, filename))
     {
-        free(config);
+        PLUTO_Free(config);
         return NULL;
     }
     config->url = NULL;
@@ -90,13 +91,13 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
 
 void PLUTO_DestroyConfig(PLUTO_Config_t *config)
 {
-    //if((*config)->name_of_input_queue) free((*config)->name_of_input_queue);
-    if((*config)->url) free((*config)->url);
+    //if((*config)->name_of_input_queue) PLUTO_Free((*config)->name_of_input_queue);
+    if((*config)->url) PLUTO_Free((*config)->url);
     for(int32_t i=0;i<(*config)->number_of_output_queues;++i)
     {
-        if((*config)->names_of_output_queues[i]) free((*config)->names_of_output_queues[i]);
+        if((*config)->names_of_output_queues[i]) PLUTO_Free((*config)->names_of_output_queues[i]);
     }
-    free(*config);
+    PLUTO_Free(*config);
     *config = NULL;
 }
 
@@ -117,7 +118,7 @@ static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename
         return false;
     }
     return_value = PLUTO_ParseConfig(config, files_content);
-    free(files_content);
+    PLUTO_Free(files_content);
     return return_value;
 }
 
@@ -139,14 +140,14 @@ static char* PLUTO_ReadyConfigFromFile1(const char *filename)
         return NULL;
     }
     fseek(file, 0L, SEEK_SET);
-    char *buffer = malloc(size + 1);
+    char *buffer = PLUTO_Malloc(size + 1);
     memset(buffer, '\0', size + 1);
 
     size_t result = fread(buffer, 1, size, file);
     if(result == 0)
     {
         printf("Result was 0.\n");
-        free(buffer);
+        PLUTO_Free(buffer);
     }
     fclose(file);
     return buffer;
@@ -170,8 +171,8 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
     printf("Parse Config...\n");
     if(result > 0)
     {
-        char *key = malloc(1024);
-        char *value = malloc(4096);
+        char *key = PLUTO_Malloc(1024);
+        char *value = PLUTO_Malloc(4096);
         for(int i=1;i<result;)
         {
             memcpy(key, bytes + token[i].start, token[i].end - token[i].start);
@@ -222,8 +223,8 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
                 return false;
             }
         }
-        free(key);
-        free(value);
+        PLUTO_Free(key);
+        PLUTO_Free(value);
     }
     return 0x7U == flags;
 }

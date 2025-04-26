@@ -6,6 +6,7 @@
 #include "pluto/pluto_semaphore.h"
 #include <pluto/pluto_message_queue.h>
 #include <pluto/pluto_message_parser.h>
+#include <pluto/pluto_malloc.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -39,7 +40,7 @@ struct PLUTO_MsgBuf
 
 PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(const char *path, const char *name, unsigned int permissions)
 {
-    PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)malloc(
+    PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)PLUTO_Malloc(
         sizeof(struct PLUTO_MessageQueue)
     );
 
@@ -48,12 +49,12 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(const char *path, const char *name
     queue->semaphore = PLUTO_CreateSemaphore(path, buffer);
     if(!queue->semaphore)
     {
-        free(queue);
+        PLUTO_Free(queue);
         return NULL;
     }
     if(PLUTO_SEM_OK != PLUTO_SemaphoreSignal(queue->semaphore))
     {
-        free(queue);
+        PLUTO_Free(queue);
         PLUTO_DestroySemaphore(&queue->semaphore);
         return NULL;
     }
@@ -71,7 +72,7 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(const char *path, const char *name
     if(identifier < 0)
     {
         printf("Error, unable to create Message Queue...\n");
-        free(queue);
+        PLUTO_Free(queue);
         return NULL;
     }
     return queue;
@@ -102,7 +103,7 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
         }
         PLUTO_DestroySemaphore(&(*queue)->semaphore);
         PLUTO_DestroyKey((*queue)->key);
-        free(*queue);
+        PLUTO_Free(*queue);
         *queue = NULL;
     }
 }
@@ -114,7 +115,7 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Request_t request)
     long msgtype = 0;
     size_t msgsize = PLUTO_MAX_BODY_SIZE-1;
     int msgflags = 0;
-    struct PLUTO_MsgBuf *buffer = malloc(sizeof(struct PLUTO_MsgBuf));
+    struct PLUTO_MsgBuf *buffer = PLUTO_Malloc(sizeof(struct PLUTO_MsgBuf));
     buffer->msgtype = 1;
     const int nbytes = msgrcv(queue->filedescriptor, buffer, msgsize, msgtype, msgflags);
     if(nbytes < 0)
@@ -126,7 +127,7 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Request_t request)
     // parse Message...
     PLUTO_MessageParserLoadRequest(buffer->text, request);
     // Cleanup and return... 
-    free(buffer);
+    PLUTO_Free(buffer);
     return true;
 }
 
@@ -135,7 +136,7 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Response_t respon
     assert(NULL != queue);
     bool return_value = true;
     // dump Message...
-    struct PLUTO_MsgBuf *buffer = malloc(sizeof(struct PLUTO_MsgBuf));
+    struct PLUTO_MsgBuf *buffer = PLUTO_Malloc(sizeof(struct PLUTO_MsgBuf));
     buffer->msgtype = 1;
     PLUTO_MessageParserDumpResponse(
         response,
@@ -158,7 +159,7 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Response_t respon
         );
         return_value = false;
     }
-    free(buffer);
+    PLUTO_Free(buffer);
     return return_value;
 }
 

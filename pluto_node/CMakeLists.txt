@@ -27,6 +27,7 @@ find_package (Python3 COMPONENTS Interpreter Development)
 set(
     SRC
     ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_malloc.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_types.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_info.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_config.c
@@ -57,12 +58,6 @@ target_include_directories(
     ${CMAKE_CURRENT_LIST_DIR}/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../external/
 )
-
-#target_link_libraries(
-#    pluto
-#    PUBLIC
-#    Python3::Python
-#)
 
 #
 # Configure libahr.

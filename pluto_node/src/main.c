@@ -4,6 +4,7 @@
 #include <pluto/pluto_compile_time_switches.h>
 #include "pluto/pluto_config.h"
 #include <pluto/pluto_processor.h>
+#include <pluto/pluto_malloc.h>
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
 #include <pluto/python/pluto_python.h>
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
   
-    PLUTO_Arguments_t *args = malloc(sizeof(PLUTO_Arguments_t));
+    PLUTO_Arguments_t *args = PLUTO_Malloc(sizeof(PLUTO_Arguments_t));
     if(!args)
     {
         return -1;
@@ -66,7 +67,7 @@ int main(int argc, char **argv)
     memset(args, '\0', sizeof(*args));
     if(!PLUTO_ParseArguments(args, argc, argv))
     {
-        free(args);
+        PLUTO_Free(args);
         return -1;
     }
 
@@ -86,11 +87,11 @@ int main(int argc, char **argv)
     PLUTO_Config_t config = PLUTO_CreateConfig(args->config_path, args->name);
     if(!config)
     {
-        free(args);
+        PLUTO_Free(args);
         printf("Unable to read Config from file.\n");
         return -1;
     }
-    free(args);
+    PLUTO_Free(args);
     
     printf("Run main Program...\n");
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(

@@ -3,8 +3,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include "pluto/pluto_types.h"
+#include <pluto/pluto_types.h>
 #include <pluto/pluto_info.h>
+#include <pluto/pluto_malloc.h>
 
 #include <stdlib.h>
 #include <sys/shm.h>
@@ -24,11 +25,11 @@
 
 PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name)
 {
-    PLUTO_Info_t info = malloc(sizeof(struct PLUTO_Info));
+    PLUTO_Info_t info = PLUTO_Malloc(sizeof(struct PLUTO_Info));
     
     if(!PLUTO_CreateKey(path, name, &info->key))
     {
-        free(info);
+        PLUTO_Free(info);
         return NULL;
     } 
 
@@ -50,7 +51,7 @@ void PLUTO_DestroyInfo(PLUTO_Info_t *info)
 
 void PLUTO_InfoDisplay(const PLUTO_Info_t info, const PLUTO_InfoValues_t *values)
 {
-    char *buffer = malloc(
+    char *buffer = PLUTO_Malloc(
         4096 
     );
     memset(buffer, '\0', 4096);
@@ -85,7 +86,7 @@ void PLUTO_InfoDisplay(const PLUTO_Info_t info, const PLUTO_InfoValues_t *values
         buffer
     );
 
-    free(buffer);
+    PLUTO_Free(buffer);
 }
 
 //

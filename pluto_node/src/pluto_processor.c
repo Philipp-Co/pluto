@@ -9,6 +9,7 @@
 #include "pluto/pluto_types.h"
 #include <pluto/pluto_processor.h>
 #include <pluto/pluto_compile_time_switches.h>
+#include <pluto/pluto_malloc.h>
 
 #include <stdlib.h>
 #include <stdio.h>
