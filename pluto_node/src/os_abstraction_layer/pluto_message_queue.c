@@ -3,10 +3,10 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include "pluto/pluto_semaphore.h"
-#include <pluto/pluto_message_queue.h>
-#include <pluto/pluto_message_parser.h>
-#include <pluto/pluto_malloc.h>
+#include "pluto/os_abstraction_layer/pluto_semaphore.h"
+#include <pluto/os_abstraction_layer/pluto_message_queue.h>
+#include <pluto/os_abstraction_layer/pluto_message_parser.h>
+#include <pluto/os_abstraction_layer/pluto_malloc.h>
 
 #include <assert.h>
 #include <stdio.h>

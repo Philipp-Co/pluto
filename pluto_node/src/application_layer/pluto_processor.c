@@ -3,13 +3,13 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include "pluto/pluto_info.h"
-#include "pluto/pluto_message_parser.h"
-#include "pluto/pluto_message_queue.h"
-#include "pluto/pluto_types.h"
-#include <pluto/pluto_processor.h>
-#include <pluto/pluto_compile_time_switches.h>
-#include <pluto/pluto_malloc.h>
+#include <pluto/application_layer/pluto_compile_time_switches.h>
+#include <pluto/application_layer/pluto_info.h>
+#include <pluto/os_abstraction_layer/pluto_types.h>
+#include <pluto/application_layer/pluto_processor.h>
+#include <pluto/os_abstraction_layer/pluto_message_parser.h>
+#include <pluto/os_abstraction_layer/pluto_message_queue.h>
+#include <pluto/os_abstraction_layer/pluto_malloc.h>
 
 #include <stdlib.h>
 #include <stdio.h>

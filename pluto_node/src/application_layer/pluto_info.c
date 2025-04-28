@@ -3,9 +3,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/pluto_types.h>
-#include <pluto/pluto_info.h>
-#include <pluto/pluto_malloc.h>
+#include <pluto/application_layer/pluto_info.h>
+#include <pluto/os_abstraction_layer/pluto_types.h>
+#include <pluto/os_abstraction_layer/pluto_malloc.h>
 
 #include <stdlib.h>
 #include <sys/shm.h>

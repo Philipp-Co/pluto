@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/pluto_semaphore.h>
+#include <pluto/os_abstraction_layer/pluto_semaphore.h>
 
 #include <stdlib.h>
 #include <sys/sem.h>

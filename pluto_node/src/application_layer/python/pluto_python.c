@@ -3,9 +3,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/pluto_compile_time_switches.h>
-#include "pluto/pluto_processor.h"
-#include <pluto/python/pluto_python.h>
+#include <pluto/application_layer/pluto_compile_time_switches.h>
+#include "pluto/application_layer/pluto_processor.h"
+#include <pluto/application_layer/python/pluto_python.h>
 
 #include <stdio.h>
 #include <stdlib.h>

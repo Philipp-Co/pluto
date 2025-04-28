@@ -1,6 +1,6 @@
 
-#include "pluto/pluto_processor.h"
-#include <pluto/shared_library/pluto_shared_library.h>
+#include <pluto/application_layer/pluto_processor.h>
+#include <pluto/application_layer/shared_library/pluto_shared_library.h>
 
 #include <dlfcn.h>
 #include <stdio.h>

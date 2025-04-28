@@ -1,15 +1,15 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
-#include <pluto/pluto_compile_time_switches.h>
-#include "pluto/pluto_config.h"
-#include <pluto/pluto_processor.h>
-#include <pluto/pluto_malloc.h>
+#include <pluto/application_layer/pluto_compile_time_switches.h>
+#include <pluto/application_layer/pluto_config.h>
+#include <pluto/application_layer/pluto_processor.h>
+#include <pluto/os_abstraction_layer/pluto_malloc.h>
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
-#include <pluto/python/pluto_python.h>
+#include <pluto/application_layer/python/pluto_python.h>
 #elif defined(PLUTO_CTS_RTM_SHARED_LIB)
-#include <pluto/shared_library/pluto_shared_library.h>
+#include <pluto/application_layer/shared_library/pluto_shared_library.h>
 #endif
 
 #include <string.h>

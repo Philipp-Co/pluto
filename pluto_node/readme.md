@@ -96,3 +96,14 @@ Eingabe lesen.
 
     ./pluto_rw -n /var/pluto_example/pluto-0/pluto-0_oq_0 -r    // Gibt '{"id":0, "payload":test}'
 
+## Architektur
+
+    +---------------------------+   
+    |   interface_layer         |
+    +---------------------------+ 
+    |   application_layer       |   python  shared_library 
+    +---------------------------+
+    |   os_abstraction_layer    |
+    +---------------------------+
+
+

@@ -26,15 +26,15 @@ find_package (Python3 COMPONENTS Interpreter Development)
 #
 set(
     SRC
-    ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_malloc.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_types.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_info.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_config.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_message_queue.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_message_parser.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_processor.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_semaphore.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/application_interface_layer/main.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_malloc.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_info.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_config.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_processor.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_types.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_message_queue.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_message_parser.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/src/jsmn.c
 )
 
@@ -103,7 +103,7 @@ endif()
 # ---------------------------------------------------------------------------------------------------------------------
 #
 add_executable(
-    pluto_node_py ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/python/pluto_python.c
+    pluto_node_py ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/python/pluto_python.c
 )
 
 target_compile_definitions(
@@ -171,7 +171,7 @@ endif()
 #
 
 add_executable(
-    pluto_node_sh ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/shared_library/pluto_shared_library.c
+    pluto_node_sh ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/shared_library/pluto_shared_library.c
 )
 
 target_compile_definitions(

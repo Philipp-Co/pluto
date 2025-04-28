@@ -19,8 +19,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/pluto_config.h>
-#include <pluto/pluto_malloc.h>
+#include <pluto/application_layer/pluto_config.h>
+#include <pluto/os_abstraction_layer/pluto_malloc.h>
 
 #define JSMN_HEADER
 #include <jsmn/jsmn.h>

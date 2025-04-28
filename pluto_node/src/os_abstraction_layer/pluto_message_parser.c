@@ -18,8 +18,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include "pluto/pluto_types.h"
-#include <pluto/pluto_message_parser.h>
+#include <pluto/os_abstraction_layer/pluto_types.h>
+#include <pluto/os_abstraction_layer/pluto_message_parser.h>
 
 #define JSMN_HEADER
 #include <jsmn/jsmn.h>
