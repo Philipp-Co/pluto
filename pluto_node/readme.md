@@ -98,12 +98,12 @@ Eingabe lesen.
 
 ## Architektur
 
-    +---------------------------+   
-    |   interface_layer         |
-    +---------------------------+ 
-    |   application_layer       |   python  shared_library 
-    +---------------------------+
-    |   os_abstraction_layer    |
-    +---------------------------+
+    +-------------------------------+   
+    |   application_interface_layer |
+    +-------------------------------+ 
+    |   application_layer           |   python  shared_library 
+    +-------------------------------+
+    |   os_abstraction_layer        |
+    +-------------------------------+
 
 

@@ -4,13 +4,10 @@
 #
 
 cmake_minimum_required(VERSION 3.16)
-project(pluto_info VERSION 0.0.0 LANGUAGES C)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #
 # Find required Packages.
@@ -42,6 +39,21 @@ target_include_directories(
     pluto_info
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
+)
+
+target_link_directories(
+    pluto_info
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
+)
+
+target_link_libraries(
+    pluto_event
+    PUBLIC
+    pluto_os_abstraction
+    pluto_config
 )
 
 #
@@ -79,6 +91,17 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         "-pedantic-errors"
     )
 endif()
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+add_dependencies(
+    pluto_info
+    pluto_config
+    pluto_event
+    pluto_os_abstraction
+)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------

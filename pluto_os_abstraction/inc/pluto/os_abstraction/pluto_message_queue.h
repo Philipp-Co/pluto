@@ -8,8 +8,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/os_abstraction_layer/pluto_types.h>
-#include <pluto/os_abstraction_layer/pluto_semaphore.h>
+#include <pluto/os_abstraction/pluto_types.h>
+#include <pluto/os_abstraction/pluto_semaphore.h>
 
 #include <stdbool.h>
 #include <sys/msg.h>

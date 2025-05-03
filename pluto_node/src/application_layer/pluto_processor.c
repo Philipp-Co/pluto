@@ -5,11 +5,10 @@
 
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include <pluto/application_layer/pluto_info.h>
-#include <pluto/os_abstraction_layer/pluto_types.h>
+#include <pluto/os_abstraction/pluto_types.h>
 #include <pluto/application_layer/pluto_processor.h>
-#include <pluto/os_abstraction_layer/pluto_message_parser.h>
-#include <pluto/os_abstraction_layer/pluto_message_queue.h>
-#include <pluto/os_abstraction_layer/pluto_malloc.h>
+#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/pluto_malloc.h>
 
 #include <stdlib.h>
 #include <stdio.h>

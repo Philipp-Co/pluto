@@ -3,10 +3,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include "pluto/os_abstraction_layer/pluto_semaphore.h"
-#include <pluto/os_abstraction_layer/pluto_message_queue.h>
-#include <pluto/os_abstraction_layer/pluto_message_parser.h>
-#include <pluto/os_abstraction_layer/pluto_malloc.h>
+#include <pluto/os_abstraction/pluto_semaphore.h>
+#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/pluto_malloc.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -125,7 +124,9 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Request_t request)
     }
     buffer->text[nbytes] = '\0'; 
     // parse Message...
-    PLUTO_MessageParserLoadRequest(buffer->text, request);
+    // PLUTO_MessageParserLoadRequest(buffer->text, request);
+    // TODO: Make SAVE memcpy!
+    memcpy(request->payload, buffer->text, nbytes);
     // Cleanup and return... 
     PLUTO_Free(buffer);
     return true;
@@ -138,11 +139,15 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Response_t respon
     // dump Message...
     struct PLUTO_MsgBuf *buffer = PLUTO_Malloc(sizeof(struct PLUTO_MsgBuf));
     buffer->msgtype = 1;
+    
+    memcpy(buffer->text, response->body, strlen(response->body));
+    /*
     PLUTO_MessageParserDumpResponse(
         response,
         buffer->text,
         sizeof(buffer->text)
     );
+    */
     size_t strl = strlen(buffer->text);
     const size_t max_bytes = (strl >= (PLUTO_MAX_BODY_SIZE - 1)) ? (PLUTO_MAX_BODY_SIZE - 1) : strl;
     int msgflags = IPC_NOWAIT;

@@ -31,6 +31,16 @@ pluto_info ist ein Hilfswerkzeug mit dem es moglich ist Informationen ueber die 
 
 pluto_rw ist ein Hilfswerkzeug mit dem ein R/W Zugriff auf die bestehende Infrastruktur moeglich ist.
 
+## Projektaufbau
+
+    +------+------+------+------+
+    | Info | Node | Core | Edge |
+    +------+------+------+------+
+    |     Event   |    Config   |
+    +-------------+-------------+
+    |    OS Abstraction         |
+    +---------------------------+
+
 ## Externe Abhaengigkeiten
 
 Externe Abhaengigkeiten werden um Verzeichnis unter external/ gesammelt.

@@ -13,6 +13,18 @@ project(pluto VERSION 0.0.0 LANGUAGES C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(
+    pluto_os_abstraction
+)
+
+add_subdirectory(
+    pluto_event
+)
+
+add_subdirectory(
+    pluto_config
+)
+
+add_subdirectory(
     pluto_info
 )
 
@@ -27,6 +39,12 @@ add_subdirectory(
 add_subdirectory(
     pluto_edge
 )
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+
 
 #
 # ---------------------------------------------------------------------------------------------------------------------

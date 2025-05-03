@@ -8,8 +8,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/application_layer/pluto_config.h>
-#include <pluto/os_abstraction_layer/pluto_message_queue.h>
+#include <pluto/pluto_config/pluto_config.h>
+#include <pluto/os_abstraction/pluto_message_queue.h>
 #include <pluto/application_layer/pluto_info.h>
 #include <pluto/types/pluto_types.h>
 

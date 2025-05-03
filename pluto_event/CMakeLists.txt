@@ -1,13 +1,15 @@
-
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
 cmake_minimum_required(VERSION 3.16)
+project(pluto_event VERSION 0.0.0 LANGUAGES C)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #
 # Find required Packages.
@@ -29,24 +31,30 @@ cmake_minimum_required(VERSION 3.16)
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
-add_executable(
-    pluto_rw
-    ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/prw_message_queue.c
+add_library(
+    pluto_event
+    STATIC
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_event.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/jsmn.c
 )
 
 target_include_directories(
-    pluto_rw
+    pluto_event
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../external/
 )
 
 target_link_directories(
-    pluto_rw
+    pluto_event
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
+)
+
+target_link_libraries(
+    pluto_event
+    PUBLIC
+    pluto_os_abstraction
 )
 
 #
@@ -54,7 +62,7 @@ target_link_directories(
 #
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(
-        pluto_rw
+        pluto_event
         PUBLIC
         "-fno-omit-frame-pointer"
         "-Wno-unused-function"
@@ -66,12 +74,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         "-pedantic-errors"
     )
     #target_link_options(
-    #    pluto_rw
+    #    pluto_event
     #    PUBLIC
     #)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(
-        pluto_rw
+        pluto_event
         PUBLIC
         "-O2"
         "-Wno-unused-function"
@@ -90,8 +98,6 @@ endif()
 #
 
 add_dependencies(
-    pluto_rw
-    pluto_config
     pluto_event
     pluto_os_abstraction
 )

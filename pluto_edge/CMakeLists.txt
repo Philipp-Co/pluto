@@ -3,7 +3,7 @@
 #
 
 cmake_minimum_required(VERSION 3.16)
-project(pluto VERSION 0.0.0 LANGUAGES C)
+# project(pluto VERSION 0.0.0 LANGUAGES C)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------

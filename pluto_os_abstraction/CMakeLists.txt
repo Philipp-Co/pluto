@@ -1,13 +1,15 @@
-
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
 cmake_minimum_required(VERSION 3.16)
+project(pluto_os_abstraction VERSION 0.0.0 LANGUAGES C)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #
 # Find required Packages.
@@ -29,24 +31,20 @@ cmake_minimum_required(VERSION 3.16)
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
-add_executable(
-    pluto_rw
-    ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/prw_message_queue.c
+add_library(
+    pluto_os_abstraction
+    STATIC
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_malloc.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_types.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_message_queue.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_semaphore.c
 )
 
 target_include_directories(
-    pluto_rw
+    pluto_os_abstraction
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
-)
-
-target_link_directories(
-    pluto_rw
-    PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
+    ${CMAKE_CURRENT_LIST_DIR}/../external/
 )
 
 #
@@ -54,7 +52,7 @@ target_link_directories(
 #
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(
-        pluto_rw
+        pluto_os_abstraction
         PUBLIC
         "-fno-omit-frame-pointer"
         "-Wno-unused-function"
@@ -66,12 +64,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         "-pedantic-errors"
     )
     #target_link_options(
-    #    pluto_rw
+    #    pluto_os_abstraction
     #    PUBLIC
     #)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(
-        pluto_rw
+        pluto_os_abstraction
         PUBLIC
         "-O2"
         "-Wno-unused-function"
@@ -84,17 +82,6 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         "-pedantic-errors"
     )
 endif()
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-add_dependencies(
-    pluto_rw
-    pluto_config
-    pluto_event
-    pluto_os_abstraction
-)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------

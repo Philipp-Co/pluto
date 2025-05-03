@@ -3,13 +3,10 @@
 #
 
 cmake_minimum_required(VERSION 3.16)
-project(pluto VERSION 0.0.0 LANGUAGES C)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #
 # Find required Packages.
@@ -17,9 +14,36 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # https://cmake.org/cmake/help/latest/module/FindPython3.html
 find_package (Python3 COMPONENTS Interpreter Development)
 
+set(
+    PLUTO_INC
+    ${CMAKE_CURRENT_LIST_DIR}/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../pluto_config/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../pluto_os_abstraction/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../external/
+)
+
+set(
+    PLUTO_LINK_DIRS
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
+)
+
+set(
+    PLUTO_LINK_LIBS
+    pluto_event
+    pluto_config
+    pluto_os_abstraction
+)
+
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
+
+#add_subdirectory(
+#    test/application_layer/
+#)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
@@ -27,14 +51,8 @@ find_package (Python3 COMPONENTS Interpreter Development)
 set(
     SRC
     ${CMAKE_CURRENT_LIST_DIR}/src/application_interface_layer/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_malloc.c
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_info.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_config.c
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_processor.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_types.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_message_queue.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_message_parser.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/os_abstraction_layer/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/src/jsmn.c
 )
 
@@ -43,7 +61,8 @@ set(
 #
 
 add_executable(
-    pluto_node_pt ${SRC}
+    pluto_node_pt 
+    ${SRC}
 )
 
 target_compile_definitions(
@@ -55,8 +74,19 @@ target_compile_definitions(
 target_include_directories(
     pluto_node_pt
     PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../external/
+    ${PLUTO_INC}
+)
+
+target_link_directories(
+    pluto_node_pt
+    PUBLIC
+    ${PLUTO_LINK_DIRS}
+)
+
+target_link_libraries(
+    pluto_node_pt
+    PUBLIC
+    ${PLUTO_LINK_LIBS}
 )
 
 #
@@ -99,11 +129,20 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     )
 endif()
 
+add_dependencies(
+    pluto_node_pt
+    pluto_event
+    pluto_config
+    pluto_os_abstraction
+)
+
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 add_executable(
-    pluto_node_py ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/python/pluto_python.c
+    pluto_node_py 
+    ${SRC} 
+    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/python/pluto_python.c
 )
 
 target_compile_definitions(
@@ -115,14 +154,20 @@ target_compile_definitions(
 target_include_directories(
     pluto_node_py
     PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../external/
+    ${PLUTO_INC}
     ${Python3_INCLUDE_DIRS}
+)
+
+target_link_directories(
+    pluto_node_py
+    PUBLIC
+    ${PLUTO_LINK_DIRS}
 )
 
 target_link_libraries(
     pluto_node_py
     PUBLIC
+    ${PLUTO_LINK_LIBS}
     Python3::Python
 )
 
@@ -171,7 +216,9 @@ endif()
 #
 
 add_executable(
-    pluto_node_sh ${SRC} ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/shared_library/pluto_shared_library.c
+    pluto_node_sh 
+    ${SRC} 
+    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/shared_library/pluto_shared_library.c
 )
 
 target_compile_definitions(
@@ -183,13 +230,21 @@ target_compile_definitions(
 target_include_directories(
     pluto_node_sh
     PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../external/
+    ${PLUTO_INC}
     ${Python3_INCLUDE_DIRS}
 )
 
+target_link_directories(
+    pluto_node_sh
+    PUBLIC
+    ${PLUTO_LINK_DIRS}
+)
+
 target_link_libraries(
-    pluto_node_sh PUBLIC ${CMAKE_DL_LIBS}
+    pluto_node_sh 
+    PUBLIC 
+    ${CMAKE_DL_LIBS}
+    ${PLUTO_LINK_LIBS}
 )
 
 #
