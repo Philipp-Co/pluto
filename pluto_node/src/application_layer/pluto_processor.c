@@ -3,6 +3,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include "pluto/pluto_event/pluto_event.h"
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include <pluto/application_layer/pluto_info.h>
 #include <pluto/os_abstraction/pluto_types.h>
@@ -63,12 +64,6 @@ PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCall
         PLUTO_PROC_INPUT_QUEUE_PERMISSIONS
     ); 
 
-    PLUTO_Request_t request = malloc(sizeof(struct PLUTO_Request));
-    request->payload = malloc(PLUTO_PROC_MAX_BYTES_BODY);
-    request->max_bytes_payload = PLUTO_PROC_MAX_BYTES_BODY;
-    
-    processor->request = request;
-
     PLUTO_InfoValues_t values = {
         .name = config->name,
         .name_of_input_queue = config->name_of_input_queue,
@@ -97,50 +92,52 @@ void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor)
 
 void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
 {
+    struct PLUTO_MsgBuf buffer;
     if(
         PLUTO_MessageQueueRead(
             processor->input_queue,
-            processor->request
+            &buffer
         )
     )
     {
+        PLUTO_Event_t event = PLUTO_CreateEventFromBuffer(buffer.text, sizeof(buffer.text));
+        if(!event)
+        {
+            printf("Error, unable to parse Inputevent!\n");
+            return;
+        }
+        PLUTO_Event_t output_event = PLUTO_CreateEvent(3072);
         // process...
-        PLUTO_Response_t response = alloca(sizeof(struct PLUTO_Response));
-        response->body = malloc(processor->request->max_bytes_payload);
-        response->id = 0;
-        response->event = 0;
-        gettimeofday(&response->timestamp, NULL);
-        memcpy(response->body, processor->request->payload, strlen(processor->request->payload) + 1);
-        memset(response->body, '\0', processor->request->max_bytes_payload);
-        printf("    Request id: %i, event %i\n", processor->request->id, processor->request->event);
+        printf("    Request id: %i, event %i\n", event->id, event->eventid);
         PLUTO_ProcessorCallbackInput_t input = {
-            .id = processor->request->id,
-            .event = processor->request->event,
-            .input_buffer = processor->request->payload,
-            .output_buffer = response->body,
-            .input_buffer_size = processor->request->max_bytes_payload,
-            .output_buffer_size = processor->request->max_bytes_payload
+            .id = event->eventid,
+            .event = PLUTO_EventId(event),
+            .input_buffer = PLUTO_EventPayload(event),
+            .output_buffer = PLUTO_EventPayload(output_event),
+            .input_buffer_size = PLUTO_EventSizeOfPayload(event),
+            .output_buffer_size = PLUTO_EventSizeOfPayload(output_event) -1
         };
+        printf("------ Callback\n");
         PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
+        printf("------\n");
         if(output.return_value)
         {
-            memcpy(response->body ,input.output_buffer, output.output_size);
-            response->id = output.id;
-            response->event = output.event;
-            for(int i=0;i<processor->number_of_output_queues;++i)
+            if(PLUTO_EventToBuffer(output_event, buffer.text, sizeof(buffer.text)))
             {
-                printf("Write output to Queue %i\n", i);
-                PLUTO_MessageQueueWrite(
-                    processor->output_queues[i],
-                    response
-                ); 
+                for(int i=0;i<processor->number_of_output_queues;++i)
+                {
+                    printf("Write output to Queue %i: %s\n", i, buffer.text);
+                    PLUTO_MessageQueueWrite(
+                        processor->output_queues[i],
+                        &buffer
+                    ); 
+                }
             }
         }
         else
         {
             printf("Callback returned an Error!\n");
         }
-        free(response->body);
     }
 }
 

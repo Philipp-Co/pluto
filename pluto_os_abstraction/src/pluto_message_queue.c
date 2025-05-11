@@ -20,18 +20,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#define PLUTO_MAX_BODY_SIZE (1024 * 64)
 #define PLUTO_MQ_INPUT_QUEUE_PERMISSIONS 0700 
-
-//
-// --------------------------------------------------------------------------------------------------------------------
-//
-
-struct PLUTO_MsgBuf 
-{
-    long msgtype;
-    char text[PLUTO_MAX_BODY_SIZE];
-};
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -107,51 +96,31 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
     }
 }
 
-bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Request_t request)
+bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
 {
     assert(NULL != queue);
     
     long msgtype = 0;
-    size_t msgsize = PLUTO_MAX_BODY_SIZE-1;
     int msgflags = 0;
-    struct PLUTO_MsgBuf *buffer = PLUTO_Malloc(sizeof(struct PLUTO_MsgBuf));
     buffer->msgtype = 1;
-    const int nbytes = msgrcv(queue->filedescriptor, buffer, msgsize, msgtype, msgflags);
+    const int nbytes = msgrcv(queue->filedescriptor, buffer, sizeof(buffer->text) - 1, msgtype, msgflags);
     if(nbytes < 0)
     {
         printf("Error receiving from Queue: %s\n", strerror(errno));
         return false;
     }
     buffer->text[nbytes] = '\0'; 
-    // parse Message...
-    // PLUTO_MessageParserLoadRequest(buffer->text, request);
-    // TODO: Make SAVE memcpy!
-    memcpy(request->payload, buffer->text, nbytes);
-    // Cleanup and return... 
-    PLUTO_Free(buffer);
     return true;
 }
 
-bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Response_t response)
+bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
 {
     assert(NULL != queue);
     bool return_value = true;
-    // dump Message...
-    struct PLUTO_MsgBuf *buffer = PLUTO_Malloc(sizeof(struct PLUTO_MsgBuf));
     buffer->msgtype = 1;
-    
-    memcpy(buffer->text, response->body, strlen(response->body));
-    /*
-    PLUTO_MessageParserDumpResponse(
-        response,
-        buffer->text,
-        sizeof(buffer->text)
-    );
-    */
     size_t strl = strlen(buffer->text);
-    const size_t max_bytes = (strl >= (PLUTO_MAX_BODY_SIZE - 1)) ? (PLUTO_MAX_BODY_SIZE - 1) : strl;
     int msgflags = IPC_NOWAIT;
-    const int status = msgsnd(queue->filedescriptor, buffer, max_bytes, msgflags);
+    const int status = msgsnd(queue->filedescriptor, buffer, strl + 1, msgflags);
     if(status != 0)
     {
         printf(
@@ -159,12 +128,11 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Response_t respon
             queue->filedescriptor,
             errno,
             strerror(errno),
-            max_bytes,
-            response->body
+            strl,
+            buffer->text
         );
         return_value = false;
     }
-    PLUTO_Free(buffer);
     return return_value;
 }
 

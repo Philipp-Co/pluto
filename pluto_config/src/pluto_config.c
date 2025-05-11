@@ -47,7 +47,6 @@ static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename
 
 PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
 {
-    (void)filename;
     PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
     
     config->manage_inputqueue = true;

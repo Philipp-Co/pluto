@@ -87,8 +87,8 @@ int main(int argc, char **argv)
     PLUTO_Config_t config = PLUTO_CreateConfig(args->config_path, args->name);
     if(!config)
     {
+        printf("Unable to read Config from file %s.\n", args->config_path);
         PLUTO_Free(args);
-        printf("Unable to read Config from file.\n");
         return -1;
     }
     PLUTO_Free(args);
@@ -158,13 +158,12 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #else
     static const char *optstring = "n:c:";
 #endif
-    while((c = getopt(argc, argv, optstring)))
+    while((c = getopt(argc, argv, optstring)) != -1)
     {
-        if(((char)-1) == (char)c)
+        if(c == ((char)-1))
         {
             break;
         }
-
         switch(c)
         {
 #if defined(PLUTO_CTS_RTM_PYTHON)

@@ -26,7 +26,6 @@ struct PLUTO_Processor
     PLUTO_MessageQueue_t input_queue;
     int32_t number_of_output_queues;
     PLUTO_MessageQueue_t *output_queues;
-    PLUTO_Request_t request;
 }; 
 typedef struct PLUTO_Processor* PLUTO_Processor_t;
 

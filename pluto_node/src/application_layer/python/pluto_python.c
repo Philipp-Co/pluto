@@ -297,6 +297,7 @@ static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_Py
 
 static PyObject* PLUTO_PY_GetClass(const char *module_name)
 {
+    printf("Try to import Modules %s\n", module_name);
     PyObject *module = PyImport_ImportModule(module_name);
     if(!module)
     {

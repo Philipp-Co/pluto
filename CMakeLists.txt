@@ -25,6 +25,10 @@ add_subdirectory(
 )
 
 add_subdirectory(
+    pluto_core
+)
+
+add_subdirectory(
     pluto_info
 )
 

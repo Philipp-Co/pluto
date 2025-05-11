@@ -53,7 +53,6 @@ set(
     ${CMAKE_CURRENT_LIST_DIR}/src/application_interface_layer/main.c
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_info.c
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_processor.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/jsmn.c
 )
 
 #

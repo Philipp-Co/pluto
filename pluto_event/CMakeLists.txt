@@ -19,6 +19,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
+add_subdirectory(
+    test/
+)
+
 #
 # add unity
 #
@@ -57,6 +61,12 @@ target_link_libraries(
     pluto_os_abstraction
 )
 
+target_compile_definitions(
+    pluto_event
+    PUBLIC
+    _XOPEN_SOURCE=700
+)
+
 #
 # Configure libahr.
 #
@@ -64,6 +74,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(
         pluto_event
         PUBLIC
+        "-std=c11"
         "-fno-omit-frame-pointer"
         "-Wno-unused-function"
         "-Wall"
