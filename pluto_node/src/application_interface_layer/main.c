@@ -5,6 +5,7 @@
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/application_layer/pluto_processor.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
+#include <pluto/os_abstraction/pluto_logger.h>
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
 #include <pluto/application_layer/python/pluto_python.h>
@@ -48,6 +49,7 @@ static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCall
 //
 
 static atomic_int PLUTO_Terminate;
+static PLUTO_Logger_t PLUTO_node_logger = NULL;
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -55,69 +57,70 @@ static atomic_int PLUTO_Terminate;
 
 int main(int argc, char **argv)
 {
-    printf("Hello World!\n");
+    int return_value = -1;
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
   
     PLUTO_Arguments_t *args = PLUTO_Malloc(sizeof(PLUTO_Arguments_t));
     if(!args)
     {
-        return -1;
+        goto end;
     } 
     memset(args, '\0', sizeof(*args));
     if(!PLUTO_ParseArguments(args, argc, argv))
     {
         PLUTO_Free(args);
-        return -1;
+        goto end;
     }
+    PLUTO_node_logger = PLUTO_CreateLogger(args->name);
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
     // Initialize Python.
-    if(!PLUTO_InitializePython(args->python_path, args->executable))
+    if(!PLUTO_InitializePython(args->python_path, args->executable, PLUTO_node_logger))
     {
-        printf("Unable to Initialize Python.\n");
-        return -1;
+        PLUTO_LoggerError(PLUTO_node_logger, "Unable to initialize Python.");
+        goto end;
     }
-    printf("Python Initialization done.\n");
+    PLUTO_LoggerInfo(PLUTO_node_logger, "Python successfully initialized.");
 #elif defined(PLUTO_CTS_RTM_SHARED_LIB)
     // Initialize Shared Library.
     PLUTO_SHLIB_Initialize(args->executable);
 #endif
 
-    PLUTO_Config_t config = PLUTO_CreateConfig(args->config_path, args->name);
+    PLUTO_Config_t config = PLUTO_CreateConfig(args->config_path, args->name, PLUTO_node_logger);
     if(!config)
     {
-        printf("Unable to read Config from file %s.\n", args->config_path);
+        PLUTO_LoggerError(PLUTO_node_logger, "Unable to read Config from file %s.", args->config_path);
         PLUTO_Free(args);
-        return -1;
+        goto end;
     }
     PLUTO_Free(args);
     
-    printf("Run main Program...\n");
+    PLUTO_LoggerInfo(PLUTO_node_logger, "Run main Program...");
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         config,
 #if defined(PLUTO_CTS_RTM_PASSTHROUGH)
-        PLUTO_ProcessCallback
+        PLUTO_ProcessCallback,
 #elif defined(PLUTO_CTS_RTM_SHARED_LIB)
-        PLUTO_SHLIB_ProcessCallback
+        PLUTO_SHLIB_ProcessCallback,
 #elif defined(PLUTO_CTS_RTM_PYTHON)
-        PLUTO_PY_ProcessCallback
+        PLUTO_PY_ProcessCallback,
 #else
 #error "Unknown Runtime Mode!"
 #endif
+        PLUTO_node_logger
     );
     PLUTO_DestroyConfig(&config);
     if(!processor)
     {
-        printf("Unable to create a Processor.\n");
-        return -1;
+        PLUTO_LoggerError(PLUTO_node_logger, "Unable to create a Processor.");
+        goto end;
     }
     while(!atomic_load(&PLUTO_Terminate))
     {
         PLUTO_ProcessorProcess(processor);
     }
     PLUTO_DestroyProcessor(&processor);
-
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
     // Deinitialize Python.
@@ -127,8 +130,11 @@ int main(int argc, char **argv)
     PLUTO_SHLIB_Destroy();
 #endif
     
-    printf("Bye Bye...\n");
-    return 0;
+    PLUTO_LoggerInfo(PLUTO_node_logger, "Bye Bye...");
+    return_value = 0;
+end:
+    PLUTO_DestroyLogger(&PLUTO_node_logger);
+    return return_value;
 }
 
 //
@@ -168,26 +174,21 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
         {
 #if defined(PLUTO_CTS_RTM_PYTHON)
             case 'p':
-                printf("-p %s\n", optarg);
                 memcpy(args->python_path, optarg, strlen(optarg));
                 break;
 #endif
 #if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
             case 'e':
-                printf("-e %s\n", optarg);
                 memcpy(args->executable, optarg, strlen(optarg));
                 break;
 #endif
             case 'n':
-                printf("-n %s\n", optarg);
                 memcpy(args->name, optarg, strlen(optarg));
                 break;
             case 'c':
-                printf("-c %s\n", optarg);
                 memcpy(args->config_path, optarg, strlen(optarg));
                 break;
             default:
-                printf("Unknown Argument 0x%x\n", (int)c);
                 return false;
         }
     }
@@ -195,7 +196,6 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #if defined(PLUTO_CTS_RTM_PYTHON)
     if(strlen(args->python_path) == 0)
     {
-        printf("No Python Path given!\n");
         return false;
     }
 #endif
@@ -203,7 +203,6 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
     if(strlen(args->executable) == 0)
     {
-        printf("No Executable given!\n");
         return false;
     }
 #endif

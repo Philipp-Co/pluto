@@ -10,6 +10,7 @@
 
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/application_layer/pluto_info.h>
 #include <pluto/types/pluto_types.h>
 
@@ -21,6 +22,7 @@ typedef PLUTO_ProcessorCallbackOutput_t (*PLUTO_ProcessCallback_t)(PLUTO_Process
 
 struct PLUTO_Processor
 {
+    PLUTO_Logger_t logger;
     PLUTO_ProcessCallback_t callback;
     PLUTO_Info_t info;
     PLUTO_MessageQueue_t input_queue;
@@ -36,7 +38,7 @@ typedef struct PLUTO_Processor* PLUTO_Processor_t;
 ///
 /// \brief  Create a Processor.
 ///
-PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback);
+PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback, PLUTO_Logger_t logger);
 ///
 /// \brief  Destroy a Processor.
 ///

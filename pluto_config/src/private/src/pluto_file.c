@@ -23,21 +23,21 @@ void PLUTO_CONFIG_DestroyBuffer(PLUTO_CONFIG_Buffer_t *buffer)
     *buffer = NULL;
 }
 
-PLUTO_CONFIG_Buffer_t PLUTO_CONFIG_ReadFile(const char *filename)
+PLUTO_CONFIG_Buffer_t PLUTO_CONFIG_ReadFile(const char *filename, PLUTO_Logger_t logger)
 {
     PLUTO_CONFIG_Buffer_t buffer = NULL;   
-    printf("Read Config File: %s\n", filename);
+    PLUTO_LoggerInfo(logger, "Read Config File: %s\n", filename);
     FILE *file = fopen(filename, "r");
     if(!file)
     {
-        printf("Unable to open Config File.\n");
+        PLUTO_LoggerError(logger, "Unable to open Config File.\n");
         return NULL;
     }
     fseek(file, 0L, SEEK_END);
     size_t size = ftell(file) + 1;
     if(size == 0LU)
     {
-        printf("File has size 0.\n");
+        PLUTO_LoggerError(logger, "File has size 0.\n");
         fclose(file);
         return NULL;
     }
@@ -48,7 +48,7 @@ PLUTO_CONFIG_Buffer_t PLUTO_CONFIG_ReadFile(const char *filename)
     size_t result = fread(buffer->buffer, 1, buffer->nbytes, file);
     if(result == 0)
     {
-        printf("Result was 0.\n");
+        PLUTO_LoggerError(logger, "Result was 0.\n");
         PLUTO_CONFIG_DestroyBuffer(&buffer);
         buffer = NULL;
     }

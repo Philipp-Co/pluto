@@ -21,7 +21,7 @@ void PLUTO_TEST_TestEvent(void)
     TEST_ASSERT_NOT_NULL(event);
     TEST_ASSERT_EQUAL_UINT32(0U, PLUTO_EventId(event));
     TEST_ASSERT_EQUAL_UINT32(0U, PLUTO_EventEventId(event));
-    TEST_ASSERT_EQUAL_UINT32((uint32_t)nbytes, (uint32_t)PLUTO_EventSizeOfPayloadBuffer(event));
+    TEST_ASSERT_GREATER_THAN_UINT32((uint32_t)nbytes, (uint32_t)PLUTO_EventSizeOfPayloadBuffer(event));
     TEST_ASSERT_EQUAL_UINT32((uint32_t)0U, (uint32_t)PLUTO_EventSizeOfPayload(event));
     TEST_ASSERT_NOT_NULL(PLUTO_EventPayload(event));
 
@@ -39,9 +39,10 @@ void PLUTO_TEST_EventFromBufferSuccess(void)
         "\"time\":\"2025-01-01T00:00:00.0+0000\","
         "\"payload\":6}\0"
         "\"test\"";
-    PLUTO_Event_t event = PLUTO_CreateEventFromBuffer(event_buffer, strlen(event_buffer));
+    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+    const bool result = PLUTO_CreateEventFromBuffer(event, event_buffer, strlen(event_buffer));
 
-    TEST_ASSERT_NOT_NULL(event);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_EQUAL_INT(
         6,
         PLUTO_EventSizeOfPayload(event)
@@ -58,6 +59,7 @@ void PLUTO_TEST_EventFromBufferSuccess(void)
         5U,
         PLUTO_EventEventId(event)
     );
+    PLUTO_DestroyEvent(&event);
 }
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -79,11 +81,14 @@ void PLUTO_TEST_EventFromBufferIdMissing(void)
         "\"payload\":6}\0"
         "\"test\"",
     };
+    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
     for(int32_t i=0;i<3;++i)
     {
-        PLUTO_Event_t event = PLUTO_CreateEventFromBuffer(event_buffer[i], strlen(event_buffer[i]));
-        TEST_ASSERT_NULL(event);
+        TEST_ASSERT_FALSE(
+            PLUTO_CreateEventFromBuffer(event, event_buffer[i], strlen(event_buffer[i]))
+        );
     }
+    PLUTO_DestroyEvent(&event);
 }
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -105,11 +110,14 @@ void PLUTO_TEST_EventFromBufferEventMissing(void)
         "\"payload\":6}\0"
         "\"test\""
     };
+    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
     for(int32_t i=0;i<3;++i)
     {
-        PLUTO_Event_t event = PLUTO_CreateEventFromBuffer(event_buffer[i], strlen(event_buffer[i]));
-        TEST_ASSERT_NULL(event);
+        TEST_ASSERT_FALSE(
+            PLUTO_CreateEventFromBuffer(event, event_buffer[i], strlen(event_buffer[i]))
+        );
     }
+    PLUTO_DestroyEvent(&event);
 }
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -128,11 +136,14 @@ void PLUTO_TEST_EventFromBufferPayloadMissing(void)
             "\"time\":\"2025-01-01T00:00:00.0+0000\",\"payload\":-1}\0"
             "\"test\""
     };
+    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
     for(int32_t i=0;i<3;++i)
     {
-        PLUTO_Event_t event = PLUTO_CreateEventFromBuffer(event_buffer[i], strlen(event_buffer[i]));
-        TEST_ASSERT_NULL(event);
+        TEST_ASSERT_FALSE(
+            PLUTO_CreateEventFromBuffer(event, event_buffer[i], strlen(event_buffer[i]))
+        );
     }
+    PLUTO_DestroyEvent(&event);
 }
 
 //

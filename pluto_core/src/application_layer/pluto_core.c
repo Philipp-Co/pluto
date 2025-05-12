@@ -18,25 +18,26 @@ static int32_t PLUTO_CoreFindNodeByPid(PLUTO_Core_t core, pid_t pid);
 
 static void PLUTO_CoreStartNode(PLUTO_Core_t core, uint32_t index); 
 
-PLUTO_Core_t PLUTO_CreateCore(const char *filename)
+PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
 {
     char *binary_dir = getenv("PLUTO_BINARY_DIR");
     if(!binary_dir)
     {
-        printf("Error: PLUTO_BINARY_DIR ist not set!\n");
+        PLUTO_LoggerError(logger, "Error: PLUTO_BINARY_DIR ist not set!");
         return NULL;
     }
 
-    PLUTO_CoreConfig_t config = PLUTO_CreateCoreConfig(filename);
+    PLUTO_CoreConfig_t config = PLUTO_CreateCoreConfig(filename, logger);
     if(!config)
     {
-        printf("Unable to create Core Object because the Program was unable to read the given Config.\n");
+        PLUTO_LoggerError(logger, "Unable to create Core Object because the Program was unable to read the given Config.\n");
         return NULL;
     }
     
     const size_t n_nodes = PLUTO_CoreConfigNumberOfNodes(config);
 
     PLUTO_Core_t core = PLUTO_Malloc(sizeof(struct PLUTO_Core));
+    core->logger = logger; 
     core->signal_queue = PLUTO_CORE_CreateSigQueue(n_nodes * 4);
     core->nodes = PLUTO_Malloc(n_nodes * sizeof(struct PLUTO_NodeState));
     core->n_nodes = n_nodes;
@@ -123,14 +124,15 @@ bool PLUTO_CoreProcess(PLUTO_Core_t core)
             const pid_t result = waitpid(element.pid, &return_value, WNOHANG);
             if(result < 0)
             {
-                printf("Error while waiting in Subprocess: %s\n", strerror(errno));
+                PLUTO_LoggerError(core->logger, "Error while waiting in Subprocess: %s\n", strerror(errno));
             }
             else if(result > 0)
             {
                 if(WIFEXITED(return_value))
                 {
-                    printf(
-                        "Subprocess exited with Status %i\n", 
+                    PLUTO_LoggerWarning(
+                        core->logger,
+                        "Subprocess exited with Status %i", 
                         (int8_t)WEXITSTATUS(return_value)
                     );
                     PLUTO_NodeStateTerminated(
@@ -141,8 +143,9 @@ bool PLUTO_CoreProcess(PLUTO_Core_t core)
                 else if(WIFSIGNALED(return_value))
                 {
                     int32_t index = PLUTO_CoreFindNodeByPid(core, element.pid);
-                    printf(
-                        "Subprocess was terminated by Signal: \"%s\"\n", 
+                    PLUTO_LoggerWarning(
+                        core->logger,
+                        "Subprocess was terminated by Signal: \"%s\"", 
                         strsignal(WTERMSIG(return_value))
                     );
                     PLUTO_NodeStateTerminatedBySignal(
@@ -192,7 +195,7 @@ static bool PLUTO_CoreSetUpNodes(PLUTO_Core_t core)
         node_config = PLUTO_CoreConfigGetNodeConfig(core->config, i);
         if(!node_config)
         {
-            printf("Error: Unable to read Nodeconfig %s\n", core->config->nodes[i].filename);
+            PLUTO_LoggerError(core->logger, "Error: Unable to read Nodeconfig %s", core->config->nodes[i].filename);
         }
         else
         {
@@ -217,7 +220,7 @@ static void PLUTO_CoreStartNode(PLUTO_Core_t core, uint32_t index)
     //
     // fork, exec
     //
-    printf("Start Node with Name %s, Configuration %s\n", core->config->nodes[index].name, core->config->nodes[index].filename);
+    PLUTO_LoggerInfo(core->logger, "Start Node with Name %s, Configuration %s", core->config->nodes[index].name, core->config->nodes[index].filename);
     pid_t node_pid = fork();
     if(node_pid > 0)
     {

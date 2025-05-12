@@ -28,17 +28,17 @@ PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name)
     if(semaphore->filedescriptor < 0)
     {
         semaphore->filedescriptor = semget(semaphore->key.key, 1, flags | permission);   
-        printf("Used Sem with count: %i\n", PLUTO_SemaphoreValue(semaphore));
+        //printf("Used Sem with count: %i\n", PLUTO_SemaphoreValue(semaphore));
         return semaphore;
     }
     semctl(semaphore->filedescriptor, 0, SETALL, 0);
-    printf("Created Sem with count: %i\n", PLUTO_SemaphoreValue(semaphore));
+    //printf("Created Sem with count: %i\n", PLUTO_SemaphoreValue(semaphore));
     return semaphore;
 } 
 
 void PLUTO_DestroySemaphore(PLUTO_Semaphore_t *semaphore)
 {
-    printf("Destroy Sem with count: %i\n", PLUTO_SemaphoreValue(*semaphore));
+    //printf("Destroy Sem with count: %i\n", PLUTO_SemaphoreValue(*semaphore));
     PLUTO_DestroyKey((*semaphore)->key);
     free(*semaphore);
 } 
@@ -59,7 +59,6 @@ PLUTO_SEM_ReturnValue_t PLUTO_SemaphoreWait(PLUTO_Semaphore_t semaphore)
         }
         return PLUTO_SEM_ERROR;   
     }
-    printf("Sem -1, %i\n", PLUTO_SemaphoreValue(semaphore));
     return PLUTO_SEM_OK;
 } 
 
@@ -79,7 +78,6 @@ PLUTO_SEM_ReturnValue_t PLUTO_SemaphoreSignal(PLUTO_Semaphore_t semaphore)
         }
         return PLUTO_SEM_ERROR;   
     }
-    printf("Sem +1, %i\n", PLUTO_SemaphoreValue(semaphore));
     return PLUTO_SEM_OK;
 } 
 

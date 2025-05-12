@@ -10,6 +10,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include <pluto/os_abstraction/pluto_logger.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -49,6 +51,7 @@ struct PLUTO_CoreConfig
     struct PLUTO_CoreConfigNode *nodes;
     PLUTO_Config_t *configurations;
     size_t n_configurations;
+    PLUTO_Logger_t logger;
 };
 typedef struct PLUTO_CoreConfig* PLUTO_CoreConfig_t;
 
@@ -56,10 +59,10 @@ typedef struct PLUTO_CoreConfig* PLUTO_CoreConfig_t;
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name);
+PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_Logger_t logger);
 void PLUTO_DestroyConfig(PLUTO_Config_t *config);
 
-PLUTO_CoreConfig_t PLUTO_CreateCoreConfig(const char *filename);
+PLUTO_CoreConfig_t PLUTO_CreateCoreConfig(const char *filename, PLUTO_Logger_t logger);
 void PLUTO_DestroyCoreConfig(PLUTO_CoreConfig_t * config);
 size_t PLUTO_CoreConfigNumberOfNodes(const PLUTO_CoreConfig_t config);
 PLUTO_Config_t PLUTO_CoreConfigGetNodeConfig(PLUTO_CoreConfig_t config, uint32_t index);

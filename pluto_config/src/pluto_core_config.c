@@ -16,7 +16,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-static PLUTO_CoreConfig_t PLUTO_CONFIG_ParseFile(const PLUTO_CONFIG_Buffer_t buffer);
+static PLUTO_CoreConfig_t PLUTO_CONFIG_ParseFile(const PLUTO_CONFIG_Buffer_t buffer, PLUTO_Logger_t logger);
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -77,16 +77,17 @@ void PLUTO_CoreConfigToString(const PLUTO_CoreConfig_t config, char *buffer, siz
     }
 }
 
-PLUTO_CoreConfig_t PLUTO_CreateCoreConfig(const char *filename)
+PLUTO_CoreConfig_t PLUTO_CreateCoreConfig(const char *filename, PLUTO_Logger_t logger)
 {
     // "buffer" is malloced by Function
-    PLUTO_CONFIG_Buffer_t buffer = PLUTO_CONFIG_ReadFile(filename);
+    PLUTO_CONFIG_Buffer_t buffer = PLUTO_CONFIG_ReadFile(filename, logger);
     if(!buffer)
     {
         return NULL;
     }
 
-    PLUTO_CoreConfig_t config = PLUTO_CONFIG_ParseFile(buffer);
+    PLUTO_CoreConfig_t config = PLUTO_CONFIG_ParseFile(buffer, logger);
+    config->logger = logger;
     // free "buffer"!
     PLUTO_CONFIG_DestroyBuffer(&buffer);
     return config;
@@ -123,7 +124,7 @@ PLUTO_Config_t PLUTO_CoreConfigGetNodeConfig(PLUTO_CoreConfig_t config, uint32_t
         // load config from file.
         //
         config->configurations[index] = PLUTO_CreateConfig(
-            config->nodes[index].filename, config->nodes[index].name
+            config->nodes[index].filename, config->nodes[index].name, config->logger
         ); 
     }
     return config->configurations[index];
@@ -146,7 +147,7 @@ static bool PLUTO_CONFIG_ParseNodes(
     size_t ntoken
 );
 
-static PLUTO_CoreConfig_t PLUTO_CONFIG_ParseFile(const PLUTO_CONFIG_Buffer_t buffer)
+static PLUTO_CoreConfig_t PLUTO_CONFIG_ParseFile(const PLUTO_CONFIG_Buffer_t buffer, PLUTO_Logger_t logger)
 {
     //
     // {
@@ -183,7 +184,7 @@ static PLUTO_CoreConfig_t PLUTO_CONFIG_ParseFile(const PLUTO_CONFIG_Buffer_t buf
 
     if(JSMN_OBJECT != token[0].type)
     {
-        printf("Error during Config parsing: Top-Level Object is no JSON Object...\n");
+        PLUTO_LoggerError(logger, "Error during Config parsing: Top-Level Object is no JSON Object...");
         goto error;
     }
 
@@ -229,7 +230,7 @@ static bool PLUTO_CONFIG_ParseNode(
 
     if(JSMN_OBJECT != token[0].type)
     {
-        printf("Error: Unable to parse Config Object from non Object Type...\n");
+        PLUTO_LoggerError(config->logger, "Error: Unable to parse Config Object from non Object Type...");
         return false;
     }
     
@@ -246,7 +247,7 @@ static bool PLUTO_CONFIG_ParseNode(
 
         if(JSMN_STRING != key_token->type || JSMN_STRING != value_token->type)
         {
-            printf("Error: Unable to parse Key/Value Pair.\n");
+            PLUTO_LoggerError(config->logger, "Error: Unable to parse Key/Value Pair.");
             return false;
         }
 
@@ -270,7 +271,7 @@ static bool PLUTO_CONFIG_ParseNode(
             const int shlen = strlen("shared");
             if(value_length > ptlen)
             {
-                printf("Unknown Object Node Type!\n");
+                PLUTO_LoggerError(config->logger, "Unknown Object Node Type!");
                 return false;
             }
             if(0 == memcmp("python", value_start, pylen))
@@ -310,7 +311,7 @@ static bool PLUTO_CONFIG_ParseNode(
         }
         else 
         {
-            printf("Error: Unknown Key!\n");
+            PLUTO_LoggerError(config->logger, "Error: Unknown Key!");
             return false;
         }
     }
@@ -332,7 +333,7 @@ static bool PLUTO_CONFIG_ParseNodes(
 
     if(JSMN_ARRAY != token[0].type)
     {
-        printf("Expected Array while parsing Nodes...\n");
+        PLUTO_LoggerError(config->logger, "Expected Array while parsing Nodes...");
         return false;
     }
 
@@ -358,7 +359,7 @@ static bool PLUTO_CONFIG_ParseNodes(
         jsmntok_t *object = &token[token_index];
         if(JSMN_OBJECT != object->type || 4 != object->size)
         {
-            printf("Error unable to parse Nodes.\n");
+            PLUTO_LoggerError(config->logger, "Error unable to parse Nodes.");
             return false;
         }
 

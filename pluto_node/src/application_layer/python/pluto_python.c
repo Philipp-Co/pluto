@@ -5,6 +5,7 @@
 
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include "pluto/application_layer/pluto_processor.h"
+#include "pluto/os_abstraction/pluto_logger.h"
 #include <pluto/application_layer/python/pluto_python.h>
 
 #include <stdio.h>
@@ -61,7 +62,7 @@ typedef struct
 
 static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_PythonPath_t *paths);
 //static PyObject* PyInit_emb_input(void);
-static PyObject* PLUTO_PY_CreateInterface(const char *path);
+static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_Logger_t logger);
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -76,18 +77,19 @@ PyGILState_STATE gstate;
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-bool PLUTO_InitializePython(const char *python_path, const char *executable)
+bool PLUTO_InitializePython(const char *python_path, const char *executable, PLUTO_Logger_t logger)
 {
     PyStatus status;
     PyConfig config;
     
-    printf("Start Python configuration.\n");
+    PLUTO_LoggerInfo(logger, "Start Python configuration...");
     //PyImport_AppendInittab("pluto", &PyInit_emb_input);
     PyConfig_InitIsolatedConfig(&config);
     
     // TODO: Check if venvs are needed...
     //char *env = getenv("VIRTUAL_ENV");
     //
+    PLUTO_LoggerInfo(logger, "Compile Python Path Variable...");
     char *buffer = malloc(4096);
     if(!buffer) return false;
     // TODO: Memory Management...
@@ -101,11 +103,9 @@ bool PLUTO_InitializePython(const char *python_path, const char *executable)
         memset(python_path_buffer.paths[i], '\0', 256);
     }
 
-    printf("Read Python ENV \"%s\".\n", python_path);
     PLUTO_PY_ReadPythonPathsFromEnv(python_path, &python_path_buffer);
-    printf("Initialize Python Interpreter with:\n");
     for(size_t i=0;i<python_path_buffer.n_paths;++i)
-        printf("  %s\n", python_path_buffer.paths[i]);
+        PLUTO_LoggerInfo(logger, "    %s", python_path_buffer.paths[i]);
 
     for(size_t j=0;j<python_path_buffer.n_paths;++j)
     {
@@ -120,19 +120,18 @@ bool PLUTO_InitializePython(const char *python_path, const char *executable)
     }
     config.module_search_paths_set = 1;
     //
-    printf("Initialize Python Interpreter from Config.\n");
+    PLUTO_LoggerInfo(logger, "Initialize Python Interpreter from Config.");
     status = Py_InitializeFromConfig(&config);
     if (PyStatus_Exception(status)) {
         goto exception;
     }
     
-    printf("Read Interface from Script.\n");
-    printf("  %s\n", executable);
+    PLUTO_LoggerInfo(logger, "Read Interface from Script: %s", executable);
     //PyRun_SimpleString("import sys; print(sys.path)");
-    PLUTO_PY_interface_object = PLUTO_PY_CreateInterface(executable);
+    PLUTO_PY_interface_object = PLUTO_PY_CreateInterface(executable, logger);
     if(!PLUTO_PY_interface_object)
     {
-        printf("Error, unable to load Interface from Script %s\n", executable);
+        PLUTO_LoggerError(logger, "Error, unable to lead Interface Class from Script %s", executable);
         goto error;
     }
     //PyConfig_Clear(&config);
@@ -295,20 +294,20 @@ static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_Py
 // Don't call this Functions outside of PLUTO_PY_CraeteInterface()! 
 //
 
-static PyObject* PLUTO_PY_GetClass(const char *module_name)
+static PyObject* PLUTO_PY_GetClass(const char *module_name, PLUTO_Logger_t logger)
 {
-    printf("Try to import Modules %s\n", module_name);
+    PLUTO_LoggerInfo(logger, "Try to import Modules %s", module_name);
     PyObject *module = PyImport_ImportModule(module_name);
     if(!module)
     {
-        fprintf(stderr, "Unable to import Module!\n");
+        PLUTO_LoggerError(logger, "Unable to import Module!");
         goto error;
     }
     
     PyObject *dict = PyModule_GetDict(module);
     if(!dict)
     {
-        fprintf(stderr, "Unable to get Module Dict!\n");
+        PLUTO_LoggerError(logger, "Unable to get Module Dict!");
         goto error;
     }
     Py_DECREF(module);
@@ -316,14 +315,14 @@ static PyObject* PLUTO_PY_GetClass(const char *module_name)
     PyObject *class = PyDict_GetItemString(dict, PLUTO_PYTHON_INTERFACE_CLASS);
     if(!class)
     {
-        fprintf(stderr, "Unable to get Class from Module Dict!\n");
+        PLUTO_LoggerError(logger, "Unable to get Class from Module Dict!");
         goto error;
     }
     Py_DECREF(dict);
 
     if(!PyCallable_Check(class))
     {
-        fprintf(stderr, "Error, Class is not Callable...\n");
+        PLUTO_LoggerError(logger, "Error, Class is not Callable...");
         goto error;
     }
     return class;
@@ -346,21 +345,20 @@ static PyObject* PLUTO_PY_CreateSetupArgs(int argc, char **argv)
         /* pValue reference stolen here: */
         PyTuple_SetItem(pArgv, i, pValue);
     }
-    printf("Python argv created..\n");
     return pArgv;
 
 error:
     return NULL;
 }
 
-static PyObject* PLUTO_PY_CreateInterface(const char *path)
+static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_Logger_t logger)
 {
     gstate = PyGILState_Ensure();
 
-    PyObject *class = PLUTO_PY_GetClass(path); 
+    PyObject *class = PLUTO_PY_GetClass(path, logger); 
     if(!class)
     {
-        printf("Unable to find Interface Class.\n");
+        PLUTO_LoggerError(logger, "Unable to find Interface Class.");
         goto error;
     }
     //
@@ -400,9 +398,7 @@ static PyObject* PLUTO_PY_CreateInterface(const char *path)
         goto error;
     }
     // Call the Objects Method with "argc" and "argv".
-    printf("Call setup...\n");
     PyObject *result = PyObject_CallMethodObjArgs(object, name, pArgc, pArgv, NULL);
-    printf("after Setup, %p.\n", (void*)result);
     Py_DECREF(name);
     Py_DECREF(pArgc);
     Py_DECREF(pArgv);
@@ -418,7 +414,7 @@ static PyObject* PLUTO_PY_CreateInterface(const char *path)
     }
     
     PyGILState_Release(gstate);
-    printf("Python Initialization of Interface Object done...\n");
+    PLUTO_LoggerInfo(logger, "Python Initialization of Interface Object done...");
     return object;
 
 error:

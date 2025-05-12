@@ -1,150 +1,105 @@
 
+#include "pluto/os_abstraction/pluto_message_queue.h"
+#include "pluto/pluto_event/pluto_event.h"
 #include <pluto/pluto_edge/pluto_edge.h>
-
-#include <stdlib.h>
-#include <sys/msg.h>
-#include <stdio.h>
+#include <pluto/os_abstraction/pluto_malloc.h>
 
 
-struct PLUTO_EDGE_Event
+#include <assert.h>
+
+
+#if PLUTO_LOGGER_ACTIVE
+PLUTO_Logger_t PLUTO_edge_logger = NULL;
+#endif
+
+PLUTO_EDGE_Edge_t PLUTO_EDGE_CreateEdge(const char *path, const char *name, unsigned int permission)
 {
-    uint32_t id;
-    uint32_t event;
-    time_t timestamp;
-    int32_t max_bytes_payload;
-    char *payload;
-};
-
-struct PLUTO_EDGE_Queue
-{
-    int filedescriptor;
-};
-
-uint32_t PLUTO_EDGE_EventId(const PLUTO_EDGE_Event_t event)
-{
-    return event->id;
-}
-
-uint32_t PLUTO_EDGE_EventEvent(const PLUTO_EDGE_Event_t event)
-{
-    return event->event;
-}
-
-char* PLUTO_EDGE_EventPayload(const PLUTO_EDGE_Event_t event)
-{
-    return event->payload;
-}  
-
-size_t PLUTO_EDGE_EventPayloadBufferSize(const PLUTO_EDGE_Event_t event)
-{
-    return event->max_bytes_payload;
-}
-
-time_t PLUTO_EDGE_EventTimestamp(const PLUTO_EDGE_Event_t event)
-{
-    return event->timestamp;
-}
-
-PLUTO_EDGE_Event_t PLUTO_EDGE_CreateEvent(uint32_t id, uint32_t event, size_t size)
-{
-    PLUTO_EDGE_Event_t event_object = malloc(sizeof(struct PLUTO_EDGE_Event));
-    event_object->id = id;
-    event_object->event = event;
-    event_object->payload = malloc(size);
-    event_object->max_bytes_payload = size;
-    event_object->timestamp = time(NULL);
-    return event_object;
-}
-
-void PLUTO_EDGE_DestroyEvent(PLUTO_EDGE_Event_t event)
-{
-    event->id = 0;
-    event->event = 0;
-    event->max_bytes_payload = 0;
-    if(event->payload)
+#if PLUTO_LOGGER_ACTIVE
+    if(!PLUTO_edge_logger)
     {
-        free(event->payload);
+        PLUTO_edge_logger = PLUTO_CreateLogger("Edge");
     }
-    event->payload = NULL;
-    event->timestamp = 0;
-}
-
-PLUTO_EDGE_Queue_t PLUTO_EDGE_CreateQueue(const char *name)
-{
-    (void)name;
-    PLUTO_EDGE_Queue_t queue = malloc(sizeof(struct PLUTO_EDGE_Queue));
-
-    key_t key = ftok(name, 1);
-    queue->filedescriptor = msgget(key, 0);
-    if(queue->filedescriptor < 0)
-    {
-        free(queue);
-        return NULL;
-    }
-
-    return queue;
-}
-
-void PLUTO_EDGE_DestroyQueue(PLUTO_EDGE_Queue_t *queue)
-{
-    free(*queue);
-}
-
-bool PLUTO_EDGE_QueueWrite(
-    PLUTO_EDGE_Queue_t queue, 
-    const PLUTO_EDGE_Event_t event
-)
-{
-    char buffer[4096];
-    
-   time_t loctime = time(NULL); 
-    struct tm *tm = localtime(&loctime);
-    char time_buffer[1024];
-    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%dT%H:%M:%S.%f%z", tm);
-
-    snprintf(
-        buffer,
-        sizeof(buffer),
-        "{\"id\":%i,\"event\":\"%i\",\"time\":\"%s\",\"payload\":\"%s\"}",
-        event->id,
-        event->event,
-        time_buffer,
-        event->payload
+    PLUTO_LoggerInfo(
+        PLUTO_edge_logger, 
+        "Create Edge Object for Path %s, Name %s", 
+        path,
+        name
     );
-    const int result = msgsnd(
-        queue->filedescriptor,
-        buffer,
-        sizeof(buffer),
-        IPC_NOWAIT
-    );
-    return result > 0;
-}
-
-static bool PLUTO_EDGE_ParseEvent(const char *message, PLUTO_EDGE_Event_t event);
-
-bool PLUTO_EDGE_QueueRead(
-    PLUTO_EDGE_Queue_t queue, 
-    PLUTO_EDGE_Event_t event
-)
-{
-    char buffer[4096];
-    const int result = msgrcv(
-        queue->filedescriptor,
-        buffer,
-        sizeof(buffer),
-        IPC_NOWAIT,
-        0
-    ); 
-    if(result > 0)
+#endif
+    PLUTO_EDGE_Edge_t edge = PLUTO_Malloc(sizeof(struct PLUTO_EDGE_Edge));
+    edge->queue = NULL;
+#if PLUTO_LOGGER_ACTIVE
+    edge->logger = NULL;
+    char buffer[1024];
+    const int result = snprintf(buffer, sizeof(buffer), "Edge=%s",name);
+    if(result <= 0 || (size_t)result >= sizeof(buffer))
     {
-        return PLUTO_EDGE_ParseEvent(buffer, event);
+        goto error;
     }
-    return false;
+    edge->logger = PLUTO_CreateLogger(buffer); 
+#endif
+    edge->queue = PLUTO_CreateMessageQueue(
+        path, name, permission
+    );
+    if(!edge->queue)
+    {
+        goto error;
+    }
+    return edge;
+error:
+    PLUTO_EDGE_DestroyEdge(&edge);
+    return edge;
 }
 
-static bool PLUTO_EDGE_ParseEvent(const char *message, PLUTO_EDGE_Event_t event)
+void PLUTO_EDGE_DestroyEdge(PLUTO_EDGE_Edge_t *edge)
 {
-    (void)message;
-    (void)event;
+    assert(NULL != *edge);
+#if PLUTO_LOGGER_ACTIVE
+    if((*edge)->logger)
+        PLUTO_DestroyLogger(&(*edge)->logger);
+#endif
+    if((*edge)->queue)
+        PLUTO_DestroyMessageQueue(&(*edge)->queue);
+    PLUTO_Free(*edge);
+    *edge = NULL;
+}
+
+bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
+{
+    struct PLUTO_MsgBuf buffer;
+    buffer.msgtype = 1;
+    PLUTO_EventToBuffer(
+        event,
+        buffer.text,
+        sizeof(buffer.text)
+    );
+    const bool result = PLUTO_MessageQueueWrite(
+        edge->queue,
+        &buffer
+    );
+
+#if PLUTO_LOGGER_ACTIVE
+    if(!result)
+    {
+        PLUTO_LoggerWarning(
+            edge->logger,
+            "An Event could not be written to the Messagequeue."
+        );
+    }
+#endif
+    return result;
+}
+
+bool PLUTO_EDGE_EdgeReceiveEvent(PLUTO_EDGE_Edge_t edge, PLUTO_Event_t event)
+{
+    struct PLUTO_MsgBuf buffer;
+    if(PLUTO_MessageQueueRead(edge->queue, &buffer))
+    {
+        return PLUTO_CreateEventFromBuffer(
+            event,
+            buffer.text,
+            sizeof(buffer.text)
+        );
+    }
     return false;
 }

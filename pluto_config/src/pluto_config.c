@@ -39,13 +39,13 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename);
+static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename, PLUTO_Logger_t logger);
 
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
+PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_Logger_t logger)
 {
     PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
     
@@ -79,7 +79,7 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name)
         );
     }
    
-    if(!PLUTO_ReadConfigFromFile(config, filename))
+    if(!PLUTO_ReadConfigFromFile(config, filename, logger))
     {
         PLUTO_Free(config);
         return NULL;
@@ -105,36 +105,36 @@ void PLUTO_DestroyConfig(PLUTO_Config_t *config)
 //
 
 
-static char* PLUTO_ReadyConfigFromFile1(const char *filename);
-static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes);
+static char* PLUTO_ReadyConfigFromFile1(const char *filename, PLUTO_Logger_t logger);
+static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Logger_t logger);
 
-static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename)
+static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename, PLUTO_Logger_t logger)
 {
     bool return_value = false;
-    char *files_content = PLUTO_ReadyConfigFromFile1(filename);
+    char *files_content = PLUTO_ReadyConfigFromFile1(filename, logger);
     if(!files_content)
     {
         return false;
     }
-    return_value = PLUTO_ParseConfig(config, files_content);
+    return_value = PLUTO_ParseConfig(config, files_content, logger);
     PLUTO_Free(files_content);
     return return_value;
 }
 
-static char* PLUTO_ReadyConfigFromFile1(const char *filename)
+static char* PLUTO_ReadyConfigFromFile1(const char *filename, PLUTO_Logger_t logger)
 {
-    printf("Read Config File: %s\n", filename);
+    PLUTO_LoggerInfo(logger, "Read Config File: %s", filename);
     FILE *file = fopen(filename, "r");
     if(!file)
     {
-        printf("Unable to open Config File.\n");
+        PLUTO_LoggerError(logger, "Unable to open Config File.");
         return NULL;
     }
     fseek(file, 0L, SEEK_END);
     size_t size = ftell(file) + 1;
     if(size == 0LU)
     {
-        printf("File has size 0.\n");
+        PLUTO_LoggerError(logger, "File has size 0.");
         fclose(file);
         return NULL;
     }
@@ -145,14 +145,14 @@ static char* PLUTO_ReadyConfigFromFile1(const char *filename)
     size_t result = fread(buffer, 1, size, file);
     if(result == 0)
     {
-        printf("Result was 0.\n");
+        PLUTO_LoggerError(logger, "Result was 0.");
         PLUTO_Free(buffer);
     }
     fclose(file);
     return buffer;
 }
 
-static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
+static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Logger_t logger)
 {
     unsigned int flags = 0U;
     jsmntok_t token[128];
@@ -167,7 +167,7 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
         sizeof(token)
     );
 
-    printf("Parse Config...\n");
+    PLUTO_LoggerInfo(logger, "Parse Config...");
     if(result > 0)
     {
         char *key = PLUTO_Malloc(1024);
@@ -182,22 +182,22 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
                 value[token[i + 1].end - token[i + 1].start] = '\0';
                 if(0 == strcmp("work_dir", key))
                 {
-                    printf("  work_dir: %s\n", value);
+                    PLUTO_LoggerInfo(logger, "  work_dir: %s", value);
                     memcpy(config->base_path, value, strlen(value) + 1);
                     flags |= 0x1U;
                     i += 2;
                 }
                 else if(0 == strcmp("name_of_input_queue", key))
                 {
-                    printf("  input_queue_name: %s\n", value);
+                    PLUTO_LoggerInfo(logger, "  input_queue_name: %s", value);
                     memcpy(config->name_of_input_queue, value, strlen(value) + 1);
                     flags |= 0x2U;
                     i += 2;
                 }
                 else if(0 == strcmp("names_of_output_queues", key))
                 {
-                    printf("  output_queue_names: %s\n", value);
-                    printf("  number_of_output_queues: %i\n", token[i + 1].size);
+                    PLUTO_LoggerInfo(logger, "  output_queue_names: %s", value);
+                    PLUTO_LoggerInfo(logger, "  number_of_output_queues: %i", token[i + 1].size);
                     config->number_of_output_queues = token[i + 1].size;
                     for(int j=0;j<token[i + 1].size;++j)
                     {
@@ -207,7 +207,7 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes)
                             token[i + j + 2].end - token[i + j + 2].start
                         );
                         config->names_of_output_queues[j][token[i + j + 2].end - token[i + j + 2].start] = '\0'; 
-                        printf("    Outputqueue Name: %s\n", config->names_of_output_queues[j]);
+                        PLUTO_LoggerInfo(logger, "    Outputqueue Name: %s", config->names_of_output_queues[j]);
                     }
                     flags |= 0x4U;
                     i += token[i + 1].size + 2;

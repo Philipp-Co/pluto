@@ -32,6 +32,7 @@ add_library(
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_types.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_message_queue.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_semaphore.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_logger.c
 )
 
 target_include_directories(
@@ -45,6 +46,7 @@ target_compile_definitions(
     pluto_os_abstraction
     PUBLIC
     _XOPEN_SOURCE=700
+    PLUTO_LOG_LEVEL=2000
 )
 
 #

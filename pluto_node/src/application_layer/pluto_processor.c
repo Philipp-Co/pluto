@@ -33,12 +33,11 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback)
+PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback, PLUTO_Logger_t logger)
 {
     PLUTO_Processor_t processor = (PLUTO_Processor_t)malloc(sizeof(struct PLUTO_Processor));
-
+    processor->logger = logger;
     processor->callback = callback;
-
     processor->info = PLUTO_CreateInfo(config->base_path, config->name);
     
     processor->number_of_output_queues = config->number_of_output_queues;
@@ -47,7 +46,7 @@ PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCall
     );    
     for(int32_t i=0;i<config->number_of_output_queues;++i)
     {
-        printf("Create Output Queue %s\n", config->names_of_output_queues[i]);
+        PLUTO_LoggerDebug(processor->logger, "Create Message Queue %s", config->names_of_output_queues[i]);
         processor->output_queues[i] = PLUTO_CreateMessageQueue(
             config->base_path,
             config->names_of_output_queues[i],
@@ -100,15 +99,15 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         )
     )
     {
-        PLUTO_Event_t event = PLUTO_CreateEventFromBuffer(buffer.text, sizeof(buffer.text));
-        if(!event)
+        PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+        bool result = PLUTO_CreateEventFromBuffer(event, buffer.text, sizeof(buffer.text));
+        if(!result)
         {
-            printf("Error, unable to parse Inputevent!\n");
+            PLUTO_LoggerWarning(processor->logger, "Error, unable to parse Inputevent!");
             return;
         }
         PLUTO_Event_t output_event = PLUTO_CreateEvent(3072);
         // process...
-        printf("    Request id: %i, event %i\n", event->id, event->eventid);
         PLUTO_ProcessorCallbackInput_t input = {
             .id = event->eventid,
             .event = PLUTO_EventId(event),
@@ -117,16 +116,13 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
             .input_buffer_size = PLUTO_EventSizeOfPayload(event),
             .output_buffer_size = PLUTO_EventSizeOfPayload(output_event) -1
         };
-        printf("------ Callback\n");
         PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
-        printf("------\n");
         if(output.return_value)
         {
             if(PLUTO_EventToBuffer(output_event, buffer.text, sizeof(buffer.text)))
             {
                 for(int i=0;i<processor->number_of_output_queues;++i)
                 {
-                    printf("Write output to Queue %i: %s\n", i, buffer.text);
                     PLUTO_MessageQueueWrite(
                         processor->output_queues[i],
                         &buffer
@@ -136,7 +132,7 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         }
         else
         {
-            printf("Callback returned an Error!\n");
+            PLUTO_LoggerWarning(processor->logger, "Client Code returned an Error!");
         }
     }
 }

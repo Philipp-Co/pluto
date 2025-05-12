@@ -1,4 +1,5 @@
 #include <pluto/pluto_core/application_layer/pluto_core.h>
+#include <pluto/os_abstraction/pluto_logger.h>
 
 #include <signal.h>
 #include <stdatomic.h>
@@ -31,9 +32,12 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    PLUTO_Logger_t logger = PLUTO_CreateLogger("core");
+
     PLUTO_CoreSetUp();
     PLUTO_core = PLUTO_CreateCore(
-        args.config_path
+        args.config_path,
+        logger
     );
     if(!PLUTO_core) return -1;
     

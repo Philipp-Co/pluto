@@ -33,9 +33,11 @@ pluto_rw ist ein Hilfswerkzeug mit dem ein R/W Zugriff auf die bestehende Infras
 
 ## Projektaufbau
 
-    +------+------+------+------+
-    | Info | Node | Core | Edge |
-    +------+------+------+------+
+    +--------+--------+---------+
+    |  Info  |  Node  |  Core   |
+    +--------+--------+---------+
+    |           Edge            |
+    +-------------+-------------+
     |     Event   |    Config   |
     +-------------+-------------+
     |    OS Abstraction         |

@@ -15,6 +15,7 @@
 //
 
 #include <pluto/os_abstraction/pluto_time.h>
+#include <pluto/os_abstraction/pluto_message_queue.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -40,17 +41,13 @@ struct PLUTO_Event
     ///
     PLUTO_Time_t timestamp;
     ///
-    /// \brief  Size of "payload" in Bytes.
-    ///
-    size_t nbytes_buffer;
-    ///
     /// \brief  Number of usable Bytes in "payload".
     ///
     size_t nbytes_payload;
     ///
     /// \brief  A Buffer.
     /// 
-    char *payload;
+    struct PLUTO_MsgBuf payload;
 };
 typedef struct PLUTO_Event* PLUTO_Event_t;
 
@@ -74,7 +71,7 @@ void PLUTO_DestroyEvent(PLUTO_Event_t *event);
 /// \param[in] buffer - A Buffer.
 /// \param[in] nbytes - Size of the given Buffer in Bytes.
 ///
-PLUTO_Event_t PLUTO_CreateEventFromBuffer(const char *buffer, size_t nbytes);
+bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t nbytes);
 ///
 /// \brief  Dump the given Event Instance to the given Buffer.
 /// \param[in] event - The Event that shall be dumped. Must not be NULL.
