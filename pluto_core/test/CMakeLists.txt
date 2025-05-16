@@ -2,61 +2,38 @@
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
-cmake_minimum_required(VERSION 3.16)
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-#
-# Find required Packages.
-#
-
-add_subdirectory(
-    test/
-)
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-#
-# add unity
-#
-#add_library(
-#    unity STATIC
-#    external/Unity/src/unity.c
-#)
-
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
 add_executable(
-    pluto_core
-    ${CMAKE_CURRENT_LIST_DIR}/src/application_interface_layer/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_core.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_node_state.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_core_state.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/data_layer/pluto_sig_queue.c
+    pluto_core_test
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_core.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_node_state.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_core_state.c
+
+    ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_core_state.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_node_state.c
+    
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
 
 target_include_directories(
-    pluto_core
+    pluto_core_test
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../external/
+    ${CMAKE_CURRENT_LIST_DIR}/../inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/
 )
 
 target_link_directories(
-    pluto_core
+    pluto_core_test
     PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_os_abstraction/
 )
 
 target_link_libraries(
-    pluto_core
+    pluto_core_test
     PUBLIC
     pluto_config
     pluto_os_abstraction
@@ -67,7 +44,7 @@ target_link_libraries(
 #
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(
-        pluto_core
+        pluto_core_test
         PUBLIC
         "-fno-omit-frame-pointer"
         "-Wno-unused-function"
@@ -80,12 +57,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         "-pedantic-errors"
     )
     #target_link_options(
-    #    pluto_core
+    #    pluto_core_test
     #    PUBLIC
     #)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(
-        pluto_core
+        pluto_core_test
         PUBLIC
         "-O2"
         "-Wno-unused-function"
@@ -104,8 +81,7 @@ endif()
 #
 
 add_dependencies(
-    pluto_core
-    pluto_config
+    pluto_core_test
     pluto_os_abstraction
 )
 

@@ -5,18 +5,15 @@
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/pluto_core/application_layer/pluto_node_state.h>
+#include <pluto/pluto_core/application_layer/pluto_core_state.h>
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 
-
 struct PLUTO_Core
 {
-    PLUTO_CoreConfig_t config;
-    char *binary_directory;
-    struct PLUTO_NodeState *nodes; 
-    size_t n_nodes;
+    struct PLUTO_CoreState state;
     PLUTO_CORE_SigQueue_t signal_queue;
     PLUTO_Logger_t logger;
 };

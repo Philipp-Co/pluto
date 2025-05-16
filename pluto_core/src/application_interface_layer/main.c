@@ -53,13 +53,15 @@ int main(int argc, char **argv)
     sigemptyset(&sigset);
     while(!atomic_load(&PLUTO_terminate))
     {
-        (void)sigsuspend(&sigset);
+        //(void)sigsuspend(&sigset);
         if(!PLUTO_CoreProcess(PLUTO_core))
         {
             atomic_store(&PLUTO_terminate, 1);
         }
+        sleep(1);
     }
 
+    PLUTO_LoggerInfo(PLUTO_core->logger, "Core: Bye Bye.");
     PLUTO_DestroyCore(&PLUTO_core);
     return 0;
 }
@@ -68,13 +70,6 @@ static void PLUTO_CoreSignalHandler(int signum, siginfo_t *info, void *args)
 {
     (void)args;
     PLUTO_CoreSignalReceived(PLUTO_core, signum, info->si_pid);
-    switch(signum)
-    {
-        case SIGINT:
-            atomic_store(&PLUTO_terminate, 1);
-            break;
-    }
-
 }
 
 static void PLUTO_CoreSetUp(void)

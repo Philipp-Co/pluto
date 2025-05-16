@@ -3,6 +3,7 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 
 typedef enum
@@ -66,5 +67,6 @@ void PLUTO_NodeStateReset(PLUTO_NodeState_t state);
 void PLUTO_NodeStateTerminatedBySignal(PLUTO_NodeState_t state, int signum);
 PLUTO_CORE_NodeStateValue_t PLUTO_NodeStateCurrentState(PLUTO_NodeState_t state);
 pid_t PLUTO_NodeStateGetPid(const PLUTO_NodeState_t state);
+bool PLUTO_NodeStateAccepting(const PLUTO_NodeState_t state);
 
 #endif

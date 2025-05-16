@@ -114,25 +114,31 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
             .input_buffer = PLUTO_EventPayload(event),
             .output_buffer = PLUTO_EventPayload(output_event),
             .input_buffer_size = PLUTO_EventSizeOfPayload(event),
-            .output_buffer_size = PLUTO_EventSizeOfPayload(output_event) -1
+            .output_buffer_size = PLUTO_EventSizeOfPayload(output_event) -1,
+            .number_of_output_queues = (uint8_t)processor->number_of_output_queues
         };
+        PLUTO_LoggerInfo(processor->logger, "Before Callback...");
         PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
+        PLUTO_LoggerInfo(processor->logger, "After Callback...");
+        //
+        // Only send an Event if the Client returned True.
+        //
         if(output.return_value)
         {
             if(PLUTO_EventToBuffer(output_event, buffer.text, sizeof(buffer.text)))
             {
                 for(int i=0;i<processor->number_of_output_queues;++i)
                 {
-                    PLUTO_MessageQueueWrite(
-                        processor->output_queues[i],
-                        &buffer
-                    ); 
+                    if((1LU << i) & output.output_to_queues)
+                    {
+                        PLUTO_LoggerInfo(processor->logger, "Send Event to Queue %i", i);
+                        PLUTO_MessageQueueWrite(
+                            processor->output_queues[i],
+                            &buffer
+                        ); 
+                    }
                 }
             }
-        }
-        else
-        {
-            PLUTO_LoggerWarning(processor->logger, "Client Code returned an Error!");
         }
     }
 }

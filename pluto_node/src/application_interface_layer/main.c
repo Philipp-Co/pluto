@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     PLUTO_SHLIB_Destroy();
 #endif
     
-    PLUTO_LoggerInfo(PLUTO_node_logger, "Bye Bye...");
+    PLUTO_LoggerInfo(PLUTO_node_logger, "Node: Bye Bye...");
     return_value = 0;
 end:
     PLUTO_DestroyLogger(&PLUTO_node_logger);
@@ -215,6 +215,7 @@ static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCall
     snprintf(args->output_buffer, args->output_buffer_size, "{\"passthrough\":\"%s\"}", args->input_buffer);
     PLUTO_ProcessorCallbackOutput_t output = {
         .id = args->id,
+        .output_to_queues = 0xFFFFFFFFFFFFFFFFU,
         .event = args->event,
         .return_value = true,
         .output_size = strlen(args->output_buffer)

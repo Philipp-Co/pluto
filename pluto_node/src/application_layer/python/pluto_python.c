@@ -72,6 +72,7 @@ static PLUTO_ProcessorCallbackInput_t *PLUTO_PY_current_buffer;
 static PLUTO_ProcessorCallbackOutput_t PLUTO_PY_current_output_buffer;
 static PyObject *PLUTO_PY_interface_object = NULL;
 PyGILState_STATE gstate;
+PLUTO_Logger_t PLUTO_PY_logger = NULL;
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -81,7 +82,9 @@ bool PLUTO_InitializePython(const char *python_path, const char *executable, PLU
 {
     PyStatus status;
     PyConfig config;
-    
+   
+    PLUTO_PY_logger = logger;
+
     PLUTO_LoggerInfo(logger, "Start Python configuration...");
     //PyImport_AppendInittab("pluto", &PyInit_emb_input);
     PyConfig_InitIsolatedConfig(&config);
@@ -176,18 +179,21 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     PLUTO_PY_current_output_buffer.output_size = 0;
 
     // Prepare Arguments
+    PyObject *n_output_queues = PyLong_FromUnsignedLongLong(args->number_of_output_queues);
     PyObject *id = PyLong_FromLong(args->id);
     PyObject *event = PyLong_FromLong(args->event);
     PyObject *payload = PyUnicode_FromString(args->input_buffer);
     
     // Call Memberfunction on Object
     PyObject *method = PyUnicode_FromString(PLUTO_PYTHON_RUN_METHOD);
-    PyObject *result = PyObject_CallMethodObjArgs(PLUTO_PY_interface_object, method, id, event, payload, NULL);
+    PyObject *result = PyObject_CallMethodObjArgs(PLUTO_PY_interface_object, method, id, event, n_output_queues, payload, NULL);
     if(!result)
     {
+        PLUTO_LoggerWarning(PLUTO_PY_logger, "NULL returned from Python-Callback.");
         PyErr_Print();
         PLUTO_PY_current_output_buffer.id = 0U;
         PLUTO_PY_current_output_buffer.event = 0U;
+        PLUTO_PY_current_output_buffer.output_to_queues = 0U;
         PLUTO_PY_current_output_buffer.return_value = false;
         PLUTO_PY_current_output_buffer.output_size = 0LU;
     }
@@ -197,16 +203,22 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
         const size_t strl_d = strlen(Py_TYPE(result)->tp_name); 
         if(strl_t != strl_d)
         {
-            printf("No Tuple!\n");
+            PLUTO_LoggerWarning(PLUTO_PY_logger, "Python-Callback returned an unspecified Objtec: %s", Py_TYPE(result)->tp_name);
         }
         else
         {
             if(0 == memcmp("tuple", Py_TYPE(result)->tp_name, strl_t))
             {
                 PLUTO_PY_current_output_buffer.return_value = true;
+                if(4LU != PyTuple_Size(result))
+                {
+                    PLUTO_LoggerWarning(PLUTO_PY_logger, "Error, unable to parse Callback Result! Tuple has %u Elements.", (unsigned int)PyTuple_Size(result));
+                    goto end;
+                }
                 PyObject *pyid = PyTuple_GetItem(result, 0LU);
                 PyObject *pyevent = PyTuple_GetItem(result, 1LU);
-                PyObject *pypayload = PyTuple_GetItem(result, 2LU);
+                PyObject *pyoutputqueues = PyTuple_GetItem(result, 2LU);
+                PyObject *pypayload = PyTuple_GetItem(result, 3LU);
                 if(pyid && PyLong_Check(pyid)) 
                 {
                     PLUTO_PY_current_output_buffer.id = PyLong_AsLong(pyid);
@@ -221,6 +233,16 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                 {
                     PLUTO_PY_current_output_buffer.event = PyLong_AsLong(pyevent);
                     Py_DECREF(pyevent);
+                }
+                else
+                {
+                    PLUTO_PY_current_output_buffer.return_value = false;
+                    goto error;
+                }
+                if(pyoutputqueues && PyLong_Check(pyoutputqueues))
+                {
+                    PLUTO_PY_current_output_buffer.output_to_queues = PyLong_AsUnsignedLongLong(pyoutputqueues);
+                    Py_DECREF(pyoutputqueues);
                 }
                 else
                 {
@@ -249,15 +271,17 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
             }
             else
             {
-                printf("Result is no Tuple!\n");
+                PLUTO_LoggerWarning(PLUTO_PY_logger, "Python-Callback returned an unspecified Objtec: %s", Py_TYPE(result)->tp_name);
             }
         }
         Py_DECREF(result);
     }
+end:
     Py_DECREF(method);
     Py_DECREF(payload);
     Py_DECREF(event);
     Py_DECREF(id);
+    Py_DECREF(n_output_queues);
 
     return PLUTO_PY_current_output_buffer;
 }

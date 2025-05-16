@@ -5,6 +5,7 @@ struct PLUTO_NodeState PLUTO_NodeState(void)
 {
     struct PLUTO_NodeState state = {
         .current_state = PLUTO_CORE_NS_INITIAL,
+        .pid = 0,
         .exit_status = -1,
         .signum = {-1, -1, -1},
         .index = 0
@@ -92,4 +93,9 @@ PLUTO_CORE_NodeStateValue_t PLUTO_NodeStateCurrentState(PLUTO_NodeState_t state)
 pid_t PLUTO_NodeStateGetPid(const PLUTO_NodeState_t state)
 {
     return state->pid;
+}
+
+bool PLUTO_NodeStateAccepting(const PLUTO_NodeState_t state)
+{
+    return (PLUTO_CORE_NS_BROKEN == state->current_state) || (PLUTO_CORE_NS_TERMINATED == state->current_state);
 }

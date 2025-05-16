@@ -15,9 +15,9 @@ class PlutoEventHandler:
         print("Teardown from Handler!")
         pass
 
-    def run(self, id: int, event: int, payload: str) -> str:
-        print(f'Hello from run: {id}, {event}, {payload}')
-        return (id, event, '{' + f'\"python\":\"{payload}\"' + '}')
+    def run(self, id: int, event: int, number_of_output_queues: int, payload: str) -> str:
+        print(f'Hello from run: {id}, {event}, {number_of_output_queues}, {payload}')
+        return (id, event, 0xffffffffffffffff, '{' + f'\"python\":\"{payload}\"' + '}')
 
     pass
 
