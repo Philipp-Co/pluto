@@ -10,8 +10,15 @@ add_executable(
     pluto_os_abstraction_test
     ${CMAKE_CURRENT_LIST_DIR}/src/test_os_abstraction_main.c
     ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_time.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_os_abstraction_semaphore.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_os_abstraction_messagequeue.c
 
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_time.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_message_queue.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_semaphore.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_logger.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_types.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_malloc.c
     ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
 

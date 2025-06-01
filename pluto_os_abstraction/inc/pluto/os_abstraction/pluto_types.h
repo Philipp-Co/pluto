@@ -63,10 +63,11 @@ typedef struct PLUTO_Response* PLUTO_Response_t;
 /// \return bool - true on success and false otherwise.
 ///
 bool PLUTO_CreateKey(const char *path, const char *name, PLUTO_Key_t *key);
+bool PLUTO_KeyGet(const char *path, const char *name, PLUTO_Key_t *key);
 ///
 /// \brief  Destroy a given Key.
 ///
-void PLUTO_DestroyKey(PLUTO_Key_t key);
+void PLUTO_DestroyKey(PLUTO_Key_t *key);
 
 //
 // --------------------------------------------------------------------------------------------------------------------

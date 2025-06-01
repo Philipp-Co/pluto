@@ -1,0 +1,12 @@
+#ifndef __PLUTO_TEST_PROCESSOR_H__
+#define __PLUTO_TEST_PROCESSOR_H__
+
+void PLUTO_TEST_ProcessorInitial(void);
+void PLUTO_TEST_ProcessorProcessWithEmptyPayload(void);
+void PLUTO_TEST_ProcessorProcessWithStandardPayload(void);
+void PLUTO_TEST_ProcessorProcessWithBigPayload(void);
+void PLUTO_TEST_ProcessorProcessWithMultipleMessages(void);
+void PLUTO_TEST_PythonProcessEventWhenQueueIsEmpty(void);
+void PLUTO_TEST_PythonProcessEventWhenQueueIsNotEmpty(void);
+
+#endif

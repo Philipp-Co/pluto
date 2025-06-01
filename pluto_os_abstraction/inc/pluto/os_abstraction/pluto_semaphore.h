@@ -1,5 +1,5 @@
 ///
-/// \brief  Implementation of a Semaphore.
+/// \brief  This Module contains the Interfacedefinition for a Semaphore.
 ///
 #ifndef __PLUTO_SEMAPHORE_H__
 #define __PLUTO_SEMAPHORE_H__
@@ -9,6 +9,7 @@
 //
 
 #include <pluto/os_abstraction/pluto_types.h>
+#include <pluto/os_abstraction/pluto_logger.h>
 
 #include <stdint.h>
 
@@ -22,6 +23,7 @@
 struct PLUTO_Semaphore 
 {
     PLUTO_Key_t key;
+    PLUTO_Logger_t logger;
     int filedescriptor;
 };
 typedef struct PLUTO_Semaphore* PLUTO_Semaphore_t;
@@ -39,10 +41,18 @@ typedef enum
 
 ///
 /// \brief  Create a Semaphore.
+///         The Object is created OS global, which means other Processes can see and use this Object as well.
 ///
-PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name);
+PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name, PLUTO_Logger_t logger);
 ///
-/// \brief  Desctroy a Semaphore.
+/// \brief  Get a Semaphore.
+///         A call to this Function does not create a Semaphore, but fails if the requestd Object does not exist.
+///
+PLUTO_Semaphore_t PLUTO_SemaphoreGet(const char *path, const char *name, PLUTO_Logger_t logger);
+///
+/// \brief  Destroy a Semaphore.
+///         The Semaphores local representation is destroy. Destruction of the global Object depends on the Semaphores Value.
+///         If the Value is equal to 0 then it is destroyed globally.
 ///
 void PLUTO_DestroySemaphore(PLUTO_Semaphore_t *semaphore);
 ///

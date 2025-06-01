@@ -38,7 +38,7 @@ static PLUTO_Logger_t PLUTO_event_logger = NULL;
 
 bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLUTO_Event_t event);
 
-PLUTO_Event_t PLUTO_CreateEvent(size_t nbytes)
+PLUTO_Event_t PLUTO_CreateEvent(void)
 {
     if(!PLUTO_event_logger)
     {
@@ -47,15 +47,6 @@ PLUTO_Event_t PLUTO_CreateEvent(size_t nbytes)
         );
     }
 
-    if(nbytes > (sizeof(struct PLUTO_MsgBuf) - (sizeof(long))))
-    {
-        PLUTO_LoggerWarning(
-            PLUTO_event_logger,
-            "Buffer Size is to Big! Size of %lu is not allowed.",
-            nbytes
-        );
-        return NULL;
-    }
     PLUTO_Time_t timestamp = {
         .time = {0},
         .milliseconds = 0
@@ -72,6 +63,7 @@ PLUTO_Event_t PLUTO_CreateEvent(size_t nbytes)
 
 void PLUTO_DestroyEvent(PLUTO_Event_t *event)
 {
+    assert(NULL != event);
     assert(NULL != *event);
     PLUTO_Free(*event);
     *event = NULL;
@@ -79,13 +71,15 @@ void PLUTO_DestroyEvent(PLUTO_Event_t *event)
 
 bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t nbytes)
 {
-    assert(NULL != buffer);
     (void)nbytes;
+    assert(NULL != buffer);
+    assert(NULL != event);
 
     jsmntok_t token[128];
     jsmn_parser parser;
     jsmn_init(&parser);
     
+    event->nbytes_payload = 0;
     const int len = strlen(buffer);
 
     const int result = jsmn_parse(&parser, buffer, len, token, sizeof(token));
@@ -106,11 +100,10 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
             "JSON parse Error: Unable to parse Top-Level JSON Object.",
             result
         );
-        PLUTO_DestroyEvent(&event);
         return false;
     }
     
-    if(event->nbytes_payload <= sizeof(event->payload.text))
+    if(event->nbytes_payload <= (sizeof(event->payload.text)-len))
     {
         memcpy(event->payload.text, buffer + len + 1, event->nbytes_payload);
         return true;
@@ -121,7 +114,6 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
         "JSON parse Error: Buffer to small.",
         result
     );
-    PLUTO_DestroyEvent(&event);
     return false;
 }
 
@@ -188,7 +180,7 @@ size_t PLUTO_EventSizeOfPayload(const PLUTO_Event_t event)
 
 size_t PLUTO_EventSizeOfPayloadBuffer(const PLUTO_Event_t event)
 {
-    return sizeof(event->payload);
+    return sizeof(event->payload.text);
 }
 
 void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, size_t nbytes_payload)

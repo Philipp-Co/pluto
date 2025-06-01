@@ -1,5 +1,7 @@
 
 #include <pluto/os_abstraction/test/test_pluto_time.h>
+#include <pluto/os_abstraction/test/test_os_abstraction_messagequeue.h>
+#include <pluto/os_abstraction/test/test_os_abstraction_semaphore.h>
 
 
 #include <Unity/src/unity.h>
@@ -16,6 +18,13 @@ int main(int argc, char **argv)
     RUN_TEST(PLUTO_TEST_TimeInitial);
     RUN_TEST(PLUTO_TEST_TimeFromString);
     RUN_TEST(PLUTO_TEST_TimeToString);
+
+    RUN_TEST(PLUTO_TEST_SemaphoreInitialCreate);
+    RUN_TEST(PLUTO_TEST_SemaphoreInitialGet);
+
+    RUN_TEST(PLUTO_TEST_MessageQueueInitialCreate);
+    RUN_TEST(PLUTO_TEST_MessageQueueInitialGet);
+
     return UNITY_END();
 }
 

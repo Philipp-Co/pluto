@@ -1,34 +1,20 @@
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
-
-cmake_minimum_required(VERSION 3.16)
-project(pluto_test_application_layer VERSION 0.0.0 LANGUAGES C)
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-#
-# Find required Packages.
-#
-# https://cmake.org/cmake/help/latest/module/FindPython3.html
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
+find_package (Python3 COMPONENTS Interpreter Development)
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 set(
     SRC
     ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/../../src/jsmn.c
-    ${CMAKE_CURRENT_LIST_DIR}/../../src/application_layer/pluto_config.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/test_config.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_processor.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_python.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_processor.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_info.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/python/pluto_python.c
+    
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
 
 #
@@ -36,34 +22,47 @@ set(
 #
 
 add_executable(
-    pluto_test_application_layer ${SRC}
+    pluto_node_test ${SRC}
 )
 
 target_compile_definitions(
-    pluto_test_application_layer 
+    pluto_node_test 
     PUBLIC
     PLUTO_CTS_RTM_PASSTHROUGH
     PLUTO_TEST
+    PLUTO_TEST_CONFIG="${CMAKE_CURRENT_LIST_DIR}/ressources/test_node_config.txt"
 )
 
 target_include_directories(
-    pluto_test_application_layer
+    pluto_node_test
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../../inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../../../external/
+    ${CMAKE_CURRENT_LIST_DIR}/../inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../../pluto_edge/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../../pluto_config/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../../pluto_os_abstraction/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/
+    ${Python3_INCLUDE_DIRS}
 )
 
 target_link_directories(
-    pluto_test_application_layer
+    pluto_node_test
     PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/../../../external/Unity/build/
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/build/
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_edge/
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_event/
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_config/
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_os_abstraction/
 )
 
 target_link_libraries(
-    pluto_test_application_layer
+    pluto_node_test
     PUBLIC
-    unity
+    pluto_edge_static
+    pluto_event
+    pluto_config
+    pluto_os_abstraction
+    Python3::Python
 )
 
 #
@@ -71,7 +70,7 @@ target_link_libraries(
 #
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(
-        pluto_test_application_layer
+        pluto_node_test
         PUBLIC
         "-fsanitize=address"
         "-fno-omit-frame-pointer"
@@ -84,14 +83,14 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         "-pedantic-errors"
     )
     target_link_options(
-        pluto_test_application_layer
+        pluto_node_test
         PUBLIC
         "-fsanitize=address"
         "-fno-omit-frame-pointer"
     )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(
-        pluto_test_application_layer
+        pluto_node_test
         PUBLIC
         "-O2"
         "-fdata-sections"

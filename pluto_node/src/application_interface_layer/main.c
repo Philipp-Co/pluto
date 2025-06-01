@@ -119,6 +119,7 @@ int main(int argc, char **argv)
     while(!atomic_load(&PLUTO_Terminate))
     {
         PLUTO_ProcessorProcess(processor);
+        sleep(1);
     }
     PLUTO_DestroyProcessor(&processor);
 

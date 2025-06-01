@@ -20,8 +20,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#define PLUTO_PROC_INPUT_QUEUE_PERMISSIONS 044
-#define PLUTO_PROC_OUTPUT_QUEUE_PERMISSIONS 022
+#define PLUTO_PROC_INPUT_QUEUE_PERMISSIONS 0777
+#define PLUTO_PROC_OUTPUT_QUEUE_PERMISSIONS 0777
 
 #define PLUTO_PROC_MAX_BYTES_BODY (1024 * 64)
 #define PLUTO_PROC_MAX_BYTES_TUPLE_NAME (128)
@@ -35,6 +35,8 @@
 
 PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCallback_t callback, PLUTO_Logger_t logger)
 {
+    if(!config) return NULL;
+    if(!callback) return NULL;
     PLUTO_Processor_t processor = (PLUTO_Processor_t)malloc(sizeof(struct PLUTO_Processor));
     processor->logger = logger;
     processor->callback = callback;
@@ -50,7 +52,8 @@ PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCall
         processor->output_queues[i] = PLUTO_CreateMessageQueue(
             config->base_path,
             config->names_of_output_queues[i],
-            PLUTO_PROC_OUTPUT_QUEUE_PERMISSIONS
+            PLUTO_PROC_OUTPUT_QUEUE_PERMISSIONS,
+            logger
         );
         if(!processor->output_queues[i])
         {
@@ -60,7 +63,8 @@ PLUTO_Processor_t PLUTO_CreateProcessor(PLUTO_Config_t config, PLUTO_ProcessCall
     processor->input_queue = PLUTO_CreateMessageQueue(
         config->base_path,
         config->name_of_input_queue,
-        PLUTO_PROC_INPUT_QUEUE_PERMISSIONS
+        PLUTO_PROC_INPUT_QUEUE_PERMISSIONS,
+        logger
     ); 
 
     PLUTO_InfoValues_t values = {
@@ -92,6 +96,7 @@ void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor)
 void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
 {
     struct PLUTO_MsgBuf buffer;
+    memset(buffer.text, '\0', sizeof(buffer.text));
     if(
         PLUTO_MessageQueueRead(
             processor->input_queue,
@@ -99,14 +104,20 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         )
     )
     {
-        PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+        PLUTO_LoggerInfo(processor->logger, "Processing next Event... %s", buffer.text);
+        
+        PLUTO_Event_t event = PLUTO_CreateEvent();
+        memset(PLUTO_EventPayload(event), '\0', PLUTO_EventSizeOfPayloadBuffer(event));
+        
+        PLUTO_Event_t output_event = PLUTO_CreateEvent();
+        memset(PLUTO_EventPayload(output_event), '\0', PLUTO_EventSizeOfPayloadBuffer(output_event));
+        
         bool result = PLUTO_CreateEventFromBuffer(event, buffer.text, sizeof(buffer.text));
         if(!result)
         {
             PLUTO_LoggerWarning(processor->logger, "Error, unable to parse Inputevent!");
-            return;
+            goto end;
         }
-        PLUTO_Event_t output_event = PLUTO_CreateEvent(3072);
         // process...
         PLUTO_ProcessorCallbackInput_t input = {
             .id = event->eventid,
@@ -114,24 +125,21 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
             .input_buffer = PLUTO_EventPayload(event),
             .output_buffer = PLUTO_EventPayload(output_event),
             .input_buffer_size = PLUTO_EventSizeOfPayload(event),
-            .output_buffer_size = PLUTO_EventSizeOfPayload(output_event) -1,
+            .output_buffer_size = PLUTO_EventSizeOfPayload(output_event),
             .number_of_output_queues = (uint8_t)processor->number_of_output_queues
         };
-        PLUTO_LoggerInfo(processor->logger, "Before Callback...");
         PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
-        PLUTO_LoggerInfo(processor->logger, "After Callback...");
         //
         // Only send an Event if the Client returned True.
         //
         if(output.return_value)
         {
-            if(PLUTO_EventToBuffer(output_event, buffer.text, sizeof(buffer.text)))
+            if(PLUTO_EventToBuffer(output_event, buffer.text, sizeof(buffer.text) - 1))
             {
                 for(int i=0;i<processor->number_of_output_queues;++i)
                 {
                     if((1LU << i) & output.output_to_queues)
                     {
-                        PLUTO_LoggerInfo(processor->logger, "Send Event to Queue %i", i);
                         PLUTO_MessageQueueWrite(
                             processor->output_queues[i],
                             &buffer
@@ -140,6 +148,10 @@ void PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
                 }
             }
         }
+
+        end:
+        PLUTO_DestroyEvent(&output_event);
+        if(event) PLUTO_DestroyEvent(&event);
     }
 }
 

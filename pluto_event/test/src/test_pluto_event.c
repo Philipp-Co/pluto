@@ -15,13 +15,11 @@
 
 void PLUTO_TEST_TestEvent(void)
 {
-    const size_t nbytes = 1024;
-    PLUTO_Event_t event = PLUTO_CreateEvent(nbytes);
+    PLUTO_Event_t event = PLUTO_CreateEvent();
 
     TEST_ASSERT_NOT_NULL(event);
     TEST_ASSERT_EQUAL_UINT32(0U, PLUTO_EventId(event));
     TEST_ASSERT_EQUAL_UINT32(0U, PLUTO_EventEventId(event));
-    TEST_ASSERT_GREATER_THAN_UINT32((uint32_t)nbytes, (uint32_t)PLUTO_EventSizeOfPayloadBuffer(event));
     TEST_ASSERT_EQUAL_UINT32((uint32_t)0U, (uint32_t)PLUTO_EventSizeOfPayload(event));
     TEST_ASSERT_NOT_NULL(PLUTO_EventPayload(event));
 
@@ -39,7 +37,7 @@ void PLUTO_TEST_EventFromBufferSuccess(void)
         "\"time\":\"2025-01-01T00:00:00.0+0000\","
         "\"payload\":6}\0"
         "\"test\"";
-    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+    PLUTO_Event_t event = PLUTO_CreateEvent();
     const bool result = PLUTO_CreateEventFromBuffer(event, event_buffer, strlen(event_buffer));
 
     TEST_ASSERT_TRUE(result);
@@ -81,7 +79,7 @@ void PLUTO_TEST_EventFromBufferIdMissing(void)
         "\"payload\":6}\0"
         "\"test\"",
     };
-    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+    PLUTO_Event_t event = PLUTO_CreateEvent();
     for(int32_t i=0;i<3;++i)
     {
         TEST_ASSERT_FALSE(
@@ -110,7 +108,7 @@ void PLUTO_TEST_EventFromBufferEventMissing(void)
         "\"payload\":6}\0"
         "\"test\""
     };
-    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+    PLUTO_Event_t event = PLUTO_CreateEvent();
     for(int32_t i=0;i<3;++i)
     {
         TEST_ASSERT_FALSE(
@@ -136,7 +134,7 @@ void PLUTO_TEST_EventFromBufferPayloadMissing(void)
             "\"time\":\"2025-01-01T00:00:00.0+0000\",\"payload\":-1}\0"
             "\"test\""
     };
-    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+    PLUTO_Event_t event = PLUTO_CreateEvent();
     for(int32_t i=0;i<3;++i)
     {
         TEST_ASSERT_FALSE(
@@ -152,7 +150,7 @@ void PLUTO_TEST_EventFromBufferPayloadMissing(void)
 
 void PLUTO_TEST_EventToString(void)
 {
-    PLUTO_Event_t event = PLUTO_CreateEvent(4096);
+    PLUTO_Event_t event = PLUTO_CreateEvent();
     PLUTO_EventSetId(event, 2);
     PLUTO_EventSetEvent(event, 3);
     const int len = snprintf(PLUTO_EventPayload(event), PLUTO_EventSizeOfPayloadBuffer(event), "test");

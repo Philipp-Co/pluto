@@ -57,10 +57,9 @@ typedef struct PLUTO_Event* PLUTO_Event_t;
 
 ///
 /// \brief  Create a Event with a specific Buffersize.
-/// \param[in] nbytes - The Size of the requested Buffer in Bytes.
 /// \returns NULL on Error. On Success this Function returns a new Instance of a Event.
 ///
-PLUTO_Event_t PLUTO_CreateEvent(size_t nbytes);
+PLUTO_Event_t PLUTO_CreateEvent(void);
 ///
 /// \brief  Destroy a given Event.
 /// \param[in/out] event - Destroys the given Event *event and sets the Pointer to NULL.

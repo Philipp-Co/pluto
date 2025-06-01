@@ -46,7 +46,7 @@ PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name)
 void PLUTO_DestroyInfo(PLUTO_Info_t *info)
 {
     shmctl((*info)->shm_filedescriptor, IPC_RMID, NULL);
-    PLUTO_DestroyKey((*info)->key);
+    PLUTO_DestroyKey(&(*info)->key);
 }
 
 void PLUTO_InfoDisplay(const PLUTO_Info_t info, const PLUTO_InfoValues_t *values)

@@ -172,6 +172,9 @@ void PLUTO_DeinitializePython(void)
 
 PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
 {
+    //
+    // https://docs.python.org/3/extending/extending.html#ownership-rules
+    //
     PLUTO_PY_current_buffer = args;
     memcpy(args->output_buffer, args->input_buffer, args->input_buffer_size);
     
@@ -215,6 +218,9 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                     PLUTO_LoggerWarning(PLUTO_PY_logger, "Error, unable to parse Callback Result! Tuple has %u Elements.", (unsigned int)PyTuple_Size(result));
                     goto end;
                 }
+                //
+                // These Items are borrowed because they are given to the caller from a Tuple.
+                //
                 PyObject *pyid = PyTuple_GetItem(result, 0LU);
                 PyObject *pyevent = PyTuple_GetItem(result, 1LU);
                 PyObject *pyoutputqueues = PyTuple_GetItem(result, 2LU);
@@ -222,7 +228,6 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                 if(pyid && PyLong_Check(pyid)) 
                 {
                     PLUTO_PY_current_output_buffer.id = PyLong_AsLong(pyid);
-                    Py_DECREF(pyid);
                 }
                 else
                 {
@@ -232,7 +237,6 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                 if(pyevent && PyLong_Check(pyevent))
                 {
                     PLUTO_PY_current_output_buffer.event = PyLong_AsLong(pyevent);
-                    Py_DECREF(pyevent);
                 }
                 else
                 {
@@ -242,7 +246,6 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                 if(pyoutputqueues && PyLong_Check(pyoutputqueues))
                 {
                     PLUTO_PY_current_output_buffer.output_to_queues = PyLong_AsUnsignedLongLong(pyoutputqueues);
-                    Py_DECREF(pyoutputqueues);
                 }
                 else
                 {
@@ -259,7 +262,6 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                         )
                     );
                     PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(payload));
-                    Py_DECREF(pypayload);
                 }
                 else
                 {

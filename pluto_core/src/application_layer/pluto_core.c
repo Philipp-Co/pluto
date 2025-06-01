@@ -1,3 +1,6 @@
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 #include "pluto/pluto_core/application_layer/pluto_core_state.h"
 #include "pluto/pluto_core/application_layer/pluto_node_state.h"
 #include "pluto/pluto_core/data_layer/pluto_sig_queue.h"
@@ -13,13 +16,18 @@
 #include <stdlib.h>
 #include <errno.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 //
 // What can happen?
 //  - SIGINT is received -> kill all Subprocesses -> Wait for all Subprocesses to terminate -> Terminate yourselve
 //
 
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
 {
     char *binary_dir = getenv("PLUTO_BINARY_DIR");
@@ -58,7 +66,9 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
 
     return core;
 }
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 void PLUTO_DestroyCore(PLUTO_Core_t *core)
 {
     assert(NULL != *core);
@@ -67,7 +77,9 @@ void PLUTO_DestroyCore(PLUTO_Core_t *core)
     PLUTO_Free(*core);
     *core = NULL;
 }
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 bool PLUTO_CoreSignalReceived(PLUTO_Core_t core, int signum, pid_t pid)
 {
     PLUTO_CORE_SigQueueElement_t element = {0};
@@ -95,7 +107,9 @@ bool PLUTO_CoreSignalReceived(PLUTO_Core_t core, int signum, pid_t pid)
     element.pid = pid;
     return PLUTO_CORE_SigQueuePut(core->signal_queue, element);
 }
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 bool PLUTO_CoreProcess(PLUTO_Core_t core)
 {
     PLUTO_CORE_SigQueueElement_t element = {0};
@@ -121,4 +135,6 @@ bool PLUTO_CoreProcess(PLUTO_Core_t core)
     }
     return true;
 }
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

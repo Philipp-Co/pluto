@@ -49,6 +49,7 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_
 {
     PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
     
+    config->url = NULL;
     config->manage_inputqueue = true;
     config->manage_outputqueues = true;
 
@@ -81,10 +82,8 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_
    
     if(!PLUTO_ReadConfigFromFile(config, filename, logger))
     {
-        PLUTO_Free(config);
-        return NULL;
+        PLUTO_DestroyConfig(&config);
     }
-    config->url = NULL;
     return config;
 }
 

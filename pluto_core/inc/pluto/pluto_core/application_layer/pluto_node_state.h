@@ -1,3 +1,12 @@
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+///
+/// \brief  This Module handles the Node State. 
+///
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 #ifndef __PLUTO_CORE_NODE_STATE_H__
 #define __PLUTO_CORE_NODE_STATE_H__
 
@@ -5,7 +14,12 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+///
+/// \brief  State-Enum.
+///
 typedef enum
 {
     PLUTO_CORE_NS_INITIAL,
@@ -57,16 +71,54 @@ struct PLUTO_NodeState
     int index;
 };
 typedef struct PLUTO_NodeState* PLUTO_NodeState_t;
-
-
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+///
+/// \brief  Create a State-Object.
+///
 struct PLUTO_NodeState PLUTO_NodeState(void);
+///
+/// \brief  Destroy a State-Object.
+/// \pre    The "state" must not be NULL.
+///
+void PLUTO_DestroyNodeState(struct PLUTO_NodeState *state);
+///
+/// \brief  Start Event.
+///
 void PLUTO_NodeStateStarted(PLUTO_NodeState_t state, pid_t pid);
+///
+/// \brief  Terminated Event.
+///
 void PLUTO_NodeStateTerminated(PLUTO_NodeState_t state, int exitstatus);
+///
+/// \brief  Broken Event.
+///
 void PLUTO_NodeStateBroken(PLUTO_NodeState_t state);
+///
+/// \brief  Reset the State-Object.
+///
 void PLUTO_NodeStateReset(PLUTO_NodeState_t state);
+///
+/// \brief  Signal Received Event.
+///
 void PLUTO_NodeStateTerminatedBySignal(PLUTO_NodeState_t state, int signum);
+///
+/// \brief  Get the current State of the given State-Object.
+///
 PLUTO_CORE_NodeStateValue_t PLUTO_NodeStateCurrentState(PLUTO_NodeState_t state);
+///
+/// \brief  Get the assigned PID of the given Object.
+/// 
 pid_t PLUTO_NodeStateGetPid(const PLUTO_NodeState_t state);
+///
+/// \brief  Check if the given Object is in an accepting State.
+///         In an accepting State no Eventinput triggers another State change.
+/// \return True if accepting, false otherwise.
+///
 bool PLUTO_NodeStateAccepting(const PLUTO_NodeState_t state);
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 #endif

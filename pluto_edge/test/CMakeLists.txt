@@ -1,40 +1,43 @@
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-#
-# Find required Packages.
-#
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
 set(
     SRC
-    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_edge.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_edge.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_edge_main.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_edge.c
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
-add_library(
-    pluto_edge_shared SHARED ${SRC}
+add_executable(
+    pluto_edge_test ${SRC}
 )
 
 target_include_directories(
-    pluto_edge_shared
+    pluto_edge_test
     PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/../inc/
     ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../external/
+    ${CMAKE_CURRENT_LIST_DIR}/../../external/
+    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
+)
+
+target_link_directories(
+    pluto_edge_test
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_event/
+    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_os_abstraction/
+)
+
+target_link_libraries(
+    pluto_edge_test
+    PUBLIC
+    pluto_event
+    pluto_os_abstraction
 )
 
 #
@@ -42,7 +45,7 @@ target_include_directories(
 #
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(
-        pluto_edge_shared
+        pluto_edge_test
         PUBLIC
         "-fsanitize=address"
         "-fno-omit-frame-pointer"
@@ -55,71 +58,14 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         "-pedantic-errors"
     )
     target_link_options(
-        pluto_edge_shared
+        pluto_edge_test
         PUBLIC
         "-fsanitize=address"
         "-fno-omit-frame-pointer"
     )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(
-        pluto_edge_shared
-        PUBLIC
-        "-O2"
-        "-fdata-sections"
-        "-ffunction-sections"
-        "-Wno-unused-function"
-        "-Wall"
-        "-Wextra"
-        "-Werror"
-        "-Wincompatible-pointer-types"
-        "-pedantic"
-        "-pedantic-errors"
-    )
-endif()
-
-#
-# ---------------------------------------------------------------------------------------------------------------------
-#
-
-add_library(
-    pluto_edge_static STATIC ${SRC}
-)
-
-target_include_directories(
-    pluto_edge_static
-    PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../external/
-    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
-)
-
-#
-# Configure libahr.
-#
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(
-        pluto_edge_static
-        PUBLIC
-        "-fsanitize=address"
-        "-fno-omit-frame-pointer"
-        "-Wno-unused-function"
-        "-Wall"
-        "-Wextra"
-        "-Werror"
-        "-Wincompatible-pointer-types"
-        "-pedantic"
-        "-pedantic-errors"
-    )
-    target_link_options(
-        pluto_edge_static
-        PUBLIC
-        "-fsanitize=address"
-        "-fno-omit-frame-pointer"
-    )
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(
-        pluto_edge_static
+        pluto_edge_test
         PUBLIC
         "-O2"
         "-fdata-sections"
@@ -138,7 +84,7 @@ endif()
 # ---------------------------------------------------------------------------------------------------------------------
 #
 add_dependencies(
-    pluto_edge_static
+    pluto_edge_test
     pluto_event
     pluto_os_abstraction
 )

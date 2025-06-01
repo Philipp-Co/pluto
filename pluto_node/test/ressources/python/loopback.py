@@ -1,6 +1,3 @@
-
-import sys
-
 class PlutoEventHandler:
 
     def __init__(self):
