@@ -34,7 +34,9 @@ RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"
 #
 
 #pluto-1 -- pluto_node_py
-
+#
+# python3.10 and python3.10-dev must be available
+#
 #RUN apt-get update && apt-get install python3 python3.10-dev -y
 #RUN apt install software-properties-common -y
 #RUN add-apt-repository ppa:deadsnakes/ppa -y
