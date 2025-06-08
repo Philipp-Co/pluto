@@ -10,6 +10,7 @@
 #ifndef __PLUTO_CORE_NODE_STATE_H__
 #define __PLUTO_CORE_NODE_STATE_H__
 
+#include "pluto/pluto_config/pluto_config.h"
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -17,6 +18,10 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+typedef struct 
+{
+    char *python_path;
+} PLUTO_NodeStatePythonConfig_t;
 ///
 /// \brief  State-Enum.
 ///
@@ -28,8 +33,6 @@ typedef enum
     PLUTO_CORE_NS_SUSPICIOUS,
     PLUTO_CORE_NS_BROKEN
 } PLUTO_CORE_NodeStateValue_t;
-
-
 ///
 /// 
 /// initial: 
@@ -63,11 +66,12 @@ typedef enum
 ///
 struct PLUTO_NodeState
 {
+    PLUTO_Config_t config;
+    int signum[3];
+    time_t timestamps[3];
     PLUTO_CORE_NodeStateValue_t current_state;
     pid_t pid;
     int exit_status;
-    int signum[3];
-    time_t timestamps[3];
     int index;
 };
 typedef struct PLUTO_NodeState* PLUTO_NodeState_t;
@@ -77,12 +81,13 @@ typedef struct PLUTO_NodeState* PLUTO_NodeState_t;
 ///
 /// \brief  Create a State-Object.
 ///
-struct PLUTO_NodeState PLUTO_NodeState(void);
+struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config);
 ///
 /// \brief  Destroy a State-Object.
 /// \pre    The "state" must not be NULL.
 ///
 void PLUTO_DestroyNodeState(struct PLUTO_NodeState *state);
+PLUTO_ConstConfig_t PLUTO_NodeStateGetConfig(const PLUTO_NodeState_t state);
 ///
 /// \brief  Start Event.
 ///

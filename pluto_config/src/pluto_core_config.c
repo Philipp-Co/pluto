@@ -87,7 +87,6 @@ PLUTO_CoreConfig_t PLUTO_CreateCoreConfig(const char *filename, PLUTO_Logger_t l
     }
 
     PLUTO_CoreConfig_t config = PLUTO_CONFIG_ParseFile(buffer, logger);
-    config->logger = logger;
     // free "buffer"!
     PLUTO_CONFIG_DestroyBuffer(&buffer);
     return config;
@@ -203,7 +202,7 @@ static PLUTO_CoreConfig_t PLUTO_CONFIG_ParseFile(const PLUTO_CONFIG_Buffer_t buf
     
     char pbuffer[4096];
     PLUTO_CoreConfigToString(core_config, pbuffer, sizeof(pbuffer));
-    printf("%s", pbuffer);
+    core_config->logger = logger;
     return core_config;
 
 error:

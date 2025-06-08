@@ -1,7 +1,12 @@
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 #include "pluto/pluto_core/application_layer/pluto_node_state.h"
 #include <pluto/pluto_core/application_layer/pluto_core_state.h>
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
+#include <pluto/pluto_core/data_layer/application_return_codes.h>
 
 #include <assert.h>
 #include <signal.h>
@@ -12,6 +17,9 @@
 #include <string.h>
 #include <errno.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 int32_t PLUTO_CoreStateFindByPid(struct PLUTO_CoreState *state, pid_t pid);
 static bool PLUTO_CoreSetUpNodes(struct PLUTO_CoreState *core);
@@ -46,7 +54,9 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
    
     for(size_t i=0;i<n_nodes;++i)
     {
-        state.nodes[i] = PLUTO_NodeState();
+        state.nodes[i] = PLUTO_NodeState(
+            config->configurations[i]
+        );
     }
 
     PLUTO_LoggerInfo(state.logger, "Prepare %lu nodes...", state.n_nodes);
@@ -58,8 +68,11 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
 
 void PLUTO_DestroyCoreState(struct PLUTO_CoreState *state)
 {
+    for(size_t i=0;i<state->n_nodes;++i)
+    {
+        PLUTO_DestroyNodeState(&state->nodes[i]);
+    }
     PLUTO_Free((*state).nodes); 
-    PLUTO_DestroyCoreConfig(&(*state).config);
     (*state).nodes = NULL;
     (*state).n_nodes = 0;
     (*state).current_state = PLUTO_CORE_STATE_NAME_TERMINATED;
@@ -128,7 +141,6 @@ bool PLUTO_CoreStateDispatchEvent(struct PLUTO_CoreState *state, PLUTO_CoreState
 
 static PLUTO_CoreStateName_t PLUTO_CoreStateHandleInitial(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event)
 {
-    (void)state;
     switch(event->name)
     {
         case PLUTO_CORE_EVENT_NAME_PROCESS:
@@ -175,7 +187,7 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
         const pid_t result = waitpid(event->event.signal.pid, &return_value, WNOHANG);
         if(result < 0)
         {
-            PLUTO_LoggerError(state->logger, "Error while waiting in Subprocess: %s\n", strerror(errno));
+            PLUTO_LoggerError(state->logger, "Error while waiting in Subprocess: %s", strerror(errno));
         }
         else if(result > 0)
         {
@@ -326,7 +338,6 @@ static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index)
     else
     {
         char executable_path[4096];
-
         //
         // Child Process.
         // 
@@ -334,7 +345,25 @@ static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index)
         //
         if(PLUTO_CORE_CONFIG_NODE_TYPE_PYTHON == core->config->nodes[index].type)
         {
+            if(!PLUTO_ConfigIsPythonPathSet(core->config->configurations[index]))
+            {
+                exit(PLUTO_CORE_RETURN_CODE_PYTHON_PATH_NOT_SET);
+            }
+            char python_path[4096];
             snprintf(executable_path, sizeof(executable_path), "%spluto_node_py", core->binary_directory);
+            snprintf(
+                python_path, 
+                sizeof(python_path), 
+                "%s", 
+                PLUTO_ConfigPythonPath(core->config->configurations[index])
+            );
+            printf(
+                "n: %s\nc: %s\ne: %s\np: %s\n",
+                core->config->nodes[index].name,
+                core->config->nodes[index].filename,
+                core->config->nodes[index].executable,
+                python_path
+            );
             char * argv[] = 
             {
                 executable_path,
@@ -345,7 +374,8 @@ static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index)
                 "-e",
                 core->config->nodes[index].executable,
                 "-p",
-                "/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages;/pluto/",
+                python_path,
+                // "/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages;/pluto/",
                 NULL
             };
             execv(executable_path, argv);
@@ -384,7 +414,7 @@ static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index)
         // Exec only returns on Erro.
         // This will terminate the foreked Child Process on Error.
         //
-        printf("Error: Execv returned with errno %s\n", strerror(errno));
+        printf("Error: Execv returned with errno %s", strerror(errno));
         exit(-1);
     }
 }

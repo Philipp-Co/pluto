@@ -80,6 +80,9 @@ PLUTO_Logger_t PLUTO_PY_logger = NULL;
 
 bool PLUTO_InitializePython(const char *python_path, const char *executable, PLUTO_Logger_t logger)
 {
+    //
+    // https://docs.python.org/3/c-api/init_config.html
+    //
     PyStatus status;
     PyConfig config;
    
@@ -88,6 +91,7 @@ bool PLUTO_InitializePython(const char *python_path, const char *executable, PLU
     PLUTO_LoggerInfo(logger, "Start Python configuration...");
     //PyImport_AppendInittab("pluto", &PyInit_emb_input);
     PyConfig_InitIsolatedConfig(&config);
+    config.isolated = 1;
     
     // TODO: Check if venvs are needed...
     //char *env = getenv("VIRTUAL_ENV");

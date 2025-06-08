@@ -18,7 +18,7 @@ add_subdirectory(
 # Find required Packages.
 #
 # https://cmake.org/cmake/help/latest/module/FindPython3.html
-find_package (Python3 COMPONENTS Interpreter Development)
+find_package (Python3 "3.10" COMPONENTS Interpreter Development)
 
 set(
     PLUTO_INC
@@ -160,20 +160,23 @@ target_include_directories(
     pluto_node_py
     PUBLIC
     ${PLUTO_INC}
-    ${Python3_INCLUDE_DIRS}
+    #${Python3_INCLUDE_DIRS}
+    /usr/include/python3.10/
 )
 
 target_link_directories(
     pluto_node_py
     PUBLIC
-    ${PLUTO_LINK_DIRS}
+    #${PLUTO_LINK_DIRS}
+    /lib/python3.10/
 )
 
 target_link_libraries(
     pluto_node_py
     PUBLIC
     ${PLUTO_LINK_LIBS}
-    Python3::Python
+    #Python3::Python
+    python3.10.so
 )
 
 #

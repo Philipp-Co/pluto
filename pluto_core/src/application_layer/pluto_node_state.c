@@ -1,16 +1,31 @@
 
+#include "pluto/pluto_config/pluto_config.h"
 #include <pluto/pluto_core/application_layer/pluto_node_state.h>
 
-struct PLUTO_NodeState PLUTO_NodeState(void)
+struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config)
 {
     struct PLUTO_NodeState state = {
         .current_state = PLUTO_CORE_NS_INITIAL,
         .pid = 0,
         .exit_status = -1,
         .signum = {-1, -1, -1},
-        .index = 0
+        .index = 0,
+        .config = config
     };
     return state;
+}
+
+void PLUTO_DestroyNodeState(struct PLUTO_NodeState *state)
+{
+    if((*state).config)
+    {
+        PLUTO_DestroyConfig(&(*state).config);
+    }
+}
+
+PLUTO_ConstConfig_t PLUTO_NodeStateGetConfig(const PLUTO_NodeState_t state)
+{
+    return (PLUTO_ConstConfig_t)state->config;
 }
 
 void PLUTO_NodeStateStarted(PLUTO_NodeState_t state, pid_t pid)
@@ -52,7 +67,9 @@ void PLUTO_NodeStateReset(PLUTO_NodeState_t state)
     {
         case PLUTO_CORE_NS_TERMINATED:
         case PLUTO_CORE_NS_BROKEN:
-            *state = PLUTO_NodeState();
+            state->current_state = PLUTO_CORE_NS_INITIAL;
+            state->exit_status = 0;
+            state->index = 0;
         default:
             break;
     }

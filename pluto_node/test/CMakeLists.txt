@@ -1,7 +1,11 @@
 #
 # ---------------------------------------------------------------------------------------------------------------------
-#
-find_package (Python3 COMPONENTS Interpreter Development)
+
+#set(Python3_FIND_STRATEGY LOCATION)#
+#set(Python3_FIND_UNVERSIONED_NAMES NEVER)
+# find_package (Python3 COMPONENTS Interpreter Development)
+#find_package (Python3 3.10 COMPONENTS Development)
+
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
@@ -42,7 +46,8 @@ target_include_directories(
     ${CMAKE_CURRENT_LIST_DIR}/../../pluto_config/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../../pluto_os_abstraction/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../../external/
-    ${Python3_INCLUDE_DIRS}
+    #${Python3_INCLUDE_DIRS}
+    /usr/include/python3.10/
 )
 
 target_link_directories(
@@ -53,6 +58,7 @@ target_link_directories(
     ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_event/
     ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_config/
     ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_os_abstraction/
+    /lib/python3.10/
 )
 
 target_link_libraries(
@@ -62,7 +68,8 @@ target_link_libraries(
     pluto_event
     pluto_config
     pluto_os_abstraction
-    Python3::Python
+    #Python3::Python
+    python3.10.so
 )
 
 #

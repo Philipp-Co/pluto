@@ -36,6 +36,7 @@
 ///
 struct PLUTO_Core
 {
+    PLUTO_CoreConfig_t config;
     ///
     /// \brief  An Object which stores Data which has State.
     ///

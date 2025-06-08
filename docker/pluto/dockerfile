@@ -5,9 +5,13 @@
 #
 from ubuntu:20.04 as builder
 
+RUN echo "Europe/Berlin" > /etc/timezone
 RUN apt-get update && apt-get upgrade -y
+RUN apt install software-properties-common -y
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get install python3.10-dev -y
 RUN apt-get install cmake -y
-RUN apt-get install python3-dev -y
+#RUN apt-get install python3-dev -y
 RUN apt-get install git -y
 
 COPY ../pluto_event/ /pluto_event/

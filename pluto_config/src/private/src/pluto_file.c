@@ -34,8 +34,8 @@ PLUTO_CONFIG_Buffer_t PLUTO_CONFIG_ReadFile(const char *filename, PLUTO_Logger_t
         return NULL;
     }
     fseek(file, 0L, SEEK_END);
-    size_t size = ftell(file) + 1;
-    if(size == 0LU)
+    long size = ftell(file);
+    if(size <= 0)
     {
         PLUTO_LoggerError(logger, "File has size 0.\n");
         fclose(file);
@@ -45,7 +45,7 @@ PLUTO_CONFIG_Buffer_t PLUTO_CONFIG_ReadFile(const char *filename, PLUTO_Logger_t
     buffer = PLUTO_CONFIG_CreateBuffer(size + 1);
     memset(buffer->buffer, '\0', buffer->nbytes);
 
-    size_t result = fread(buffer->buffer, 1, buffer->nbytes, file);
+    size_t result = fread(buffer->buffer, 1, buffer->nbytes - 1, file);
     if(result == 0)
     {
         PLUTO_LoggerError(logger, "Result was 0.\n");

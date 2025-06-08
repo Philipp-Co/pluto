@@ -11,6 +11,7 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_core.c
     ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_node_state.c
     ${CMAKE_CURRENT_LIST_DIR}/src/test_pluto_core_state.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/prepare.c
 
     ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_core_state.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_node_state.c
@@ -37,6 +38,14 @@ target_link_libraries(
     PUBLIC
     pluto_config
     pluto_os_abstraction
+)
+
+target_compile_definitions(
+    pluto_core_test
+    PUBLIC
+    PLUTO_CORE_TEST_BINARY_DIR="${CMAKE_CURRENT_LIST_DIR}/build/pluto_node/"
+    PLUTO_CORE_TEST_CONFIG_PATH="${CMAKE_CURRENT_LIST_DIR}/ressources/config_files/config.txt"
+    PLUTO_CORE_TEST_EXECUTABLE="${CMAKE_CURRENT_LIST_DIR}/ressources/executable_files/loopback"
 )
 
 #

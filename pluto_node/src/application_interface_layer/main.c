@@ -60,15 +60,18 @@ int main(int argc, char **argv)
     int return_value = -1;
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
+    printf("Hello World: %s!\n", argv[0]);
   
     PLUTO_Arguments_t *args = PLUTO_Malloc(sizeof(PLUTO_Arguments_t));
     if(!args)
     {
+        printf("Uanble to allocate Memory for Arugments...\n");
         goto end;
     } 
     memset(args, '\0', sizeof(*args));
     if(!PLUTO_ParseArguments(args, argc, argv))
     {
+        printf("Unable to parse Arguments!\n");
         PLUTO_Free(args);
         goto end;
     }
@@ -131,9 +134,9 @@ int main(int argc, char **argv)
     PLUTO_SHLIB_Destroy();
 #endif
     
-    PLUTO_LoggerInfo(PLUTO_node_logger, "Node: Bye Bye...");
     return_value = 0;
 end:
+    PLUTO_LoggerInfo(PLUTO_node_logger, "Node: Bye Bye...");
     PLUTO_DestroyLogger(&PLUTO_node_logger);
     return return_value;
 }

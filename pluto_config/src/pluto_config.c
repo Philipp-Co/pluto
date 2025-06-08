@@ -25,6 +25,7 @@
 #define JSMN_HEADER
 #include <jsmn/jsmn.h>
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,11 +35,15 @@
 //
 
 #define PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES 4
-
+#define PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH ((4096 * 4) - 1)
+#define PLUTO_CONFIG_MAX_STRLEN_NAME (1024 - 1)
+#define PLUTO_CONFIG_MAX_STRLEN_BASE_PATH (4096 - 1)
+#define PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE (1024 - 1)
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+static PLUTO_Config_t PLUTO_ConfigMallocConfigObject(void);
 static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename, PLUTO_Logger_t logger);
 
 //
@@ -47,38 +52,10 @@ static bool PLUTO_ReadConfigFromFile(PLUTO_Config_t config, const char *filename
 
 PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_Logger_t logger)
 {
-    PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
+    PLUTO_Config_t config = PLUTO_ConfigMallocConfigObject();
     
-    config->url = NULL;
-    config->manage_inputqueue = true;
-    config->manage_outputqueues = true;
-
-    config->name = PLUTO_Malloc(strlen(name) + 1);
     memset(config->name, '\0', strlen(name) + 1);
     memcpy(config->name, name, strlen(name));
-   
-    config->base_path = PLUTO_Malloc(4096);
-    memset(config->base_path, '\0', 4096);
-
-    char *buffer = PLUTO_Malloc(4096);
-    config->name_of_input_queue = buffer;
-    
-    config->names_of_output_queues = (char**)PLUTO_Malloc(
-        sizeof(char*) * PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES
-    ); 
-    for(size_t i=0;i<PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES;++i)
-    {
-        config->names_of_output_queues[i] = PLUTO_Malloc(
-            4096
-        );
-        snprintf(
-            config->names_of_output_queues[i], 
-            4096, 
-            "%s_oq_%lu", 
-            config->name, 
-            i
-        );
-    }
    
     if(!PLUTO_ReadConfigFromFile(config, filename, logger))
     {
@@ -87,10 +64,56 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_
     return config;
 }
 
+PLUTO_Config_t PLUTO_CopyConfig(const PLUTO_Config_t config)
+{
+    PLUTO_Config_t new_config = PLUTO_ConfigMallocConfigObject();
+    
+    memcpy(
+        new_config->base_path, 
+        config->base_path, 
+        strlen(config->base_path)
+    );
+    memcpy(
+        new_config->name, 
+        config->name, 
+        strlen(config->name)
+    );
+    memcpy(
+        new_config->name_of_input_queue, 
+        config->name_of_input_queue, 
+        strlen(config->name_of_input_queue)
+    );
+    memcpy(
+        new_config->python_path, 
+        config->python_path, 
+        strlen(config->python_path)
+    );
+
+    for(int32_t i=0;i<config->number_of_output_queues;++i)
+    {
+        memcpy(
+            new_config->names_of_output_queues[i], 
+            config->names_of_output_queues[i], 
+            strlen(config->names_of_output_queues[i])
+        );
+    }
+
+    return new_config;
+}
+
 void PLUTO_DestroyConfig(PLUTO_Config_t *config)
 {
-    //if((*config)->name_of_input_queue) PLUTO_Free((*config)->name_of_input_queue);
-    if((*config)->url) PLUTO_Free((*config)->url);
+    if(!(*config))
+    {
+        return;
+    }
+
+    if(*config && (*config)->python_path)
+    {
+        PLUTO_Free(
+            (*config)->python_path
+        );
+    }
     for(int32_t i=0;i<(*config)->number_of_output_queues;++i)
     {
         if((*config)->names_of_output_queues[i]) PLUTO_Free((*config)->names_of_output_queues[i]);
@@ -99,6 +122,49 @@ void PLUTO_DestroyConfig(PLUTO_Config_t *config)
     *config = NULL;
 }
 
+bool PLUTO_ConfigIsPythonPathSet(const PLUTO_Config_t config)
+{
+    assert(NULL != config);
+    assert(NULL != config->python_path);
+    return 0LU < strlen(
+        config->python_path
+    );
+}
+
+size_t PLUTO_ConfigMaxNumberOfCharactersForPythonPath(void)
+{
+    return (size_t)PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH;
+}
+
+size_t PLUTO_ConfigMaxNumberOfOutputQueues(void)
+{
+    return (size_t)PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES;
+}
+
+int32_t PLUTO_ConfigNumberOfOutputQueues(const PLUTO_Config_t config)
+{
+    return config->number_of_output_queues;
+}
+
+const char* PLUTO_ConfigPythonPath(const PLUTO_Config_t config)
+{
+    return config->python_path;
+}
+
+const char* PLUTO_ConfigNameOfOutputQueue(const PLUTO_Config_t config, const int32_t index)
+{
+    assert(index >= 0);
+    assert(index < config->number_of_output_queues);
+    assert(NULL != config->names_of_output_queues[index]);
+    return config->names_of_output_queues[index];
+}
+
+const char* PLUTO_ConfigNameOfInputQueue(const PLUTO_Config_t config)
+{
+    assert(NULL != config);
+    assert(NULL != config->name_of_input_queue);
+    return config->name_of_input_queue;
+}
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -130,13 +196,14 @@ static char* PLUTO_ReadyConfigFromFile1(const char *filename, PLUTO_Logger_t log
         return NULL;
     }
     fseek(file, 0L, SEEK_END);
-    size_t size = ftell(file) + 1;
-    if(size == 0LU)
+    long size = ftell(file);
+    if(size <= 0)
     {
         PLUTO_LoggerError(logger, "File has size 0.");
         fclose(file);
         return NULL;
     }
+    PLUTO_LoggerInfo(logger, "Config File size is %lu.", size);
     fseek(file, 0L, SEEK_SET);
     char *buffer = PLUTO_Malloc(size + 1);
     memset(buffer, '\0', size + 1);
@@ -211,6 +278,15 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
                     flags |= 0x4U;
                     i += token[i + 1].size + 2;
                 }
+                else if(0 == strcmp("python_path", key))
+                {
+                    PLUTO_LoggerInfo(logger, "  python_path: %s", value);
+                    const size_t strl = strlen(value);
+                    memcpy(
+                        config->python_path, value, strl > PLUTO_ConfigMaxNumberOfCharactersForPythonPath() ? PLUTO_ConfigMaxNumberOfCharactersForPythonPath() : strl
+                    );
+                    i += 2;
+                }
                 else
                 {
                     return false;
@@ -227,6 +303,43 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
     return 0x7U == flags;
 }
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+static PLUTO_Config_t PLUTO_ConfigMallocConfigObject(void)
+{
+    PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
+    
+    config->name = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_NAME + 1);
+    memset(config->name, '\0', PLUTO_CONFIG_MAX_STRLEN_NAME + 1);
+   
+    config->python_path = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
+    memset(config->python_path, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
+    config->base_path = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_BASE_PATH + 1);
+    memset(config->base_path, '\0', PLUTO_CONFIG_MAX_STRLEN_BASE_PATH + 1);
+
+    char *buffer = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1);
+    config->name_of_input_queue = buffer;
+    memset(config->name_of_input_queue, '\0', PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1);
+    
+    config->names_of_output_queues = (char**)PLUTO_Malloc(
+        sizeof(char*) * PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES
+    ); 
+    for(size_t i=0;i<PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES;++i)
+    {
+        config->names_of_output_queues[i] = PLUTO_Malloc(
+            PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1
+        );
+        snprintf(
+            config->names_of_output_queues[i], 
+            PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1, 
+            "%s_oq_%lu", 
+            config->name, 
+            i
+        );
+    }
+    return config;
+}
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

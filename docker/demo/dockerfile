@@ -4,7 +4,16 @@
 # https://docs.docker.com/build/building/multi-stage/
 from ubuntu:20.04
 
-RUN apt-get update && apt-get upgrade -y
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+#RUN echo "Europe/Berlin" > /etc/timezone
+#RUN export LD_LIBRARY_PATH=lib/aarch64-linux-gnu/:$LS_LIBRARY_PATH
+RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+RUN apt-get update
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
 #
 # Copy Helper-Binaries from the Pluto Baseimage.
 #
@@ -26,9 +35,14 @@ RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_iq\",\"
 
 #pluto-1 -- pluto_node_py
 
-RUN apt-get update && apt-get install python3 python3-dev -y
+#RUN apt-get update && apt-get install python3 python3.10-dev -y
+#RUN apt install software-properties-common -y
+#RUN add-apt-repository ppa:deadsnakes/ppa -y
+#RUN apt-get install python3.10 -y
+COPY --from=pluto:latest /lib/python3.10 /lib/python3.10
+COPY --from=pluto:latest /lib/aarch64-linux-gnu/libpython3.10.so.1.0 /lib/aarch64-linux-gnu/libpython3.10.so.1.0
 COPY --from=pluto:latest /bin/pluto_node_py /bin/pluto_node_py 
-RUN echo {\"work_dir\":\"/pluto/ipc/\",\"name_of_input_queue\":\"pluto-0_oq_0\",\"names_of_output_queues\":[\"pluto-1_oq_0\"]} > /pluto-1-config.txt
+RUN echo {\"work_dir\":\"/pluto/ipc/\",\"python_path\":\"/pluto/\;/usr/lib/python310.zip\;/usr/lib/python3.10\;/usr/lib/python3.10/lib-dynload\;/usr/local/lib/python3.10/dist-packages\;/usr/lib/python3/dist-packages\",\"name_of_input_queue\":\"pluto-0_oq_0\",\"names_of_output_queues\":[\"pluto-1_oq_0\"]} > /pluto-1-config.txt
 COPY docker/demo/pluto_python_demo/pluto_event_handler.py /pluto/
 
 #
