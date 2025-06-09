@@ -324,6 +324,19 @@ int32_t PLUTO_CoreStateFindByPid(struct PLUTO_CoreState *state, pid_t pid)
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+
+void PLUTO_CoreCalculatePythonPath(char *buffer, int nbytes, const char *python_path)
+{
+    static const char *static_python_path = "/usr/lib/python38.zip;/usr/lib/python3.8;/usr/lib/python3.8/lib-dynload;/usr/local/lib/python3.8/dist-packages;/usr/lib/python3/dist-packages";
+    snprintf(
+        buffer,
+        nbytes,
+        "%s;%s",
+        static_python_path,
+        python_path
+    );    
+}
+
 static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index) 
 {
     //
@@ -351,12 +364,20 @@ static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index)
             }
             char python_path[4096];
             snprintf(executable_path, sizeof(executable_path), "%spluto_node_py", core->binary_directory);
+            /*
             snprintf(
                 python_path, 
                 sizeof(python_path), 
                 "%s", 
                 PLUTO_ConfigPythonPath(core->config->configurations[index])
             );
+            */
+            PLUTO_CoreCalculatePythonPath(
+                python_path, 
+                sizeof(python_path), 
+                PLUTO_ConfigPythonPath(core->config->configurations[index])
+            );
+
             printf(
                 "n: %s\nc: %s\ne: %s\np: %s\n",
                 core->config->nodes[index].name,

@@ -18,6 +18,6 @@ void PLUTO_EDGE_DestroyEdge(PLUTO_EDGE_Edge_t *edge);
 bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event);
 bool PLUTO_EDGE_EdgeReceiveEvent(PLUTO_EDGE_Edge_t edge, PLUTO_Event_t event);
 int32_t PLUTO_EDGE_NumberOfMessagesAvailable(PLUTO_EDGE_Edge_t edge);
-
+const char* PLUTO_EDGE_EdgeVersion(void);
 
 #endif

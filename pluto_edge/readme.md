@@ -6,13 +6,13 @@ pluto_edge ist eine Bibliothek die den Zugriff auf die von Pluto erstellte Infra
 
 Dieses Unterprojekt wird auf hoechter Ebene von Top-Level CMake eingebnunden und gebaut.
 
-    cd repo_root/build/ && make pluto_edge
+    cd build/ && make pluto_edge
 
 pluto_edge liegt nach dem Bauen in pluto_edge/ als statische Bibliothek "pluto_edge/pluto_edge_static" und als dynamisch Bibliothek "pluto_edge/pluto_edge_shared" vor.
 
 ## Tests
 
-   TBD 
+   cd build/ && ./pluto_edge/test/pluto_edge_test 
 
 ## pluto_edge Verwenden
 
@@ -41,7 +41,7 @@ pluto_edge liegt nach dem Bauen in pluto_edge/ als statische Bibliothek "pluto_e
 
     ...
     PLUTO_EDGE_Queue_t queue = PLUTO_EDGE_CreateQueue("path/to/some/input_queue");
-    PLUTO_EDGE_Event_t event = PLUTO_EDGE_CreateEvent(1024);
+    PLUTO_EDGE_Event_t event = PLUTO_EDGE_CreateEvent();
     snprintf(
         PLUTO_EDGE_EventPayload(event),
         PLUTO_EDGE_EventPayloadBufferSize,

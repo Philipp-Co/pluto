@@ -28,6 +28,14 @@ pluto_node initialisiert die Fachlogik.
 Fuer jedes eingehende Event fuehrt pluto_node die hinterlegte Fachlogik aus und leitet das neu produzierte Event entsprechend weiter.
 Zum Programmende fuehrt pluto_node eine deinitialisierung der Fachlogik durch.
 
+## Features
+
+### Thread Pool
+
+Pluto Node stellt einen Thread Pool bereit mit dem die Anwendung asynchrone Aufgabe erledigen kann.
+
+    Node -> Handler -> Thread Pool -> Node
+
 ## Varianten
 
 Varianten werden zur Compile Zeit definiert und entsprechend ueber Praeprozessor Makros definiert.

@@ -34,7 +34,6 @@ static PLUTO_SHLIB_Library_t PLUTO_SHLIB_library =
 
 bool PLUTO_SHLIB_Initialize(const char *path)
 {
-    (void)path;
     PLUTO_SHLIB_shared_lirary_handle = dlopen(path, RTLD_NOW);
     if(!PLUTO_SHLIB_shared_lirary_handle)
     {

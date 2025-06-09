@@ -110,3 +110,12 @@ int32_t PLUTO_EDGE_NumberOfMessagesAvailable(PLUTO_EDGE_Edge_t edge)
         edge->queue
     );
 }
+
+const char* PLUTO_EDGE_EdgeVersion(void)
+{
+#if !defined(PLUTO_EDGE_VERSION)
+    return "0.0.0";
+#else
+    return PLUTO_EDGE_VERSION;
+#endif
+}
