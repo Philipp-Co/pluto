@@ -18,7 +18,55 @@ add_subdirectory(
 # Find required Packages.
 #
 # https://cmake.org/cmake/help/latest/module/FindPython3.html
-find_package (Python3 COMPONENTS Interpreter Development)
+find_package (Python3 REQUIRED COMPONENTS Interpreter Development)
+message(
+    STATUS
+    "Python Found: ${Python3_FOUND} - Python Version: ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}.${Python3_VERSION_PATCH}"
+)
+message(
+    STATUS
+    "System Interpreter found: ${Python3_Interpreter_FOUND}"
+)
+message(
+    STATUS
+    "Dev found: ${Python3_Development_FOUND}"
+)
+message(
+    STATUS
+    "Include Dirs: ${Python3_INCLUDE_DIRS}"
+)
+message(
+    STATUS
+    "Executable: ${Python3_EXECUTABLE}"
+)
+message(
+    STATUS
+    "Stdlib: ${Python3_STDLIB}"
+)
+
+if(${Python3_Interpreter_FOUND})
+    message(
+        STATUS
+        "INTERPRETER FOUND!"
+    )
+else()
+    message(
+        STATUS
+        "INTERPRETER --NOT-- FOUND!"
+    )
+endif()
+
+if(${Python3_Development_FOUND})
+    message(
+        STATUS
+        "STDARCH: ${Python3_STDARCH}"
+    )
+else()
+    message(
+        STATUS
+        "Development --NOT-- FOUND!"
+    )
+endif()
 
 set(
     PLUTO_INC
@@ -161,14 +209,12 @@ target_include_directories(
     PUBLIC
     ${PLUTO_INC}
     ${Python3_INCLUDE_DIRS}
-    #/usr/include/python3.10/
 )
 
 target_link_directories(
     pluto_node_py
     PUBLIC
     ${PLUTO_LINK_DIRS}
-    #/lib/python3.10/
 )
 
 target_link_libraries(
@@ -176,7 +222,6 @@ target_link_libraries(
     PUBLIC
     ${PLUTO_LINK_LIBS}
     Python3::Python
-    #python3.10.so
 )
 
 #
