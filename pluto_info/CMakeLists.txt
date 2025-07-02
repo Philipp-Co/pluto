@@ -106,3 +106,15 @@ add_dependencies(
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
+
+#
+# Install Binaries to ${CMAKE_INSTALL_PREFIX}/bin
+# https://cmake.org/cmake/help/latest/command/install.html
+#
+install(
+    TARGETS pluto_info DESTINATION bin 
+)
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#

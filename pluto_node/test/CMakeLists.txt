@@ -1,6 +1,8 @@
 #
 # ---------------------------------------------------------------------------------------------------------------------
 
+include(CTest)
+enable_testing()
 #set(Python3_FIND_STRATEGY LOCATION)#
 #set(Python3_FIND_UNVERSIONED_NAMES NEVER)
 find_package (Python3 COMPONENTS Interpreter Development)
@@ -111,6 +113,12 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         "-pedantic-errors"
     )
 endif()
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+add_test(NAME pluto_node COMMAND pluto_node_test)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------

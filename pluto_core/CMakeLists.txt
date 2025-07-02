@@ -8,6 +8,11 @@ cmake_minimum_required(VERSION 3.16)
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
+enable_testing()
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
 #
 # Find required Packages.
 #
@@ -107,6 +112,18 @@ add_dependencies(
     pluto_core
     pluto_config
     pluto_os_abstraction
+)
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+#
+# Install Binaries to ${CMAKE_INSTALL_PREFIX}/bin
+# https://cmake.org/cmake/help/latest/command/install.html
+#
+install(
+    TARGETS pluto_core DESTINATION bin 
 )
 
 #

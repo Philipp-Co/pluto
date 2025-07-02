@@ -7,6 +7,9 @@ cmake_minimum_required(VERSION 3.16)
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
+
+enable_testing()
+
 add_subdirectory(
     test
 )
@@ -339,6 +342,18 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         "-pedantic-errors"
     )
 endif()
+
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
+#
+# Install Binaries to ${CMAKE_INSTALL_PREFIX}/bin
+# https://cmake.org/cmake/help/latest/command/install.html
+#
+install(
+    TARGETS pluto_node_sh pluto_node_pt pluto_node_py DESTINATION bin 
+)
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
