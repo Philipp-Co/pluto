@@ -36,6 +36,8 @@ add_library(
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_logger.c
     ${CMAKE_CURRENT_LIST_DIR}/src/signals/pluto_signal.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/system_events/pluto_system_events.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/files/pluto_file.c
 )
 
 target_compile_definitions(
@@ -54,8 +56,15 @@ target_include_directories(
 target_compile_definitions(
     pluto_os_abstraction
     PUBLIC
+    _DARWIN_C_SOURCE=1
     _XOPEN_SOURCE=700
     PLUTO_LOG_LEVEL=2000
+)
+
+set_property(
+    TARGET pluto_os_abstraction 
+    PROPERTY 
+    C_STANDARD 23
 )
 
 #

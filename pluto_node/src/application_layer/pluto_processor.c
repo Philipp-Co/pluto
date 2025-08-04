@@ -3,8 +3,10 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include "pluto/os_abstraction/files/pluto_file.h"
 #include "pluto/os_abstraction/pluto_time.h"
 #include "pluto/os_abstraction/signals/pluto_signal.h"
+#include "pluto/os_abstraction/system_events/pluto_system_events.h"
 #include "pluto/pluto_event/pluto_event.h"
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include <pluto/application_layer/pluto_info.h>
@@ -85,7 +87,7 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
         .n_query_parameter = PLUTO_PROC_MAX_N_QUERY_PARAMETER
     };
     PLUTO_InfoDisplay(processor->info, &values);
-
+    processor->system_event_handler = PLUTO_CreateSystemEventHandler(processor->logger);
     return processor;
 }
 
@@ -138,6 +140,24 @@ bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
         },
         .nevents = 0
     };
+    
+    //
+    // Get File Events.
+    //
+    PLUTO_SystemEvent_t sevent = PLUTO_CreateSystemEvent();
+    const int sresult = PLUTO_SystemEventsPoll(processor->system_event_handler, sevent);
+    if(PLUTO_SE_OK == sresult)
+    {
+        PLUTO_Event_t tmp = PLUTO_CreateEvent();
+        event_buffer.pending_events[event_buffer.nevents] = tmp;
+        event_buffer.nevents++;
+        
+        PLUTO_EventSetEvent(tmp, (uint32_t)101U);
+        PLUTO_EventSetTimestamp(tmp, sevent->timestamp);
+        PLUTO_EventSetId(tmp, 0);
+        PLUTO_EventSetSizeOfPayload(tmp, 0);
+    }
+    PLUTO_DestroySystemEvent(&sevent);
     
     //
     // Get Signal Events...

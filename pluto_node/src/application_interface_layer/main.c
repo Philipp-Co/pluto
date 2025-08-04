@@ -237,7 +237,8 @@ static PLUTO_SignalHandler_t PLUTO_NodeInitializeSignals(PLUTO_Logger_t logger)
     int known_signals[] = {
         SIGHUP,
         SIGQUIT,
-        SIGPOLL,
+        //SIGPOLL,
+        SIGIO,
         SIGPIPE,
         SIGALRM,
         SIGURG,
