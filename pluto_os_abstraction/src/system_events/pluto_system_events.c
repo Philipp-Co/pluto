@@ -125,6 +125,14 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     }
     else if(result < 0)
     {
+        switch(errno)
+        {
+            case EINTR:
+            case EAGAIN:
+                return PLUTO_SE_NO_EVENT;
+            default:
+                break;
+        }
         PLUTO_LoggerInfo(
             handler->logger,
             "Error Polling System Event: %i, %s",

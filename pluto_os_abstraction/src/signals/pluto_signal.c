@@ -57,6 +57,11 @@ bool PLUTO_SignalAddListener(PLUTO_SignalHandler_t object, const PLUTO_Signal_t 
         PLUTO_LoggerWarning(object->logger, "Unable to add Listener for Signal %i", signal.signal_numer);
         return false;
     }
+    PLUTO_LoggerInfo(
+        object->logger,
+        "Sucessfully registered a Signalhandler for Signal %i",
+        signal.signal_numer
+    );
     return true;
 }
 
@@ -77,6 +82,7 @@ static void PLUTO_SigactionHandler(int signo, siginfo_t *info, void *context)
     // https://man7.org/linux/man-pages/man2/sigaction.2.html
     //
     (void)context;
+    printf("Write new Signal to Queue!\n");
     unsigned int write_index = atomic_fetch_add(&PLUTO_global_SignalHandler.ringbuffer.write_index, 1) & PLUTO_OS_ABSTRACTION_SIG_QUEUE_SIZE_MASK; 
     PLUTO_global_SignalHandler.ringbuffer.buffer[write_index].signum = signo;
     PLUTO_global_SignalHandler.ringbuffer.buffer[write_index].initiating_process = info->si_pid;
@@ -94,6 +100,7 @@ bool PLUTO_SignalPendingEvent(PLUTO_SignalHandler_t handler, PLUTO_SignalEvent_t
     event->signum = handler->ringbuffer.buffer[read_index].signum;
     event->initiating_process = handler->ringbuffer.buffer[read_index].initiating_process;
     event->timestamp = handler->ringbuffer.buffer[read_index].timestamp;
+    printf("Read Signal from Queue\n");
     return true;
 }
 

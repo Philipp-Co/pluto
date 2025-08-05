@@ -152,6 +152,7 @@ end:
 void PLUTO_SignalHandler(int signum)
 {
     (void)signum;
+    printf("Sigint empfangen!\n");
     atomic_store(&PLUTO_Terminate, 1);
 }
 
