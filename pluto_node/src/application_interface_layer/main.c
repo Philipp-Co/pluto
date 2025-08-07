@@ -46,12 +46,18 @@ static PLUTO_SignalHandler_t PLUTO_NodeInitializeSignals(PLUTO_Logger_t logger);
 static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args);
 #endif
 
+#if defined(PLUTO_CTS_RTM_PYTHON)
+static int PLUTO_NodePythonCAPI_RegisterObserver(int filedescriptor);
+static int PLUTO_NodePythonCAPI_DeregisterObserver(int filedescriptor);
+static int PLUTO_NodePythonCAPI_EmitEvent(int id, int event, const char *payload, size_t nbytes);
+#endif
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
 static atomic_int PLUTO_Terminate;
 static PLUTO_Logger_t PLUTO_node_logger = NULL;
+static PLUTO_Processor_t PLUTO_processor = NULL;
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -80,9 +86,15 @@ int main(int argc, char **argv)
     
     PLUTO_SignalHandler_t signal_handler = PLUTO_NodeInitializeSignals(PLUTO_node_logger);
 
+/*
 #if defined(PLUTO_CTS_RTM_PYTHON)
     // Initialize Python.
-    if(!PLUTO_InitializePython(args->python_path, args->executable, PLUTO_node_logger))
+    PLUTO_PythonCAPI_t c_api = {
+        .register_observer=PLUTO_NodePythonCAPI_RegisterObserver,
+        .deregister_observer=PLUTO_NodePythonCAPI_DeregisterObserver,
+        .emit_event=PLUTO_NodePythonCAPI_EmitEvent
+    };
+    if(!PLUTO_InitializePython(args->python_path, args->executable, &c_api, PLUTO_node_logger))
     {
         PLUTO_LoggerError(PLUTO_node_logger, "Unable to initialize Python.");
         goto end;
@@ -92,7 +104,7 @@ int main(int argc, char **argv)
     // Initialize Shared Library.
     PLUTO_SHLIB_Initialize(args->executable);
 #endif
-
+*/
     PLUTO_Config_t config = PLUTO_CreateConfig(args->config_path, args->name, PLUTO_node_logger);
     if(!config)
     {
@@ -103,7 +115,7 @@ int main(int argc, char **argv)
     PLUTO_Free(args);
     
     PLUTO_LoggerInfo(PLUTO_node_logger, "Run main Program...");
-    PLUTO_Processor_t processor = PLUTO_CreateProcessor(
+    PLUTO_processor = PLUTO_CreateProcessor(
         config,
         signal_handler,
 #if defined(PLUTO_CTS_RTM_PASSTHROUGH)
@@ -118,17 +130,36 @@ int main(int argc, char **argv)
         PLUTO_node_logger
     );
     PLUTO_DestroyConfig(&config);
-    if(!processor)
+    if(!PLUTO_processor)
     {
         PLUTO_LoggerError(PLUTO_node_logger, "Unable to create a Processor.");
         goto end;
     }
+
+
+#if defined(PLUTO_CTS_RTM_PYTHON)
+    // Initialize Python.
+    PLUTO_PythonCAPI_t c_api = {
+        .register_file_observer=PLUTO_NodePythonCAPI_RegisterObserver,
+        .deregister_file_observer=PLUTO_NodePythonCAPI_DeregisterObserver,
+        .emit_event=PLUTO_NodePythonCAPI_EmitEvent
+    };
+    if(!PLUTO_InitializePython(args->python_path, args->executable, &c_api, PLUTO_node_logger))
+    {
+        PLUTO_LoggerError(PLUTO_node_logger, "Unable to initialize Python.");
+        goto end;
+    }
+    PLUTO_LoggerInfo(PLUTO_node_logger, "Python successfully initialized.");
+#elif defined(PLUTO_CTS_RTM_SHARED_LIB)
+    // Initialize Shared Library.
+    PLUTO_SHLIB_Initialize(args->executable);
+#endif
     while(!atomic_load(&PLUTO_Terminate))
     {
-        while(PLUTO_ProcessorProcess(processor));
+        while(PLUTO_ProcessorProcess(PLUTO_processor));
         usleep(1000 * 25);
     }
-    PLUTO_DestroyProcessor(&processor);
+    PLUTO_DestroyProcessor(&PLUTO_processor);
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
     // Deinitialize Python.
@@ -263,6 +294,46 @@ static PLUTO_SignalHandler_t PLUTO_NodeInitializeSignals(PLUTO_Logger_t logger)
     }
     return signal_handler; 
 }
+
+#if defined(PLUTO_CTS_RTM_PYTHON)
+#include <pluto/pluto_event/pluto_event.h>
+#include <pluto/os_abstraction/pluto_time.h>
+#include <pluto/os_abstraction/system_events/pluto_system_events.h>
+static int PLUTO_NodePythonCAPI_RegisterObserver(int filedescriptor)
+{
+    return PLUTO_SystemEventsHandlerRegisterObserver(
+        PLUTO_processor->system_event_handler,
+        filedescriptor
+    );
+}
+
+static int PLUTO_NodePythonCAPI_DeregisterObserver(int filedescriptor)
+{
+    return PLUTO_SystemEventsHandlerDeregisterObserver(
+        PLUTO_processor->system_event_handler,
+        filedescriptor
+    );
+}
+
+static int PLUTO_NodePythonCAPI_EmitEvent(int id, int event, const char *payload, size_t nbytes)
+{
+    PLUTO_Time_t timestamp = PLUTO_TimeNow();
+    PLUTO_Event_t event_object = PLUTO_CreateEvent();
+    PLUTO_EventSetTimestamp(event_object, timestamp);
+    PLUTO_EventSetId(event_object, id);
+    PLUTO_EventSetEvent(event_object, event);
+    PLUTO_EventSetSizeOfPayload(event_object, nbytes);
+    snprintf(
+        PLUTO_EventPayload(event_object),
+        PLUTO_EventSizeOfPayloadBuffer(event_object),
+        "%s",
+        payload
+    );
+    const int result = PLUTO_ProcessorEmitEvent(PLUTO_processor, event_object)? 0 : -1;
+    PLUTO_DestroyEvent(&event_object); 
+    return result;
+}
+#endif
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

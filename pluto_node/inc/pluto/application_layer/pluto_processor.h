@@ -9,6 +9,7 @@
 //
 
 #include "pluto/os_abstraction/files/pluto_file.h"
+#include "pluto/pluto_event/pluto_event.h"
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/os_abstraction/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_logger.h>
@@ -59,6 +60,15 @@ void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor);
 ///         output Event.
 ///
 bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor);
+///
+/// \brief  Emit an Event.
+///         The Event is written to the Inputqueue of the Processor.
+///         Be careful with this Function: 
+///         If to many Events are emitted the Inputqueue can overflow very fast!!!
+///
+/// \returns bool - true if the Event was emitted successfully, false otherwise.
+///
+bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event);
 
 //
 // --------------------------------------------------------------------------------------------------------------------

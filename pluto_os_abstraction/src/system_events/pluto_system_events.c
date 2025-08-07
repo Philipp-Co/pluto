@@ -44,6 +44,7 @@ struct PLUTO_SystemEventHandler
 
 PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
 {
+    assert(NULL != logger);
     PLUTO_SystemEventHandler_t handler = (PLUTO_SystemEventHandler_t)PLUTO_Malloc(
         sizeof(struct PLUTO_SystemEventHandler)
     );
@@ -51,6 +52,7 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
     handler->kqueue = kqueue();
     if(handler->kqueue < 0)
     {
+        PLUTO_LoggerWarning(logger, "Unable to create kqueue...");
         PLUTO_Free(handler);
         return NULL;
     }
@@ -67,13 +69,22 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
+    assert(NULL != handler);
+    assert(NULL != handler->logger);
+    PLUTO_LoggerInfo(
+        handler->logger,
+        "Register Observer for Filedescriptor %i on kqueue %i",
+        descriptor,
+        handler->kqueue
+    );
+    //descriptor = open("/Users/philippkroll/Repositories/pluto/plyto/test.txt", O_RDWR);
     struct kevent event; 
     EV_SET(
         &event, 
         descriptor, 
         EVFILT_VNODE, 
         EV_ADD | EV_CLEAR, 
-        NOTE_WRITE | NOTE_DELETE | NOTE_LINK | NOTE_ATTRIB | NOTE_RENAME,
+        NOTE_WRITE | NOTE_DELETE | NOTE_LINK | NOTE_ATTRIB | NOTE_RENAME | NOTE_EXTEND,
 	    0, 
         NULL
     );
@@ -95,13 +106,29 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
     return result;
 }
 
+int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
+{
+    assert(NULL != handler);
+    assert(NULL != handler->logger);
+    PLUTO_LoggerInfo(
+        handler->logger,
+        "Deregister Observer for Filedescripto %i",
+        descriptor
+    );
+    return -1;
+}
+
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
 {
+    assert(NULL != handler);
+    assert(NULL != handler->logger);
+    assert(handler->kqueue > 0);
     struct timespec timeout = {
         .tv_sec=0,
-        .tv_nsec=1000*1000*5
+        .tv_nsec=0,//1000*1000*5
     };
     struct kevent kq_event;
+    //PLUTO_LoggerInfo(handler->logger, "Read kqueue %i", handler->kqueue);
     const int32_t result = kevent(
         handler->kqueue,
         NULL, 0,
@@ -121,6 +148,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     }
     else if(result > 0 && (kq_event.flags & EV_ERROR))
     {
+        PLUTO_LoggerWarning(handler->logger, "Polling kqueue %i: EV_ERROR", handler->kqueue);
         return PLUTO_SE_NO_EVENT;
     }
     else if(result < 0)

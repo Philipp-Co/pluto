@@ -1,4 +1,3 @@
-
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -6,6 +5,8 @@
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include "pluto/application_layer/pluto_processor.h"
 #include "pluto/os_abstraction/pluto_logger.h"
+#include "pluto/os_abstraction/pluto_malloc.h"
+#include "pluto/os_abstraction/pluto_time.h"
 #include <pluto/application_layer/python/pluto_python.h>
 
 #include <stdio.h>
@@ -74,22 +75,50 @@ static PyObject *PLUTO_PY_interface_object = NULL;
 PyGILState_STATE gstate;
 PLUTO_Logger_t PLUTO_PY_logger = NULL;
 
+static PyObject* PLUTO_PythonInitPluto(void);
+
+
+static int PLUTO_PythonCAPI_DefaultRegisterObserver(int filedescriptor);
+static int PLUTO_PythonCAPI_DefaultDeregisterObserver(int filedescriptor);
+static int PLUTO_PythonCAPI_DefaultEmitEvent(int id, int event, const char *payload, size_t nbytes);
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-bool PLUTO_InitializePython(const char *python_path, const char *executable, PLUTO_Logger_t logger)
+static PLUTO_PythonCAPI_t PLUTO_c_api = {
+    .register_file_observer=PLUTO_PythonCAPI_DefaultRegisterObserver,
+    .deregister_file_observer=PLUTO_PythonCAPI_DefaultDeregisterObserver,
+    .emit_event=PLUTO_PythonCAPI_DefaultEmitEvent
+};
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+bool PLUTO_InitializePython(
+    const char *python_path,
+    const char *executable,
+    PLUTO_PythonCAPI_t *c_api, 
+    PLUTO_Logger_t logger
+)
 {
     //
     // https://docs.python.org/3/c-api/init_config.html
     //
     PyStatus status;
     PyConfig config;
-   
+    if(NULL != c_api)
+    { 
+        assert(c_api->register_observer != NULL); 
+        assert(c_api->deregister_observer != NULL); 
+        assert(c_api->emit_event != NULL); 
+        PLUTO_c_api = *c_api;
+    }
     PLUTO_PY_logger = logger;
 
     PLUTO_LoggerInfo(logger, "Start Python configuration...");
     //PyImport_AppendInittab("pluto", &PyInit_emb_input);
+    PyImport_AppendInittab("pluto", &PLUTO_PythonInitPluto);
     PyConfig_InitIsolatedConfig(&config);
     config.isolated = 1;
     
@@ -451,6 +480,120 @@ error:
     PyErr_Print();
     PyGILState_Release(gstate);
     return NULL;
+}
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
+static PyObject* PLUTO_PythonCAPIRegisterFileObserver(PyObject *self, PyObject *args)
+{
+    (void)self;
+    int filedescriptor;
+    if(!PyArg_ParseTuple(args, "i", &filedescriptor))
+    {
+        PyErr_BadArgument();
+        return NULL;
+    }
+    PLUTO_c_api.register_file_observer(filedescriptor);
+    return Py_None;
+}
+
+static PyObject* PLUTO_PythonCAPIDeregisterFileObserver(PyObject *self, PyObject *args)
+{
+    (void)self;
+    int filedescriptor;
+    if(!PyArg_ParseTuple(args, "i", &filedescriptor))
+    {
+        PyErr_BadArgument();
+        return NULL;
+    }
+    PLUTO_c_api.deregister_file_observer(filedescriptor);
+    return Py_None;
+}
+
+static PyObject* PLUTO_PythonCAPIEmitEvent(PyObject *self, PyObject* args)
+{
+    (void)self;
+    int id = -1;
+    int event = -1;
+    char *string = NULL;
+    if(!PyArg_ParseTuple(args, "iis", &id, &event, &string))
+    {
+        return PyLong_FromLong(-1l);
+    }
+    const int c_api_result = PLUTO_c_api.emit_event(id, event, string, strlen(string) + 1);
+    return PyLong_FromLong((long)c_api_result);
+}
+
+static PyObject* PLUTO_PythonInitPluto(void)
+{
+    //
+    //  events
+    //      |
+    //      +-- observer
+    //      |       |
+    //      |       +-- signals
+    //      |       +-- system
+    //      |       +-- external
+    //      |
+    //      +-- emit
+    //              |
+    //              +-- external
+    //
+    static PyMethodDef pluto_module_methods[] = 
+    {
+        {
+            "register_file_observer", 
+            PLUTO_PythonCAPIRegisterFileObserver, 
+            METH_VARARGS,
+            "Observe the activity of a given Object. "
+            "Pass a Filedescriptor to Pluto."
+        },
+        {
+            "deregister_file_observer", 
+            PLUTO_PythonCAPIDeregisterFileObserver,
+            METH_VARARGS,
+            "Observe the activity of a given Object. "
+            "Pass a Filedescriptor to Pluto."
+        },
+        {
+            "emit_event", 
+            PLUTO_PythonCAPIEmitEvent, 
+            METH_VARARGS,
+            "Observe the activity of a given Object. "
+            "Pass a Filedescriptor to Pluto."
+        },
+        {NULL, NULL, 0, NULL}
+    };
+    static struct PyModuleDef pluto_module = 
+    {
+        .m_base=PyModuleDef_HEAD_INIT,
+        .m_name="pluto",
+        .m_size=0,
+        .m_methods=pluto_module_methods,
+    };
+    return PyModuleDef_Init(&pluto_module);
+}
+
+static int PLUTO_PythonCAPI_DefaultRegisterObserver(int filedescriptor)
+{
+    (void)filedescriptor;
+    return -1;
+}
+
+static int PLUTO_PythonCAPI_DefaultDeregisterObserver(int filedescriptor)
+{
+    (void)filedescriptor;
+    return -1;
+}
+
+static int PLUTO_PythonCAPI_DefaultEmitEvent(int id, int event, const char *payload, size_t nbytes)
+{
+    (void)id;
+    (void)event;
+    (void)payload;
+    (void)nbytes;
+    return -1;
 }
 //
 // --------------------------------------------------------------------------------------------------------------------
