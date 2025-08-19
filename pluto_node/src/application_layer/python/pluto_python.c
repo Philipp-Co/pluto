@@ -55,7 +55,7 @@ typedef struct
 {
     char **paths;
     size_t n_paths;
-} PLUTO_PY_PythonPath_t;
+} PLUTO_PY_PythonPath_t __attribute__((aligned(64)));
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -109,8 +109,8 @@ bool PLUTO_InitializePython(
     PyConfig config;
     if(NULL != c_api)
     { 
-        assert(c_api->register_observer != NULL); 
-        assert(c_api->deregister_observer != NULL); 
+        assert(c_api->register_file_observer != NULL); 
+        assert(c_api->deregister_file_observer != NULL); 
         assert(c_api->emit_event != NULL); 
         PLUTO_c_api = *c_api;
     }
@@ -126,16 +126,17 @@ bool PLUTO_InitializePython(
     //char *env = getenv("VIRTUAL_ENV");
     //
     PLUTO_LoggerInfo(logger, "Compile Python Path Variable...");
-    char *buffer = malloc(4096);
+    char *buffer = PLUTO_Malloc(4096);
     if(!buffer) return false;
     // TODO: Memory Management...
+    const int N_PYTHON_PATHS = 128;
     PLUTO_PY_PythonPath_t python_path_buffer = {
-        .paths=malloc(sizeof(char*) * 128),
+        .paths=PLUTO_Malloc(sizeof(char*) * N_PYTHON_PATHS),
         .n_paths=0
     };
-    for(size_t i=0LU;i<128;++i)
+    for(size_t i=0LU;i<N_PYTHON_PATHS;++i)
     {
-        python_path_buffer.paths[i] = malloc(256);
+        python_path_buffer.paths[i] = PLUTO_Malloc(256);
         memset(python_path_buffer.paths[i], '\0', 256);
     }
 
@@ -146,19 +147,21 @@ bool PLUTO_InitializePython(
     for(size_t j=0;j<python_path_buffer.n_paths;++j)
     {
         snprintf(buffer, 4096, "%s", python_path_buffer.paths[j]); 
-        wchar_t *wcstr = malloc(sizeof(wchar_t) * (strlen(buffer) + 1));
+        wchar_t *wcstr = PLUTO_Malloc(sizeof(wchar_t) * (strlen(buffer) + 1));
         for(size_t i=0;i<(strlen(buffer)+1);++i)
         {
             wcstr[i] = L'\0';
         } 
         mbstowcs(wcstr, buffer, strlen(buffer));
         PyWideStringList_Append(&config.module_search_paths, wcstr);
+        PLUTO_Free(wcstr);
     }
     config.module_search_paths_set = 1;
     //
     PLUTO_LoggerInfo(logger, "Initialize Python Interpreter from Config.");
     status = Py_InitializeFromConfig(&config);
-    if (PyStatus_Exception(status)) {
+    if (PyStatus_Exception(status))
+    {
         goto exception;
     }
     
@@ -171,12 +174,35 @@ bool PLUTO_InitializePython(
         goto error;
     }
     //PyConfig_Clear(&config);
+    if(buffer)
+    {
+        PLUTO_Free(buffer);
+    }
+    if(python_path_buffer.paths)
+    {
+        for(size_t i=0;i<N_PYTHON_PATHS;++i)
+        {
+            PLUTO_Free(python_path_buffer.paths[i]);
+        }
+    }
+    PyConfig_Clear(&config);
     return true;
 
 exception:
     PyConfig_Clear(&config);
     Py_ExitStatusException(status);
 error:
+    if(buffer)
+    {
+        PLUTO_Free(buffer);
+    }
+    if(python_path_buffer.paths)
+    {
+        for(size_t i=0;i<N_PYTHON_PATHS;++i)
+        {
+            PLUTO_Free(python_path_buffer.paths[i]);
+        }
+    }
     //PyConfig_Clear(&config);
     return false;
 }
@@ -221,8 +247,18 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     PyObject *payload = PyUnicode_FromString(args->input_buffer);
     
     // Call Memberfunction on Object
-    PyObject *method = PyUnicode_FromString(PLUTO_PYTHON_RUN_METHOD);
-    PyObject *result = PyObject_CallMethodObjArgs(PLUTO_PY_interface_object, method, id, event, n_output_queues, payload, NULL);
+    PyObject *method = PyUnicode_FromString(
+        PLUTO_PYTHON_RUN_METHOD
+    );
+    PyObject *result = PyObject_CallMethodObjArgs(
+        PLUTO_PY_interface_object, 
+        method, 
+        id, 
+        event, 
+        n_output_queues, 
+        payload, 
+        NULL
+    );
     if(!result)
     {
         PLUTO_LoggerWarning(PLUTO_PY_logger, "NULL returned from Python-Callback.");
@@ -294,7 +330,9 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                             PyUnicode_AsUTF8(pypayload)
                         )
                     );
-                    PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(payload));
+                    //PyObject *bytes = PyUnicode_AsEncodedString(payload, "utf-8", NULL);
+                    //printf("Python Callback: %s, %lu\n", PyUnicode_AsUTF8(pypayload), strlen(PyUnicode_AsUTF8(pypayload)));
+                    PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(pypayload));
                 }
                 else
                 {

@@ -21,7 +21,7 @@ typedef struct
     PLUTO_PythonCAPI_RegisterFileObserver register_file_observer;
     PLUTO_PythonCAPI_DeregisterFileObserver deregister_file_observer;
     PLUTO_PythonCAPI_EmitEvent emit_event;
-} PLUTO_PythonCAPI_t;
+} PLUTO_PythonCAPI_t __attribute__((aligned(64)));
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

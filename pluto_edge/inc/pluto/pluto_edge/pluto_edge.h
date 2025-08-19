@@ -25,4 +25,6 @@ bool PLUTO_EDGE_EdgeReceiveEvent(PLUTO_EDGE_Edge_t edge, PLUTO_Event_t event);
 int32_t PLUTO_EDGE_NumberOfMessagesAvailable(PLUTO_EDGE_Edge_t edge);
 const char* PLUTO_EDGE_EdgeVersion(void);
 
+
+
 #endif

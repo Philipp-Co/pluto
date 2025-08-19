@@ -4,5 +4,6 @@
 
 void PLUTO_TEST_MessageQueueInitialCreate(void);
 void PLUTO_TEST_MessageQueueInitialGet(void);
+void PLUTO_TEST_MessageQueueSendAndRead(void);
 
 #endif

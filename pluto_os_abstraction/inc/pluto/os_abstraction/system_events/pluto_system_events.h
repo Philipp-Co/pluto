@@ -29,7 +29,7 @@ struct PLUTO_SystemEvent
     /// \brief  Filedescriptor.
     ///
     int descriptor;
-};
+} __attribute__((aligned(64)));
 typedef struct PLUTO_SystemEvent* PLUTO_SystemEvent_t;
 
 ///

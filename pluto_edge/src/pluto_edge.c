@@ -30,30 +30,21 @@ PLUTO_EDGE_Edge_t PLUTO_EDGE_CreateEdge(
     const int result = snprintf(buffer, sizeof(buffer), "Edge=%s",name);
     if(result <= 0 || (size_t)result >= sizeof(buffer))
     {
-        goto error;
+        PLUTO_Free(edge);
+        return NULL;
     }
     edge->queue = PLUTO_MessageQueueGet(
         path, name, logger
     );
-    if(!edge->queue)
-    {
-        goto error;
-    }
-    return edge;
-error:
-    PLUTO_EDGE_DestroyEdge(&edge);
     return edge;
 }
 
 void PLUTO_EDGE_DestroyEdge(PLUTO_EDGE_Edge_t *edge)
 {
     assert(NULL != *edge);
-    if(*edge)
-    {
-        if((*edge)->queue)
-            PLUTO_DestroyMessageQueue(&(*edge)->queue);
-        PLUTO_Free(*edge);
-    }
+    assert(NULL != (*edge)->queue);
+    PLUTO_DestroyMessageQueue(&(*edge)->queue);
+    PLUTO_Free(*edge);
     *edge = NULL;
 }
 

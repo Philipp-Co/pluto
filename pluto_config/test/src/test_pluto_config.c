@@ -1,5 +1,6 @@
 
-#include "pluto/os_abstraction/pluto_logger.h"
+#include <pluto/os_abstraction/pluto_logger.h>
+#include <pluto/os_abstraction/pluto_malloc.h>
 #include <test_node_config.h>
 #include <test_core_config.h>
 #include <test_pluto_config.h>
@@ -27,11 +28,14 @@ int main(int argc, char **argv)
 
 void setUp(void)
 {
+    PLUTO_MallocResetState();
     TEST_PLUTO_Logger = PLUTO_CreateLogger("Test Config");
 }
 
 void tearDown(void)
 {
     PLUTO_DestroyLogger(&TEST_PLUTO_Logger);
+    TEST_ASSERT_TRUE(PLUTO_MallocCountEqual());
+    PLUTO_MallocResetState();
 }
 

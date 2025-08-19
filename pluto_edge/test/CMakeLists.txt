@@ -25,6 +25,12 @@ add_executable(
     pluto_edge_test ${SRC}
 )
 
+#target_compile_definitions(
+#    pluto_edge_test
+#    PUBLIC
+#    PLUTO_TEST=1
+#)
+
 target_include_directories(
     pluto_edge_test
     PUBLIC

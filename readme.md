@@ -61,6 +61,20 @@ Dieses Projekt wird mit Hilfe von unity getestet. Siehe dazu https://github.com/
     cmake -G "Unix Makefiles" ../
     make
 
+### Testflags
+
+Fuer erweiterte Tests kann das Flag 
+
+    PLUTO_TEST
+
+definiert werden.
+Folgendes Flag wird beim generieren hinzugefuegt:
+
+    -DPLUTO_TEST=1
+
+Zusaetzliche Testfunktionen beinhalten:
+    - Pruefungen fuer das Speichermanagement
+
 ## Einen Node starten
 
 Terminal 1

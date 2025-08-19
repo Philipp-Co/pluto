@@ -32,7 +32,52 @@ add_subdirectory(
 #    unity STATIC
 #    external/Unity/src/unity.c
 #)
+add_library(
+    pluto_core_client
+    SHARED
+    ${CMAKE_CURRENT_LIST_DIR}/src/data_layer/pluto_core_register.c
+)
 
+target_compile_definitions(
+    pluto_core_client
+    PUBLIC
+    PLUTO_CORE_CLIENT_LIB
+)
+
+target_include_directories(
+    pluto_core_client
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../external/
+)
+
+target_link_directories(
+    pluto_core_client
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
+    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
+)
+
+target_link_libraries(
+    pluto_core_client
+    PUBLIC
+    pluto_config
+    pluto_os_abstraction
+)
+
+target_compile_options(
+    pluto_core_client
+    PUBLIC
+    "-fno-omit-frame-pointer"
+    "-Wno-unused-function"
+    "-Wall"
+    "-Wextra"
+    "-Werror"
+    "-Wincompatible-pointer-types"
+    "-pedantic"
+    "-gdwarf-5"
+    "-pedantic-errors"
+)
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
@@ -44,6 +89,7 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_node_state.c
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/pluto_core_state.c
     ${CMAKE_CURRENT_LIST_DIR}/src/data_layer/pluto_sig_queue.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/data_layer/pluto_core_register.c
 )
 
 target_include_directories(
@@ -114,6 +160,12 @@ add_dependencies(
     pluto_os_abstraction
 )
 
+add_dependencies(
+    pluto_core_client
+    pluto_config
+    pluto_os_abstraction
+)
+
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
@@ -124,6 +176,9 @@ add_dependencies(
 #
 install(
     TARGETS pluto_core DESTINATION bin 
+)
+install(
+    TARGETS pluto_core_client DESTINATION lib 
 )
 
 #

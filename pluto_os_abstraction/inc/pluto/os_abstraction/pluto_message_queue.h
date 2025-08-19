@@ -30,18 +30,18 @@
 
 struct PLUTO_MessageQueue
 {
-    PLUTO_Key_t key;
+    PLUTO_Key_t key __attribute__((aligned(64)));
     PLUTO_Semaphore_t semaphore;
     PLUTO_Logger_t logger;
     int filedescriptor;
-};
+} __attribute__((aligned(64)));
 typedef struct PLUTO_MessageQueue* PLUTO_MessageQueue_t;
 
 struct PLUTO_MsgBuf 
 {
-    long msgtype;
-    char text[PLUTO_MAX_BODY_SIZE];
-};
+    long msgtype __attribute__((aligned(16)));
+    char text[PLUTO_MAX_BODY_SIZE] __attribute__((aligned(16)));
+} __attribute__((aligned(64)));
 
 //
 // --------------------------------------------------------------------------------------------------------------------

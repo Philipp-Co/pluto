@@ -120,6 +120,7 @@ void PLUTO_EventSetTimestamp(PLUTO_Event_t event, PLUTO_Time_t timestamp);
 /// \returns char* - A Buffer. Use PLUTO_EventSizeOfPayloadBuffer(event) to retrieve the Size of this Buffer in Bytes.
 ///
 char* PLUTO_EventPayload(PLUTO_Event_t event);
+bool PLUTO_EventCopyBufferToPayload(PLUTO_Event_t event, const void *buffer, size_t nbytes);
 ///
 /// \brief  Set the number of Bytes of the payload.
 /// \param[out] event - The Event.

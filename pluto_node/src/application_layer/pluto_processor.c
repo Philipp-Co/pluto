@@ -48,14 +48,13 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
 {
     if(!config) return NULL;
     if(!callback) return NULL;
-    PLUTO_Processor_t processor = (PLUTO_Processor_t)malloc(sizeof(struct PLUTO_Processor));
+    PLUTO_Processor_t processor = (PLUTO_Processor_t)PLUTO_Malloc(sizeof(struct PLUTO_Processor));
     processor->logger = logger;
     processor->signal_handler = signal_handler;
     processor->callback = callback;
-    processor->info = PLUTO_CreateInfo(config->base_path, config->name);
     
     processor->number_of_output_queues = config->number_of_output_queues;
-    processor->output_queues = (PLUTO_MessageQueue_t*)malloc(
+    processor->output_queues = (PLUTO_MessageQueue_t*)PLUTO_Malloc(
         config->number_of_output_queues * sizeof(PLUTO_MessageQueue_t)
     );    
     for(int32_t i=0;i<config->number_of_output_queues;++i)
@@ -69,6 +68,8 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
         );
         if(!processor->output_queues[i])
         {
+            PLUTO_Free(processor->output_queues);
+            PLUTO_Free(processor);
             return NULL;
         }
     }
@@ -78,16 +79,7 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
         PLUTO_PROC_INPUT_QUEUE_PERMISSIONS,
         logger
     ); 
-
-    PLUTO_InfoValues_t values = {
-        .name = config->name,
-        .name_of_input_queue = config->name_of_input_queue,
-        .n_names_of_output_queues = config->number_of_output_queues,
-        .names_of_output_queues = config->names_of_output_queues,
-        .n_header = PLUTO_PROC_MAX_N_HEADER,
-        .n_query_parameter = PLUTO_PROC_MAX_N_QUERY_PARAMETER
-    };
-    PLUTO_InfoDisplay(processor->info, &values);
+    
     processor->system_event_handler = PLUTO_CreateSystemEventHandler(processor->logger);
     return processor;
 }
@@ -100,9 +92,9 @@ void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor)
     {
         PLUTO_DestroyMessageQueue(&(*processor)->output_queues[i]);
     }
-    PLUTO_DestroyInfo(&(*processor)->info);
-
-    free(*processor);
+    PLUTO_Free((*processor)->output_queues);
+    PLUTO_DestroySystemEventHandler(&(*processor)->system_event_handler);
+    PLUTO_Free(*processor);
 }
 
 bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event)
@@ -130,29 +122,23 @@ bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
     // Get System Events.
     //
     PLUTO_ProcessorDispatchSystemEvents(processor);
-    
     //
     // Get Signal Events...
     //
     PLUTO_ProcessorDispatchSignalEvents(processor);
-    
     //
     // Get Events from Queue...
     //
-    int count = 10;
-    while(count--)
-    {
-        if(!PLUTO_ProcessorDispatchExternalEvents(processor))
-            break;
-    }
+    (void)PLUTO_ProcessorDispatchExternalEvents(processor);
     return false;
 }
 
 static void PLUTO_ProcessorExecuteCallback(PLUTO_Processor_t processor, struct PLUTO_Event *event)
 {
     struct PLUTO_MsgBuf buffer;
-    memset(buffer.text, '\0', sizeof(buffer.text));
-    PLUTO_Event_t output_event = PLUTO_CreateEvent();
+    //memset(buffer.text, '\0', sizeof(buffer.text));
+    //PLUTO_Event_t output_event = PLUTO_CreateEvent();
+    PLUTO_Event_t output_event = &processor->output_event; 
     memset(PLUTO_EventPayload(output_event), '\0', PLUTO_EventSizeOfPayloadBuffer(output_event));
     
     // process...
@@ -162,16 +148,20 @@ static void PLUTO_ProcessorExecuteCallback(PLUTO_Processor_t processor, struct P
         .input_buffer = PLUTO_EventPayload(event),
         .output_buffer = PLUTO_EventPayload(output_event),
         .input_buffer_size = PLUTO_EventSizeOfPayload(event),
-        .output_buffer_size = PLUTO_EventSizeOfPayload(output_event),
+        .output_buffer_size = PLUTO_EventSizeOfPayloadBuffer(output_event),
         .number_of_output_queues = (uint8_t)processor->number_of_output_queues
     };
     PLUTO_ProcessorCallbackOutput_t output = processor->callback(&input);
     PLUTO_EventSetTimestamp(output_event, PLUTO_TimeNow());
+    PLUTO_EventSetSizeOfPayload(output_event, output.output_size);
+    PLUTO_EventSetEvent(output_event, output.event);
+    PLUTO_EventSetId(output_event, output.id);
     //
     // Only send an Event if the Client returned True.
     //
     if(output.return_value)
     {
+        buffer.text[output.output_size] = '\0';
         if(PLUTO_EventToBuffer(output_event, buffer.text, sizeof(buffer.text) - 1))
         {
             for(int i=0;i<processor->number_of_output_queues;++i)
@@ -185,8 +175,13 @@ static void PLUTO_ProcessorExecuteCallback(PLUTO_Processor_t processor, struct P
                     ); 
                 }
             }
+        } 
+        else
+        {
+            printf("Event to Buffer failed!\n");
         }
     }
+    //PLUTO_DestroyEvent(&output_event);
 }
 
 static void PLUTO_ProcessorDispatchSignalEvents(PLUTO_Processor_t processor)
@@ -197,7 +192,8 @@ static void PLUTO_ProcessorDispatchSignalEvents(PLUTO_Processor_t processor)
     {
         PLUTO_TimeToString(signal_event.timestamp, buffer, sizeof(buffer));
         
-        PLUTO_Event_t tmp = PLUTO_CreateEvent();
+        //PLUTO_Event_t tmp = PLUTO_CreateEvent();
+        PLUTO_Event_t tmp = &processor->event_buffer;
         PLUTO_EventSetEvent(tmp, PLUTO_NODE_EVENT_DEFINITION_SIGNAL_EVENT);
         PLUTO_EventSetTimestamp(tmp, signal_event.timestamp);
         PLUTO_EventSetId(tmp, 0);
@@ -209,18 +205,20 @@ static void PLUTO_ProcessorDispatchSignalEvents(PLUTO_Processor_t processor)
         );
         PLUTO_EventSetSizeOfPayload(tmp, len);
         PLUTO_ProcessorExecuteCallback(processor, tmp);
+        //PLUTO_DestroyEvent(&tmp);
     }
 }
 
 static void PLUTO_ProcessorDispatchSystemEvents(PLUTO_Processor_t processor)
 {
-    PLUTO_SystemEvent_t sevent = PLUTO_CreateSystemEvent();
+    PLUTO_SystemEvent_t sevent = &processor->system_event;//PLUTO_CreateSystemEvent();
     int count = 10;
     while(count--)
     {
         if(PLUTO_SE_OK != PLUTO_SystemEventsPoll(processor->system_event_handler, sevent))
             break;
-        PLUTO_Event_t tmp = PLUTO_CreateEvent();
+        //PLUTO_Event_t tmp = PLUTO_CreateEvent();
+        PLUTO_Event_t tmp = &processor->event_buffer;
         PLUTO_EventSetEvent(tmp, PLUTO_NODE_EVENT_DEFINITION_SYSTEM_EVENT);
         PLUTO_EventSetTimestamp(tmp, sevent->timestamp);
         PLUTO_EventSetId(tmp, 0);
@@ -232,14 +230,15 @@ static void PLUTO_ProcessorDispatchSystemEvents(PLUTO_Processor_t processor)
         );
         PLUTO_EventSetSizeOfPayload(tmp, len);
         PLUTO_ProcessorExecuteCallback(processor, tmp);
+        //PLUTO_DestroyEvent(&tmp);
     }
-    PLUTO_DestroySystemEvent(&sevent);
+    //PLUTO_DestroySystemEvent(&sevent);
 }
 
 static bool PLUTO_ProcessorDispatchExternalEvents(PLUTO_Processor_t processor)
 {
     struct PLUTO_MsgBuf buffer;
-    memset(buffer.text, '\0', sizeof(buffer.text));
+    //memset(buffer.text, '\0', sizeof(buffer.text));
     if(
         PLUTO_MessageQueueRead(
             processor->input_queue,
@@ -247,18 +246,16 @@ static bool PLUTO_ProcessorDispatchExternalEvents(PLUTO_Processor_t processor)
         )
     )
     {
-        PLUTO_Event_t event = PLUTO_CreateEvent();
-        memset(PLUTO_EventPayload(event), '\0', PLUTO_EventSizeOfPayloadBuffer(event));
-        bool result = PLUTO_CreateEventFromBuffer(event, buffer.text, sizeof(buffer.text));
-        if(!result)
-        {
-            PLUTO_DestroyEvent(&event);
-        }
-        else
+        //PLUTO_Event_t event = PLUTO_CreateEvent();
+        memset(PLUTO_EventPayload(&processor->event_buffer), '\0', PLUTO_EventSizeOfPayloadBuffer(&processor->event_buffer));
+        bool result = PLUTO_CreateEventFromBuffer(&processor->event_buffer, buffer.text, sizeof(buffer.text));
+        if(result)
         {    
-            PLUTO_ProcessorExecuteCallback(processor, event);
+            PLUTO_ProcessorExecuteCallback(processor, &processor->event_buffer);
+            //PLUTO_DestroyEvent(&event);
             return true;
         }
+        //PLUTO_DestroyEvent(&event);
     }
     return false;
 }

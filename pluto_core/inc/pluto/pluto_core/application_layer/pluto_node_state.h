@@ -11,6 +11,7 @@
 #define __PLUTO_CORE_NODE_STATE_H__
 
 #include "pluto/pluto_config/pluto_config.h"
+#include <pluto/pluto_core/data_layer/pluto_core_register.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -18,6 +19,13 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+
+struct PLUTO_NodeStateData
+{
+    PLUTO_CoreRegister_t core_register;
+    int32_t index;
+};
+
 typedef struct 
 {
     char *python_path;
@@ -67,6 +75,7 @@ typedef enum
 struct PLUTO_NodeState
 {
     PLUTO_Config_t config;
+    struct PLUTO_NodeStateData data;
     int signum[3];
     time_t timestamps[3];
     PLUTO_CORE_NodeStateValue_t current_state;
@@ -81,7 +90,7 @@ typedef struct PLUTO_NodeState* PLUTO_NodeState_t;
 ///
 /// \brief  Create a State-Object.
 ///
-struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config);
+struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config, struct PLUTO_NodeStateData data);
 ///
 /// \brief  Destroy a State-Object.
 /// \pre    The "state" must not be NULL.

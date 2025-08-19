@@ -23,6 +23,7 @@
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/pluto_core/application_layer/pluto_node_state.h>
 #include <pluto/pluto_core/application_layer/pluto_core_state.h>
+#include <pluto/pluto_core/data_layer/pluto_core_register.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -49,6 +50,7 @@ struct PLUTO_Core
     /// \brief  A logger.
     ///
     PLUTO_Logger_t logger;
+    PLUTO_CoreRegister_t core_register;
 };
 typedef struct PLUTO_Core* PLUTO_Core_t;
 //

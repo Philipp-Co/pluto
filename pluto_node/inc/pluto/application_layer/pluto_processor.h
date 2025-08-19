@@ -29,13 +29,15 @@ struct PLUTO_Processor
     PLUTO_Logger_t logger;
     PLUTO_SignalHandler_t signal_handler;
     PLUTO_ProcessCallback_t callback;
-    PLUTO_Info_t info;
     PLUTO_MessageQueue_t input_queue;
     int32_t number_of_output_queues;
-    PLUTO_MessageQueue_t *output_queues;
-
+    PLUTO_MessageQueue_t *output_queues; // Allocated. Owned by this Struct.
     PLUTO_SystemEventHandler_t system_event_handler;
-}; 
+    
+    struct PLUTO_Event event_buffer;
+    struct PLUTO_Event output_event; 
+    struct PLUTO_SystemEvent system_event;
+} __attribute__((aligned(64))); 
 typedef struct PLUTO_Processor* PLUTO_Processor_t;
 
 //

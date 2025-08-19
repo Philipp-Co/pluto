@@ -35,7 +35,7 @@ target_compile_definitions(
     pluto_node_test 
     PUBLIC
     PLUTO_CTS_RTM_PASSTHROUGH
-    PLUTO_TEST
+    #PLUTO_TEST
     PLUTO_TEST_CONFIG="${CMAKE_CURRENT_LIST_DIR}/ressources/test_node_config.txt"
 )
 

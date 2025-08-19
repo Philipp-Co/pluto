@@ -115,7 +115,17 @@ int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t h
         "Deregister Observer for Filedescripto %i",
         descriptor
     );
-    return -1;
+    struct kevent event;
+    EV_SET(
+        &event,
+        descriptor,
+        EVFILT_VNODE,
+        EV_DELETE,
+        0,
+        0,
+        NULL
+    );
+    return kevent(handler->kqueue, &event, 1, NULL, 0, NULL);
 }
 
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 

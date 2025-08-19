@@ -22,10 +22,10 @@
 ///
 struct PLUTO_Semaphore 
 {
-    PLUTO_Key_t key;
+    PLUTO_Key_t key __attribute__((aligned(64)));
     PLUTO_Logger_t logger;
     int filedescriptor;
-};
+} __attribute__((aligned(64)));
 typedef struct PLUTO_Semaphore* PLUTO_Semaphore_t;
 
 typedef enum

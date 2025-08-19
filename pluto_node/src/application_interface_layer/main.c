@@ -1,6 +1,7 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+#include <pluto/application_interface_layer/main.h>
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/application_layer/pluto_processor.h>
@@ -112,7 +113,6 @@ int main(int argc, char **argv)
         PLUTO_Free(args);
         goto end;
     }
-    PLUTO_Free(args);
     
     PLUTO_LoggerInfo(PLUTO_node_logger, "Run main Program...");
     PLUTO_processor = PLUTO_CreateProcessor(
@@ -157,7 +157,9 @@ int main(int argc, char **argv)
     while(!atomic_load(&PLUTO_Terminate))
     {
         while(PLUTO_ProcessorProcess(PLUTO_processor));
-        usleep(1000 * 25);
+#if !defined(PLUTO_NODE_TIME_TO_SLEEP_IN_US) && ((PLUTO_NODE_TIME_TO_SLEEP_IN_US) > 0)
+        usleep(PLUTO_NODE_TIME_TO_SLEEP_IN_US);
+#endif
     }
     PLUTO_DestroyProcessor(&PLUTO_processor);
 
@@ -169,6 +171,7 @@ int main(int argc, char **argv)
     PLUTO_SHLIB_Destroy();
 #endif
     
+    PLUTO_Free(args);
     return_value = 0;
 end:
     PLUTO_LoggerInfo(PLUTO_node_logger, "Node: Bye Bye...");
@@ -183,7 +186,6 @@ end:
 void PLUTO_SignalHandler(int signum)
 {
     (void)signum;
-    printf("Sigint empfangen!\n");
     atomic_store(&PLUTO_Terminate, 1);
 }
 
@@ -219,6 +221,7 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #endif
 #if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
             case 'e':
+                printf("Executable Arg: %s\n", optarg);
                 memcpy(args->executable, optarg, strlen(optarg));
                 break;
 #endif
@@ -252,14 +255,21 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #if defined(PLUTO_CTS_RTM_PASSTHROUGH)
 static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
 {
-    snprintf(args->output_buffer, args->output_buffer_size, "{\"passthrough\":\"%s\"}", args->input_buffer);
-    PLUTO_ProcessorCallbackOutput_t output = {
-        .id = args->id,
-        .output_to_queues = 0xFFFFFFFFFFFFFFFFU,
-        .event = args->event,
-        .return_value = true,
-        .output_size = strlen(args->output_buffer)
-    };
+    const size_t result = (size_t)snprintf(args->output_buffer, args->output_buffer_size, "{\"passthrough\":\"%s\"}", args->input_buffer);
+    PLUTO_ProcessorCallbackOutput_t output = {0};
+    if(result >= args->output_buffer_size)
+    {
+        output.return_value = false;
+        output.output_size = 0;   
+    }
+    else
+    {
+        output.id = args->id;
+        output.output_to_queues = 0xFFFFFFFFFFFFFFFFU;
+        output.event = args->event;
+        output.return_value = true;
+        output.output_size = strlen(args->output_buffer) + 1;
+    }
     return output;
 }
 #endif

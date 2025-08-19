@@ -18,6 +18,7 @@ add_executable(
 
     ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_core_state.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/application_layer/pluto_node_state.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/data_layer/pluto_core_register.c
     
     ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
@@ -46,6 +47,7 @@ target_link_libraries(
 target_compile_definitions(
     pluto_core_test
     PUBLIC
+    #PLUTO_TEST=1
     PLUTO_CORE_TEST_BINARY_DIR="${CMAKE_CURRENT_LIST_DIR}/build/pluto_node/"
     PLUTO_CORE_TEST_CONFIG_PATH="${CMAKE_CURRENT_LIST_DIR}/ressources/config_files/config.txt"
     PLUTO_CORE_TEST_EXECUTABLE="${CMAKE_CURRENT_LIST_DIR}/ressources/executable_files/loopback"

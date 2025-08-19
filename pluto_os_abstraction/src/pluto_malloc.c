@@ -1,7 +1,7 @@
 #include <pluto/os_abstraction/pluto_malloc.h>
 
 #include <stdlib.h>
-
+#include <stdio.h>
 
 #if defined(PLUTO_TEST)
 typedef struct
@@ -18,18 +18,25 @@ void* PLUTO_Malloc(size_t size)
 #if defined(PLUTO_TEST)
     PLUTO_mstate.n_mallocs++;
 #endif
-    return malloc(size);
+
+    void *mem = malloc(size);
+#if defined(PLUTO_TEST)
+    //printf("Malloc: %p\n", mem);
+#endif
+    return mem;
 }
 
 void PLUTO_Free(void *ptr)
 {
 #if defined(PLUTO_TEST)
     PLUTO_mstate.n_frees++;
+    //printf("Free: %p\n", ptr);
 #endif
     free(ptr);
 }
 
 #if defined(PLUTO_TEST)
+#include <stdio.h>
 void PLUTO_MallocResetState(void)
 {
     PLUTO_mstate.n_mallocs = 0;
@@ -38,6 +45,10 @@ void PLUTO_MallocResetState(void)
 
 bool PLUTO_MallocCountEqual(void)
 {
+    if(PLUTO_mstate.n_mallocs != PLUTO_mstate.n_frees)
+    {
+        printf("Mallocs: %lu, Frees: %lu\n", PLUTO_mstate.n_mallocs, PLUTO_mstate.n_frees);
+    }
     return PLUTO_mstate.n_mallocs == PLUTO_mstate.n_frees;
 }
 #endif

@@ -1,8 +1,10 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+#include "pluto/os_abstraction/pluto_logger.h"
 #include "pluto/pluto_core/application_layer/pluto_core_state.h"
 #include "pluto/pluto_core/application_layer/pluto_node_state.h"
+#include "pluto/pluto_core/data_layer/pluto_core_register.h"
 #include "pluto/pluto_core/data_layer/pluto_sig_queue.h"
 #include <pluto/pluto_core/application_layer/pluto_core.h>
 
@@ -54,10 +56,20 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
     core->config = config;
     core->logger = logger; 
     core->signal_queue = PLUTO_CORE_CreateSigQueue(n_nodes * 4);
+    
+    core->core_register = PLUTO_CreateCoreRegister(logger);
+    if(!core->core_register)
+    {
+        PLUTO_LoggerWarning(logger, "Unable to create CoreRegister...");
+        PLUTO_Free(&core);
+        return NULL;
+    }
+
     core->state = PLUTO_CreateCoreState(
         n_nodes,
         config,
         binary_dir,
+        core->core_register,
         logger
     );
    

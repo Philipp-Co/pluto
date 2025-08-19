@@ -16,6 +16,7 @@
 #include <pluto/pluto_config/pluto_config.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/pluto_core/application_layer/pluto_node_state.h>
+#include <pluto/pluto_core/data_layer/pluto_core_register.h>
 
 #include <stdbool.h>
 #include <unistd.h>
@@ -39,6 +40,7 @@ struct PLUTO_CoreState
     struct PLUTO_NodeState *nodes;
     size_t n_nodes;
     PLUTO_Logger_t logger;
+    PLUTO_CoreRegister_t core_register;
 };
 
 typedef enum
@@ -65,7 +67,7 @@ typedef struct
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t config, const char *binary_directory, PLUTO_Logger_t logger);
+struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t config, const char *binary_directory, PLUTO_CoreRegister_t core_register, PLUTO_Logger_t logger);
 void PLUTO_DestroyCoreState(struct PLUTO_CoreState *state);
 void PLUTO_CoreStateStartNodes(struct PLUTO_CoreState *state);
 void PLUTO_CoreStateEventForSignal(PLUTO_CoreStateEvent_t *event, int signum, pid_t pid);

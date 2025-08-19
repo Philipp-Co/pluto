@@ -3,6 +3,7 @@
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/os_abstraction/pluto_time.h>
 
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -14,7 +15,7 @@ struct PLUTO_Logger
 {
     FILE *file_descriptor;
     char *name;
-};
+} __attribute__((aligned(64)));
 
 
 PLUTO_Logger_t PLUTO_CreateLogger(const char *name)
@@ -31,7 +32,14 @@ PLUTO_Logger_t PLUTO_CreateLogger(const char *name)
 
 void PLUTO_DestroyLogger(PLUTO_Logger_t *logger)
 {
+    assert(NULL != logger);
+    assert(NULL != (*logger)->name);
+    if((*logger)->name)
+    {
+        PLUTO_Free((*logger)->name);
+    }
     PLUTO_Free(*logger);
+    *logger = NULL;
 }
 
 void PLUTO_LoggerDebug(PLUTO_Logger_t logger, const char *format, ...)
@@ -49,6 +57,9 @@ void PLUTO_LoggerDebug(PLUTO_Logger_t logger, const char *format, ...)
 
     snprintf(buffer1, 8192, "[%s][DEBUG][%s] - %s\n", timebuffer, logger->name, buffer);
     va_end(arglist);
+    
+    PLUTO_Free(buffer);
+    PLUTO_Free(buffer1);
 #else
     (void)logger;
     (void)format;

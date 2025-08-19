@@ -29,7 +29,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+/*
 static PLUTO_Logger_t PLUTO_event_logger = NULL;
+*/
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -40,12 +42,14 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
 
 PLUTO_Event_t PLUTO_CreateEvent(void)
 {
+    /*
     if(!PLUTO_event_logger)
     {
         PLUTO_event_logger = PLUTO_CreateLogger(
             "Event"
         );
     }
+    */
 
     PLUTO_Time_t timestamp = {
         .time = {0},
@@ -85,21 +89,25 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
     const int result = jsmn_parse(&parser, buffer, len, token, sizeof(token));
     if(result < 0)
     {
+        /*
         PLUTO_LoggerWarning(
             PLUTO_event_logger,
             "JSON parse Error: %i",
             result
         );
+        */
         return false;
     }
 
     if(!PLUTO_ReadTopLevelJSON(token, result, buffer, event))
     {
+        /*
         PLUTO_LoggerWarning(
             PLUTO_event_logger,
             "JSON parse Error: Unable to parse Top-Level JSON Object.",
             result
         );
+        */
         return false;
     }
     
@@ -108,12 +116,13 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
         memcpy(event->payload.text, buffer + len + 1, event->nbytes_payload);
         return true;
     }
-
+/*
     PLUTO_LoggerWarning(
         PLUTO_event_logger,
         "JSON parse Error: Buffer to small.",
         result
     );
+    */
     return false;
 }
 
@@ -128,7 +137,7 @@ bool PLUTO_EventToBuffer(const PLUTO_Event_t event, char *buffer, size_t nbytes)
         event->id,
         event->eventid,
         timestamp,
-        event->nbytes_payload
+        PLUTO_EventSizeOfPayload(event)
     );
     if((result > 0) && ((result + event->nbytes_payload) < nbytes))
     {
@@ -186,6 +195,17 @@ size_t PLUTO_EventSizeOfPayloadBuffer(const PLUTO_Event_t event)
 void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, size_t nbytes_payload)
 {
     event->nbytes_payload = nbytes_payload;
+}
+
+bool PLUTO_EventCopyBufferToPayload(PLUTO_Event_t event, const void *buffer, size_t nbytes)
+{
+    if(PLUTO_EventSizeOfPayloadBuffer(event) > nbytes)
+    {
+        memcpy(PLUTO_EventPayload(event), buffer, nbytes);
+        PLUTO_EventSetSizeOfPayload(event, nbytes);
+        return true;
+    }
+    return false;
 }
 
 //

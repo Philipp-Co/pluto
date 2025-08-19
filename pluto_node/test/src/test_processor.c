@@ -5,6 +5,7 @@
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/os_abstraction/signals/pluto_signal.h>
 #include <pluto/pluto_node/test/prepare.h>
+#include <pluto/os_abstraction/pluto_malloc.h>
 
 #include <Unity/src/unity.h>
 
@@ -16,13 +17,15 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_TEST_SimpleCallback(PLUTO_ProcessorCallbac
 void PLUTO_TEST_ProcessorInitial(void)
 {
     PLUTO_ProcessCallback_t callback = PLUTO_TEST_SimpleCallback;
+    PLUTO_SignalHandler_t signal_handler = PLUTO_CreateSignalHandler(PLUTO_TEST_processor_logger);
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         PLUTO_TEST_config,
-        PLUTO_CreateSignalHandler(PLUTO_TEST_processor_logger),
+        signal_handler,
         callback,
         PLUTO_TEST_processor_logger
     );
     PLUTO_DestroyProcessor(&processor);
+    PLUTO_DestroySignal(&signal_handler);
 }
 
 void PLUTO_TEST_ProcessorProcessWithEmptyPayload(void)
@@ -59,13 +62,14 @@ void PLUTO_TEST_ProcessorProcessWithEmptyPayload(void)
 void PLUTO_TEST_ProcessorProcessWithStandardPayload(void)
 {
     PLUTO_ProcessCallback_t callback = PLUTO_TEST_SimpleCallback;
+    PLUTO_SignalHandler_t signal_handler = PLUTO_CreateSignalHandler(PLUTO_TEST_processor_logger);
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         PLUTO_TEST_config,
-        PLUTO_CreateSignalHandler(PLUTO_TEST_processor_logger),
+        signal_handler,
         callback,
         PLUTO_TEST_processor_logger
     );
-
+    printf("TEST 1\n");
     PLUTO_EDGE_Edge_t edge = PLUTO_EDGE_CreateEdge(
         PLUTO_TEST_config->base_path,
         PLUTO_TEST_name,
@@ -74,21 +78,24 @@ void PLUTO_TEST_ProcessorProcessWithStandardPayload(void)
     ); 
     TEST_ASSERT_NOT_NULL(edge);
 
+    printf("TEST 2\n");
     PLUTO_Event_t event = PLUTO_CreateEvent();
     snprintf(
         PLUTO_EventPayload(event), 
         PLUTO_EventSizeOfPayload(event),
         "ThisIsATest"    
     );
+    printf("TEST 3\n");
     PLUTO_EventSetSizeOfPayload(event, strlen("ThisIsATest"));
     const bool result = PLUTO_EDGE_EdgeSendEvent(edge, event);
 
+    printf("TEST 4\n");
     PLUTO_ProcessorProcess(processor);
 
+    printf("TEST 5\n");
     PLUTO_DestroyEvent(&event);
     PLUTO_EDGE_DestroyEdge(&edge);
     PLUTO_DestroyProcessor(&processor);
-
 
     TEST_ASSERT_TRUE(
         result

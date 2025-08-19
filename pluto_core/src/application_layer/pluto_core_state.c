@@ -40,7 +40,7 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleTerminated(struct PLUTO_CoreSt
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t config, const char *binary_directory, PLUTO_Logger_t logger)
+struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t config, const char *binary_directory, PLUTO_CoreRegister_t core_register, PLUTO_Logger_t logger)
 {
     struct PLUTO_CoreState state = {
         .config = config,
@@ -48,14 +48,20 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
         .n_nodes = n_nodes,
         .nodes = PLUTO_Malloc(sizeof(struct PLUTO_NodeState) * n_nodes),
         .logger = logger,
-        .binary_directory = PLUTO_Malloc(strlen(binary_directory) + 1)
+        .binary_directory = PLUTO_Malloc(strlen(binary_directory) + 1),
+        .core_register = core_register
     };
     memcpy(state.binary_directory, binary_directory, strlen(binary_directory) + 1);
    
     for(size_t i=0;i<n_nodes;++i)
     {
+        struct PLUTO_NodeStateData data = {
+            .core_register = state.core_register,
+            .index = i
+        };
         state.nodes[i] = PLUTO_NodeState(
-            config->configurations[i]
+            config->configurations[i],
+            data 
         );
     }
 
@@ -72,6 +78,8 @@ void PLUTO_DestroyCoreState(struct PLUTO_CoreState *state)
     {
         PLUTO_DestroyNodeState(&state->nodes[i]);
     }
+    PLUTO_Free((*state).binary_directory);
+    (*state).binary_directory = NULL;
     PLUTO_Free((*state).nodes); 
     (*state).nodes = NULL;
     (*state).n_nodes = 0;

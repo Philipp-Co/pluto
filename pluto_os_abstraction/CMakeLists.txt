@@ -35,6 +35,7 @@ add_library(
     ${CMAKE_CURRENT_LIST_DIR}/src/message_queue/system_v/pluto_message_queue.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_logger.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_shared_memory.c
     ${CMAKE_CURRENT_LIST_DIR}/src/signals/pluto_signal.c
     ${CMAKE_CURRENT_LIST_DIR}/src/system_events/pluto_system_events.c
     ${CMAKE_CURRENT_LIST_DIR}/src/files/pluto_file.c
@@ -44,6 +45,7 @@ target_compile_definitions(
     pluto_os_abstraction
     PUBLIC
     PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
+    PLUTO_TEST=1
 )
 
 target_include_directories(

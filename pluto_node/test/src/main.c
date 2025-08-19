@@ -2,6 +2,7 @@
 #include "pluto/pluto_config/pluto_config.h"
 #include <pluto/pluto_node/test/test_processor.h>
 #include <pluto/pluto_node/test/prepare.h>
+#include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/pluto_edge/pluto_edge.h>
 #include <pluto/pluto_node/test/test_python.h>
 #include <Unity/src/unity.h>
@@ -31,6 +32,9 @@ int main(int argc, char **argv)
 
 void setUp(void)
 {
+#if defined(PLUTO_TEST)
+    PLUTO_MallocResetState();
+#endif
     PLUTO_TEST_edge_logger = PLUTO_CreateLogger("test-edge");
     PLUTO_TEST_processor_logger = PLUTO_CreateLogger("test-processor");
 
@@ -49,10 +53,15 @@ void setUp(void)
 
 void tearDown(void)
 {
-    if(PLUTO_TEST_config)
-        PLUTO_DestroyConfig(&PLUTO_TEST_config);
+    PLUTO_DestroyConfig(&PLUTO_TEST_config);
     PLUTO_DestroyLogger(&PLUTO_TEST_edge_logger);
     PLUTO_DestroyLogger(&PLUTO_TEST_processor_logger);
+    
+#if defined(PLUTO_TEST)
+    // Memory Check...
+    TEST_ASSERT_TRUE(PLUTO_MallocCountEqual());
+    PLUTO_MallocResetState();
+#endif
 }
 
 const char* PLUTO_TEST_name = "pluto-0_iq";

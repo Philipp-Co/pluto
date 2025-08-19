@@ -116,6 +116,7 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     queue->semaphore = PLUTO_SemaphoreGet(path, buffer, logger);
     if(!queue->semaphore)
     {
+        PLUTO_LoggerWarning(logger, "Unable to get Semaphore on Path %s with Name %s-sem", path, name);
         goto error;
     }
     
@@ -127,6 +128,7 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     
     if(!PLUTO_KeyGet(path, name, &queue->key))
     {
+        PLUTO_LoggerWarning(logger, "Unable to get Key on Path %s with Name %s", path, name);
         goto error;
     }
 
@@ -136,6 +138,7 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     );
     if(queue->filedescriptor < 0)
     {
+        PLUTO_LoggerWarning(logger, "Unable to open MessageQueue on Path %s with Name %s", path, name);
         goto error;
     }
 
@@ -203,7 +206,7 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buf
     
     long msgtype = 0L;
     int msgflags = IPC_NOWAIT | MSG_NOERROR;
-    buffer->msgtype = 0L;
+    buffer->msgtype = 1;
     const int nbytes = msgrcv(
         queue->filedescriptor, 
         buffer, 
@@ -263,7 +266,12 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *bu
                 break;
             }
             retry_count--;
-            usleep(1000 * 10);
+            usleep(100);
+        }
+        else if((status < 0) && (EINTR == errno))
+        {
+            return_value = false;
+            break;
         }
         else
         {

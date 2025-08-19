@@ -19,7 +19,7 @@
 
 PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name, PLUTO_Logger_t logger)
 {
-    PLUTO_Semaphore_t semaphore = malloc(sizeof(struct PLUTO_Semaphore));
+    PLUTO_Semaphore_t semaphore = PLUTO_Malloc(sizeof(struct PLUTO_Semaphore));
     semaphore->logger = logger; 
 
     if(!PLUTO_CreateKey(path, name, &semaphore->key))
@@ -81,7 +81,7 @@ void PLUTO_DestroySemaphore(PLUTO_Semaphore_t *semaphore)
             );
         }
         PLUTO_DestroyKey(&(*semaphore)->key);
-        free(*semaphore);
+        PLUTO_Free(*semaphore);
     }
 } 
 

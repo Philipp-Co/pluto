@@ -1,8 +1,9 @@
 
 #include "pluto/pluto_config/pluto_config.h"
 #include <pluto/pluto_core/application_layer/pluto_node_state.h>
+#include <pluto/pluto_core/data_layer/pluto_core_register.h>
 
-struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config)
+struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config, struct PLUTO_NodeStateData data)
 {
     struct PLUTO_NodeState state = {
         .current_state = PLUTO_CORE_NS_INITIAL,
@@ -10,7 +11,8 @@ struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config)
         .exit_status = -1,
         .signum = {-1, -1, -1},
         .index = 0,
-        .config = config
+        .config = config,
+        .data = data
     };
     return state;
 }
@@ -31,6 +33,7 @@ PLUTO_ConstConfig_t PLUTO_NodeStateGetConfig(const PLUTO_NodeState_t state)
 void PLUTO_NodeStateStarted(PLUTO_NodeState_t state, pid_t pid)
 {
     state->pid = pid;
+    PLUTO_CoreRegisterSetNodePid(state->data.core_register, state->data.index, pid);
     switch(state->current_state)
     {
         case PLUTO_CORE_NS_INITIAL:
@@ -44,6 +47,7 @@ void PLUTO_NodeStateStarted(PLUTO_NodeState_t state, pid_t pid)
 
 void PLUTO_NodeStateTerminated(PLUTO_NodeState_t state, int exitstatus)
 {
+    PLUTO_CoreRegisterSetNodePid(state->data.core_register, state->data.index, 0);
     switch(state->current_state)
     {
         case PLUTO_CORE_NS_INCONSPICIOUS:
