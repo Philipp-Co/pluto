@@ -147,7 +147,7 @@ bool PLUTO_InitializePython(
     for(size_t j=0;j<python_path_buffer.n_paths;++j)
     {
         snprintf(buffer, 4096, "%s", python_path_buffer.paths[j]); 
-        wchar_t *wcstr = PLUTO_Malloc(sizeof(wchar_t) * (strlen(buffer) + 1));
+        wchar_t *wcstr = (wchar_t*)PLUTO_Malloc(sizeof(wchar_t) * (strlen(buffer) + 1));
         for(size_t i=0;i<(strlen(buffer)+1);++i)
         {
             wcstr[i] = L'\0';
@@ -166,25 +166,18 @@ bool PLUTO_InitializePython(
     }
     
     PLUTO_LoggerInfo(logger, "Read Interface from Script: %s", executable);
-    //PyRun_SimpleString("import sys; print(sys.path)");
     PLUTO_PY_interface_object = PLUTO_PY_CreateInterface(executable, logger);
     if(!PLUTO_PY_interface_object)
     {
         PLUTO_LoggerError(logger, "Error, unable to lead Interface Class from Script %s", executable);
         goto error;
     }
-    //PyConfig_Clear(&config);
-    if(buffer)
+    PLUTO_Free(buffer);
+    for(size_t i=0;i<N_PYTHON_PATHS;++i)
     {
-        PLUTO_Free(buffer);
+        PLUTO_Free(python_path_buffer.paths[i]);
     }
-    if(python_path_buffer.paths)
-    {
-        for(size_t i=0;i<N_PYTHON_PATHS;++i)
-        {
-            PLUTO_Free(python_path_buffer.paths[i]);
-        }
-    }
+    PLUTO_Free(python_path_buffer.paths);
     PyConfig_Clear(&config);
     return true;
 
@@ -202,8 +195,8 @@ error:
         {
             PLUTO_Free(python_path_buffer.paths[i]);
         }
+        PLUTO_Free(python_path_buffer.paths);
     }
-    //PyConfig_Clear(&config);
     return false;
 }
 

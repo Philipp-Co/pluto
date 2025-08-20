@@ -30,6 +30,7 @@ void PLUTO_DestroyCoreRegister(PLUTO_CoreRegister_t *reg)
 {
     assert(NULL != reg);
     assert(NULL != *reg);
+    PLUTO_DestroySharedMemory(&(*reg)->shm);
     PLUTO_Free(*reg);
     *reg = NULL;
 }

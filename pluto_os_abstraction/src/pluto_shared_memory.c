@@ -27,6 +27,7 @@ PLUTO_SharedMemory_t PLUTO_CreateSharedMemory(size_t nbytes, const char *path, c
     if(shm_fd < 0)
     {
         PLUTO_LoggerWarning(logger, "shmget returned with an Error, errno: %s", strerror(errno));
+        PLUTO_DestroyKey(&key);
         return NULL;
     }
 
@@ -35,12 +36,14 @@ PLUTO_SharedMemory_t PLUTO_CreateSharedMemory(size_t nbytes, const char *path, c
     {
         PLUTO_LoggerWarning(logger, "shmat returned with an Error, errno: %s", strerror(errno));
         close(shm_fd);
+        PLUTO_DestroyKey(&key);
         return NULL;
     }
 
     PLUTO_SharedMemory_t shm = (PLUTO_SharedMemory_t)PLUTO_Malloc(sizeof(struct PLUTO_SharedMemory));
     shm->address = address;
     shm->shm_fd = shm_fd;
+    PLUTO_DestroyKey(&key);
     return shm;
 }
 
@@ -51,7 +54,7 @@ void PLUTO_DestroySharedMemory(PLUTO_SharedMemory_t *shm)
     //
     assert(NULL != shm);
     assert(NULL != *shm);
-    PLUTO_Free(&shm);
+    PLUTO_Free(*shm);
     *shm = NULL;
 }
 
