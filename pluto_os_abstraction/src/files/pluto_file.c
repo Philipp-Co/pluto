@@ -1,4 +1,5 @@
-#include "pluto/os_abstraction/pluto_time.h"
+
+#include <pluto/os_abstraction/pluto_time.h>
 #include <pluto/os_abstraction/files/pluto_file.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 
@@ -13,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/file.h>
 
+#if PLUTO_KQUEUE_AVAILABLE
 //
 // kqueue
 //
@@ -97,4 +99,4 @@ int32_t PLUTO_FileRegisterObserver(PLUTO_File_t file, PLUTO_SystemEventHandler_t
 {
     return PLUTO_SystemEventsHandlerRegisterObserver(handler, file->descriptor);
 }
-
+#endif

@@ -1,6 +1,9 @@
 ///
 /// \brief System V Implementation of Semaphore Interface.
 ///
+#include <pluto/os_abstraction/config/pluto_compile_config.h>
+
+#if PLUTO_OS_INTERFACE == (PLUTO_OS_INTERFACE_SYSTEM_V)
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -16,6 +19,8 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+
+#if PLUTO_OS_INTERFACE == (PLUTO_OS_INTERFACE_SYSTEM_V)
 
 PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name, PLUTO_Logger_t logger)
 {
@@ -127,7 +132,10 @@ int32_t PLUTO_SemaphoreValue(PLUTO_Semaphore_t semaphore)
 {
     return semctl(semaphore->filedescriptor, 0, GETVAL);
 } 
-
+#else
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+#error "PLUTO Semaphore not implemented!"
+#endif
+#endif

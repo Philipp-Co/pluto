@@ -1,3 +1,8 @@
+
+#include <pluto/os_abstraction/config/pluto_compile_config.h>
+
+#if PLUTO_OS_INTERFACE == (PLUTO_OS_INTERFACE_SYSTEM_V)
+
 #include <pluto/os_abstraction/pluto_shared_memory.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/os_abstraction/pluto_types.h>
@@ -62,3 +67,7 @@ void* PLUTO_SharedMemoryAddress(PLUTO_SharedMemory_t shm)
 {
     return shm->address;
 }
+#else
+#error "PLUTO Shared Memory not implemented!"
+#endif
+

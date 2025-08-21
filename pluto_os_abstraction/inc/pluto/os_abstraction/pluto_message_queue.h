@@ -6,10 +6,14 @@
 #ifndef __PLUTO_MESSAGE_QUEUE_H__
 #define __PLUTO_MESSAGE_QUEUE_H__
 
+
+#if PLUTO_OS_INTERFACE == (PLUTO_OS_INTERFACE_SYSTEM_V)
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include <pluto/os_abstraction/config/pluto_compile_config.h>
 #include <pluto/os_abstraction/pluto_types.h>
 #include <pluto/os_abstraction/pluto_semaphore.h>
 #include <pluto/os_abstraction/pluto_logger.h>
@@ -72,6 +76,9 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buf
 ///
 bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer);
 int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue);
+
+#endif 
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

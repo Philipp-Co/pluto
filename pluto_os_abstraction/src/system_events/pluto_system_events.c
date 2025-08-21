@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+
+#if PLUTO_KQUEUE_AVAILABLE
 //
 // kqueue
 //
@@ -181,6 +183,9 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     }
     return PLUTO_SE_NO_EVENT;
 } 
+#else
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+#error "PLUTO System Events not implemented!"
+#endif
