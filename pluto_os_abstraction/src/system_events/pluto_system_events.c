@@ -187,5 +187,55 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
-#error "PLUTO System Events not implemented!"
+PLUTO_SystemEvent_t PLUTO_CreateSystemEvent(void)
+{
+    PLUTO_SystemEvent_t event = (PLUTO_SystemEvent_t)PLUTO_Malloc(sizeof(struct PLUTO_SystemEvent));
+    event->descriptor = -1;
+    event->timestamp = PLUTO_TimeNow();
+    return event;
+}
+
+void PLUTO_DestroySystemEvent(PLUTO_SystemEvent_t *event)
+{
+    PLUTO_Free(*event);
+    *event = NULL;
+}
+
+int32_t PLUTO_SystemEventFiledescriptor(PLUTO_SystemEvent_t event)
+{
+    return event->descriptor;
+}
+
+struct PLUTO_SystemEventHandler
+{
+    PLUTO_Logger_t logger;
+    int kqueue;
+};
+
+PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
+{
+    return NULL;
+}
+
+void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
+{
+}
+
+int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
+{
+    return -1;
+}
+
+int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
+{
+    return -1;
+}
+
+int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
+{
+    return PLUTO_SE_ERRROR;
+} 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 #endif

@@ -11,7 +11,9 @@
 //
 // \brief   This Definition is used to determine the target OS.
 //
+#ifndef PLUTO_TARGET_OS
 #define PLUTO_TARGET_OS (PLUTO_TARGET_OS_FREE_BSD)
+#endif
 
 #if (PLUTO_TARGET_OS_FREE_BSD) == (PLUTO_TARGET_OS)
 #define PLUTO_KQUEUE_AVAILABLE 1
