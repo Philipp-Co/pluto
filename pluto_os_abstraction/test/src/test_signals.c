@@ -6,6 +6,7 @@
 #include <Unity/src/unity.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 
 
 void PLUTO_TEST_SignalsInitial(void)
@@ -39,7 +40,11 @@ void PLUTO_TEST_SignalsAddListener(void)
         PLUTO_SignalAddListener(handler, listener)
     );
     kill(getpid(), SIGUSR1);
-    usleep(1000);
+    struct timespec ts;
+    long msec = 1000;
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+    nanosleep(&ts, &ts);
     PLUTO_SignalEvent_t event;
     TEST_ASSERT_TRUE(
         PLUTO_SignalPendingEvent(handler, &event)
@@ -66,7 +71,11 @@ void PLUTO_TEST_SignalsRemoveListener(void)
     PLUTO_SignalRemoveListener(handler, listener);
 
     kill(getpid(), SIGUSR1);
-    usleep(1000);
+    struct timespec ts;
+    long msec = 1000;
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+    nanosleep(&ts, &ts);
     PLUTO_SignalEvent_t event;
     TEST_ASSERT_FALSE(
         PLUTO_SignalPendingEvent(handler, &event)

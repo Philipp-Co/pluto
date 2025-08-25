@@ -22,7 +22,7 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-
+#include <time.h>
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -143,6 +143,14 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     }
 
     queue->logger = logger;
+    
+    const int32_t semaphore_value = PLUTO_SemaphoreValue(queue->semaphore);
+    PLUTO_LoggerInfo(
+        logger, 
+        "Queue %s Ref. Count %i", 
+        queue->key.path_to_file != NULL ? queue->key.path_to_file : "NULL", 
+        semaphore_value
+    );
     return queue;
 error:
     PLUTO_LoggerWarning(logger, "Unable to \"get\" MessageQueue abort with error.");
@@ -161,7 +169,12 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
         //
         if((*queue)->semaphore)
         {
-            PLUTO_SemaphoreWait((*queue)->semaphore);
+            const PLUTO_SEM_ReturnValue_t result = PLUTO_SemaphoreWait((*queue)->semaphore);
+            PLUTO_LoggerInfo(
+                (*queue)->logger,
+                "Sem Wait Result: %i",
+                result
+            );
             const int32_t semaphore_value = PLUTO_SemaphoreValue((*queue)->semaphore);
             PLUTO_LoggerInfo(
                 (*queue)->logger, 
@@ -266,7 +279,21 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *bu
                 break;
             }
             retry_count--;
-            usleep(100);
+            struct timespec ts;
+            int res;
+            const long msec = 1000;
+            if (msec < 0)
+            {
+                errno = EINVAL;
+                return -1;
+            }
+
+            ts.tv_sec = msec / 1000;
+            ts.tv_nsec = (msec % 1000) * 1000000;
+
+            do {
+                res = nanosleep(&ts, &ts);
+            } while (res && errno == EINTR);
         }
         else if((status < 0) && (EINTR == errno))
         {
