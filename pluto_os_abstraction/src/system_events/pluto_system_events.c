@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <string.h>
 
-#if PLUTO_KQUEUE_AVAILABLE
+#if defined(PLUTO_KQUEUE_AVAILABLE) && PLUTO_KQUEUE_AVAILABLE
 //
 // kqueue
 //
