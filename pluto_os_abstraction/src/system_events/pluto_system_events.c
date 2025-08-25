@@ -16,6 +16,14 @@
 #include <sys/event.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#else
+
+#include <sys/epoll.h>
+
+#endif
+
+#if defined(PLUTO_KQUEUE_AVAILABLE) && PLUTO_KQUEUE_AVAILABLE
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -206,20 +214,38 @@ int32_t PLUTO_SystemEventFiledescriptor(PLUTO_SystemEvent_t event)
     return event->descriptor;
 }
 
+#define PLUTO_MAX_EPOLL_EVENTS 100
 struct PLUTO_SystemEventHandler
 {
+    struct {
+        struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS];
+        int number_of_events;
+        int epoll_fd;
+    } epoll;
     PLUTO_Logger_t logger;
 };
 
 PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
 {
+    assert(NULL != logger);
+
     PLUTO_LoggerInfo(logger, "Not implemented.");
-    return NULL;
+    PLUTO_SystemEventHandler_t handler = (PLUTO_SystemEventHandler_t)PLUTO_Malloc(sizeof(struct PLUTO_EventHandler));
+    handler->logger = logger;
+    handler->epoll_fd = epoll_create1(0);
+    if(handler->epoll_fd < 0)
+    {
+        PLUTO_Free(handler);
+        return NULL;
+    }
+    return handler;
 }
 
 void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 {
-    (void)handler;
+    assert(NULL != *handler);
+    PLUTO_Free(*handler);
+    *handler = NULL;
 }
 
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
@@ -240,7 +266,27 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
 {
     (void)handler;
     (void)event;
-    return PLUTO_SE_ERRROR;
+#define PLUTO_MAX_EPOLL_EVENTS_BUFFER 32
+    struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
+
+    int res = epoll_wait(handler->epoll.epoll_fd, events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, -1);
+    if(res < 0)
+    {
+        // error
+        return PLUTO_SE_ERRROR;
+    }
+
+    if(res == 0)
+    {
+        return PLUTO_SE_NO_EVENT;
+    }
+    
+    //for(int i=0;i<res; ++i)
+    //{
+    //    events[i]
+    //}
+
+    return PLUTO_SE_OK;
 } 
 //
 // --------------------------------------------------------------------------------------------------------------------
