@@ -26,10 +26,43 @@ const char* PLUTO_binary_dir = PLUTO_CORE_TEST_BINARY_DIR;
 #include <errno.h>
 #include <sys/stat.h>
 
+int mkdir_p(const char *path, int mode)
+{
+    char *buf = strdup(path);
+    char *p = buf;
+    int ret = 0;
+
+    if (buf == NULL) {
+        return -1;
+    }
+
+    mode |= 0700;
+
+    do {
+        p = strchr(p + 1, '/');
+        if (p) {
+            *p = '\0';
+        }
+        if (mkdir(buf, mode) != 0) {
+            if (errno != EEXIST) {
+                ret = errno;
+                break;
+            }
+        }
+        if (p) {
+            *p = '/';
+        }
+    } while (p);
+
+    free(buf);
+
+    return (ret);
+}
+
 static void PLUTO_TEST_MakeDirectory(const char *path)
 {
     const int len = strlen(path);
-    char buffer[1024];
+    char buffer[4096];
     if(
         path[len-1] != '/'
     )
@@ -45,7 +78,7 @@ static void PLUTO_TEST_MakeDirectory(const char *path)
     {
         memcpy(buffer, path, len);
     }
-    mkdir(buffer, 0777);
+    mkdir_p(buffer, 0777);
 }
 
 bool PLUTO_TEST_WriteToConfigFile(const char *config_file_path, const char *content)
