@@ -230,10 +230,10 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
     assert(NULL != logger);
 
     PLUTO_LoggerInfo(logger, "Not implemented.");
-    PLUTO_SystemEventHandler_t handler = (PLUTO_SystemEventHandler_t)PLUTO_Malloc(sizeof(struct PLUTO_EventHandler));
+    PLUTO_SystemEventHandler_t handler = (PLUTO_SystemEventHandler_t)PLUTO_Malloc(sizeof(struct PLUTO_SystemEventHandler));
     handler->logger = logger;
-    handler->epoll_fd = epoll_create1(0);
-    if(handler->epoll_fd < 0)
+    handler->epoll.epoll_fd = epoll_create1(0);
+    if(handler->epoll.epoll_fd < 0)
     {
         PLUTO_Free(handler);
         return NULL;
