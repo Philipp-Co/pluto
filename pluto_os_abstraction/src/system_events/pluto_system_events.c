@@ -209,30 +209,37 @@ int32_t PLUTO_SystemEventFiledescriptor(PLUTO_SystemEvent_t event)
 struct PLUTO_SystemEventHandler
 {
     PLUTO_Logger_t logger;
-    int kqueue;
 };
 
 PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
 {
+    PLUTO_LoggerInfo(logger, "Not implemented.");
     return NULL;
 }
 
 void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 {
+    (void)handler;
 }
 
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
+    (void)handler;
+    (void)descriptor;
     return -1;
 }
 
 int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
+    (void)handler;
+    (void)descriptor;
     return -1;
 }
 
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
 {
+    (void)handler;
+    (void)event;
     return PLUTO_SE_ERRROR;
 } 
 //
