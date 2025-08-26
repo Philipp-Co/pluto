@@ -19,8 +19,11 @@
 
 #else
 
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/epoll.h>
 #include <errno.h>
 #include <string.h>
@@ -218,12 +221,14 @@ int32_t PLUTO_SystemEventFiledescriptor(PLUTO_SystemEvent_t event)
     return event->descriptor;
 }
 
-#define PLUTO_MAX_EPOLL_EVENTS 100
 struct PLUTO_SystemEventHandler
 {
     struct {
         int epoll_fd;
     } epoll;
+    struct {
+        int inotify_fd;
+    } inotify;
     PLUTO_Logger_t logger;
 };
 
@@ -240,6 +245,13 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
         PLUTO_Free(handler);
         return NULL;
     }
+    handler->inotify.inotify_fd = inotify_init1(IN_NONBLOCK);
+    if(handler->inotify.inotify_fd < 0)
+    {
+        close(handler->epoll.epoll_fd);
+        PLUTO_Free(handler);
+        return NULL;
+    }
     return handler;
 }
 
@@ -253,17 +265,47 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
-    struct epoll_event event = {
-        .events = EPOLLIN | EPOLLOUT,
-        .data.fd = descriptor,
-    };
-    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, &event);
-    if(res < 0)
+    struct stat fstat_buffer;
+    if(fstat(descriptor, &fstat_buffer) < 0)
     {
         PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
         return PLUTO_SE_ERRROR;
     }
-    return PLUTO_SE_OK;
+    if(S_ISREG(fstat_buffer.st_mode) || S_ISDIR(fstat_buffer.st_mode))
+    {
+        //
+        // Work with inotify...
+        //
+        char file_path[MAX_PATH];
+        if(fcntl(descriptor, F_GETPATH, file_path) < 0)
+        {
+            PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+            return PLUTO_SE_ERRROR;
+        }
+        if(inotify_add_watch(handler->inotify.inotify_fd, file_path, 0) < 0)
+        {
+            PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+            return PLUTO_SE_ERRROR;
+        }
+        return PLUTO_SE_OK;
+    }
+    else if(S_ISFIFO(fstat_buffer.st_mode) || S_ISSOCK(fstat_buffer.st_mode))
+    {
+        //
+        // Work with epoll...
+        //
+        struct epoll_event event = {
+            .events = EPOLLIN | EPOLLOUT,
+            .data.fd = descriptor,
+        };
+        const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, &event);
+        if(res < 0)
+        {
+            PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+            return PLUTO_SE_ERRROR;
+        }
+        return PLUTO_SE_OK;
+    }
 }
 
 int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
@@ -279,9 +321,7 @@ int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t h
 
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
 {
-    (void)handler;
-    (void)event;
-#define PLUTO_MAX_EPOLL_EVENTS_BUFFER 32
+#define PLUTO_MAX_EPOLL_EVENTS_BUFFER 64
     struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
 
     int res = epoll_wait(handler->epoll.epoll_fd, events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, 0);
@@ -301,7 +341,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         printf("%i: Event...\n", i);
     }
 
-    return PLUTO_SE_OK;
+    return PLUTO_SE_NO_EVENT;
 } 
 //
 // --------------------------------------------------------------------------------------------------------------------
