@@ -64,7 +64,7 @@ void PLUTO_DestroyKey(PLUTO_Key_t *key)
 {
     if(key->path_to_file)
     {
-        remove(key->path_to_file);
+        //remove(key->path_to_file);
         PLUTO_Free(key->path_to_file);
     }
     if(key->file)

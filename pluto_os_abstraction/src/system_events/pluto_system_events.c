@@ -281,10 +281,10 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         return PLUTO_SE_NO_EVENT;
     }
     
-    //for(int i=0;i<res; ++i)
-    //{
-    //    events[i]
-    //}
+    for(int i=0;i<res; ++i)
+    {
+        printf("%i: Event...\n", i);
+    }
 
     return PLUTO_SE_OK;
 } 
