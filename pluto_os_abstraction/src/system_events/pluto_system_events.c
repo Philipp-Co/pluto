@@ -19,6 +19,7 @@
 
 #else
 
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/epoll.h>
 #include <errno.h>
