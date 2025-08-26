@@ -253,10 +253,10 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
     struct epoll_event event = {
-        .events = POLLIN | POLLOUT,
+        .events = EPOLLIN | EPOLLOUT,
         .data.fd = descriptor,
     };
-    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, &event);
+    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, &event);
     if(res < 0)
     {
         PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
