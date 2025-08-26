@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 #include <sys/epoll.h>
+#include <errno.h>
+#include <string.h>
 
 #endif
 
@@ -219,8 +221,6 @@ int32_t PLUTO_SystemEventFiledescriptor(PLUTO_SystemEvent_t event)
 struct PLUTO_SystemEventHandler
 {
     struct {
-        struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS];
-        int number_of_events;
         int epoll_fd;
     } epoll;
     PLUTO_Logger_t logger;
@@ -245,22 +245,35 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
 void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 {
     assert(NULL != *handler);
+    close((*handler)->epoll.epoll_fd);
     PLUTO_Free(*handler);
     *handler = NULL;
 }
 
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
-    (void)handler;
-    (void)descriptor;
-    return -1;
+    struct epoll_event event = {
+        .events = POLLIN | POLLOUT,
+        .data.fd = descriptor,
+    };
+    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, &event);
+    if(res < 0)
+    {
+        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        return PLUTO_SE_ERRROR;
+    }
+    return PLUTO_SE_OK;
 }
 
 int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
-    (void)handler;
-    (void)descriptor;
-    return -1;
+    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_DEL, descriptor, NULL);
+    if(res < 0)
+    {
+        PLUTO_LoggerWarning(handler->logger, "Unable to deregister Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        return PLUTO_SE_ERRROR;
+    }
+    return PLUTO_SE_OK;
 }
 
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
@@ -270,7 +283,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
 #define PLUTO_MAX_EPOLL_EVENTS_BUFFER 32
     struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
 
-    int res = epoll_wait(handler->epoll.epoll_fd, events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, -1);
+    int res = epoll_wait(handler->epoll.epoll_fd, events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, 0);
     if(res < 0)
     {
         // error
