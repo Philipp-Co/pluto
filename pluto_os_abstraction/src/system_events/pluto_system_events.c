@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/syslimits.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
 #include <sys/types.h>
