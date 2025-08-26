@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/inotify.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
@@ -289,7 +290,7 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
         }
         return PLUTO_SE_OK;
     }
-    else if(S_ISFIFO(fstat_buffer.st_mode) || S_ISSOCK(fstat_buffer.st_mode))
+    else if(S_ISFIFO(fstat_buffer.st_mode) || S_ISSOCK(fstat_buffer.st_mode))
     {
         //
         // Work with epoll...
