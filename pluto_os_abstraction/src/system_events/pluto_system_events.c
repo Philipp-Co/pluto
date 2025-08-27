@@ -372,7 +372,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
 
         if(res > 0)
         {
-            printf("%i: Event...\n", i);
+            printf("Event...\n");
             return PLUTO_SE_OK;
         }
     } 
