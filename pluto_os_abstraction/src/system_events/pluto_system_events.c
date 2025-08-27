@@ -259,6 +259,19 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
         PLUTO_Free(handler);
         return NULL;
     }
+    
+    struct epoll_event event = {
+        .events = EPOLLIN | EPOLLOUT,
+        .data.fd = handler->inotify.inotify_fd,
+    };
+    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, handler->inotify.inotify_fd, &event);
+    if(res < 0)
+    {
+        close(handler->epoll.epoll_fd);
+        close(handler->inotify.inotify_fd);
+        PLUTO_Free(handler);
+        return NULL;
+    }
     return handler;
 }
 
