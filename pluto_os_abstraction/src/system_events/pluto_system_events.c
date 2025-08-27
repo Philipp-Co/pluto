@@ -333,10 +333,12 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
         //
         // Work with epoll...
         //
+        /*
         struct epoll_event event = {
             .events = EPOLLIN | EPOLLOUT,
             .data.fd = descriptor,
         };
+        */
         const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, NULL); // &event);
         if(res < 0)
         {
