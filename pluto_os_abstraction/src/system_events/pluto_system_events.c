@@ -355,11 +355,6 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     (void)event;
 #define PLUTO_MAX_EPOLL_EVENTS_BUFFER 64
     struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
-
-    int filedescriptors[1] = 
-    {
-        handler->epoll.epoll_fd,
-    };
     int res = epoll_wait(handler->epoll.epoll_fd, events, 1, 0);
     if(res < 0)
     {
