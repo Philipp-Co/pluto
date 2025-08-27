@@ -22,7 +22,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/syslimits.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -76,6 +75,13 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
         return NULL;
     }
     return handler;
+}
+
+int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const char *path)
+{
+    (void)handler;
+    (void)path;
+    return -1;
 }
 
 void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
@@ -265,6 +271,20 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
     *handler = NULL;
 }
 
+int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const char *path)
+{
+    assert(NULL != handler);
+    assert(handler->inotify.inotify_fd >= 0);
+    
+    const int mask = IN_ATTRIB | IN_CLOSE_WRITE | IN_CLOSE_NOWRITE | IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF; 
+    if(inotify_add_watch(handler->inotify.inotify_fd, file_path, ) < 0)
+    {
+        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        return PLUTO_SE_ERRROR;
+    }
+    return PLUTO_SE_OK;
+}
+
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
 {
     struct stat fstat_buffer;
@@ -275,10 +295,11 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
     }
     if(S_ISREG(fstat_buffer.st_mode) || S_ISDIR(fstat_buffer.st_mode))
     {
+        /*
         //
         // Work with inotify...
         //
-        char file_path[MAX_PATH];
+        char file_path[4096];
         if(fcntl(descriptor, F_GETPATH, file_path) < 0)
         {
             PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
@@ -290,6 +311,9 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
             return PLUTO_SE_ERRROR;
         }
         return PLUTO_SE_OK;
+        */
+        PLUTO_LoggerWarning(handler->logger, "Files can not be registered for System Events, use the Fileinterface instead.");
+        return PLUTO_SE_ERRROR;
     }
     else if(S_ISFIFO(fstat_buffer.st_mode) || S_ISSOCK(fstat_buffer.st_mode))
     {
@@ -307,6 +331,11 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
             return PLUTO_SE_ERRROR;
         }
         return PLUTO_SE_OK;
+    }
+    else
+    {
+        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, unknown Mode...", descriptor);
+        return PLUTO_SE_ERRROR;
     }
 }
 
@@ -326,25 +355,33 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
 #define PLUTO_MAX_EPOLL_EVENTS_BUFFER 64
     struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
 
-    int res = epoll_wait(handler->epoll.epoll_fd, events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, 0);
-    if(res < 0)
+    int filedescriptors[2] = 
     {
-        // error
-        return PLUTO_SE_ERRROR;
+        handler->epoll.epoll_fd,
+        handker->inotify.inotify_fd
     }
-
-    if(res == 0)
+    for(int i=0;i<(sizeof(filedescriptors)/sizeof(int));++i)
     {
+        int res = epoll_wait(filedescriptors[i], events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, 0);
+        if(res < 0)
+        {
+            // error
+            return PLUTO_SE_ERRROR;
+        }
+
+        if(res == 0)
+        {
+            return PLUTO_SE_NO_EVENT;
+        }
+        
+        for(int i=0;i<res; ++i)
+        {
+            printf("%i: Event...\n", i);
+        }
+
         return PLUTO_SE_NO_EVENT;
-    }
-    
-    for(int i=0;i<res; ++i)
-    {
-        printf("%i: Event...\n", i);
-    }
-
-    return PLUTO_SE_NO_EVENT;
-} 
+    } 
+}
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

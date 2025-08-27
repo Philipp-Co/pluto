@@ -20,6 +20,8 @@
 //
 #include <sys/event.h>
 
+#endif
+
 
 struct PLUTO_File
 {
@@ -97,6 +99,15 @@ int32_t PLUTO_FileUnlockRelease(PLUTO_File_t file)
 
 int32_t PLUTO_FileRegisterObserver(PLUTO_File_t file, PLUTO_SystemEventHandler_t handler)
 {
+#if PLUTO_KQUEUE_AVAILABLE
     return PLUTO_SystemEventsHandlerRegisterObserver(handler, file->descriptor);
-}
+#elif PLUTO_INOTIFY_AVAILABLE
+    if(inotify_add_watch(handler->inotify.inotify_fd, file_path, 0) < 0)
+    {
+        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        return PLUTO_SE_ERRROR;
+    }
+#else
+    return -1;
 #endif
+}
