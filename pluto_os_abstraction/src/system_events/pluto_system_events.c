@@ -266,6 +266,7 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
 {
     assert(NULL != *handler);
     close((*handler)->epoll.epoll_fd);
+    close((*handler)->inotify.inotify_fd);
     PLUTO_Free(*handler);
     *handler = NULL;
 }
@@ -360,6 +361,8 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         handler->epoll.epoll_fd,
         handler->inotify.inotify_fd
     };
+    events[0].fd = handler->inotify.inotify_fd;
+    events[0].event = EPOLLIN;
     for(size_t i=0;i<(sizeof(filedescriptors)/sizeof(int));++i)
     {
         int res = epoll_wait(filedescriptors[i], events, 1, 0);
