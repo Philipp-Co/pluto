@@ -37,7 +37,7 @@ void PLUTO_TEST_SystemEventsFileEvent(void)
     TEST_ASSERT_TRUE(filedescriptor >= 0);
     TEST_ASSERT_EQUAL(
         0,
-        PLUTO_SystemEventsHandlerRegisterObserver(handler, filedescriptor)
+        PLUTO_SystemEventHandlerRegisterFileObserver(handler, path)
     );
     
     char buffer[1024]; 
