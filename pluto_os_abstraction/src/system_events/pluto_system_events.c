@@ -360,24 +360,18 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     {
         handler->epoll.epoll_fd,
     };
-    events[0].data.fd = handler->inotify.inotify_fd;
-    events[0].events = EPOLLIN;
-    for(size_t i=0;i<(sizeof(filedescriptors)/sizeof(int));++i)
+    int res = epoll_wait(handler->epoll.epoll_fd, events, 1, 0);
+    if(res < 0)
     {
-        int res = epoll_wait(filedescriptors[i], events, 1, 0);
-        if(res < 0)
-        {
-            // error
-            printf("Error! %s\n", strerror(errno));
-            return PLUTO_SE_ERRROR;
-        }
+        // error
+        return PLUTO_SE_ERRROR;
+    }
 
-        if(res > 0)
-        {
-            printf("Event...\n");
-            return PLUTO_SE_OK;
-        }
-    } 
+    if(res > 0)
+    {
+        printf("Event...\n");
+        return PLUTO_SE_OK;
+    }
     return PLUTO_SE_NO_EVENT;
 }
 //
