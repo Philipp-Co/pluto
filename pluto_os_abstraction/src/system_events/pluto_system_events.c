@@ -366,7 +366,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         if(res < 0)
         {
             // error
-            printf("Error!\n");
+            printf("Error! %s\n", strerror(errno));
             return PLUTO_SE_ERRROR;
         }
 
