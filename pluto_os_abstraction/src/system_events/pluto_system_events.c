@@ -361,7 +361,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         handler->epoll.epoll_fd,
         handler->inotify.inotify_fd
     };
-    events[0].fd = handler->inotify.inotify_fd;
+    events[0].data.fd = handler->inotify.inotify_fd;
     events[0].events = EPOLLIN;
     for(size_t i=0;i<(sizeof(filedescriptors)/sizeof(int));++i)
     {
