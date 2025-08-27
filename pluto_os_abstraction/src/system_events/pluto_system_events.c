@@ -352,6 +352,7 @@ int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t h
 
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
 {
+    (void)event;
 #define PLUTO_MAX_EPOLL_EVENTS_BUFFER 64
     struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
 
@@ -362,25 +363,20 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     };
     for(size_t i=0;i<(sizeof(filedescriptors)/sizeof(int));++i)
     {
-        int res = epoll_wait(filedescriptors[i], events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, 0);
+        int res = epoll_wait(filedescriptors[i], events, 1, 0);
         if(res < 0)
         {
             // error
             return PLUTO_SE_ERRROR;
         }
 
-        if(res == 0)
-        {
-            return PLUTO_SE_NO_EVENT;
-        }
-        
-        for(int i=0;i<res; ++i)
+        if(res > 0)
         {
             printf("%i: Event...\n", i);
+            return PLUTO_SE_OK;
         }
-
-        return PLUTO_SE_NO_EVENT;
     } 
+    return PLUTO_SE_NO_EVENT;
 }
 //
 // --------------------------------------------------------------------------------------------------------------------
