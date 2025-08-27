@@ -337,7 +337,7 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
             .events = EPOLLIN | EPOLLOUT,
             .data.fd = descriptor,
         };
-        const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, &event);
+        const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, NULL); // &event);
         if(res < 0)
         {
             PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
