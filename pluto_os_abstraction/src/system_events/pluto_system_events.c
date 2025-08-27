@@ -277,9 +277,9 @@ int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t 
     assert(handler->inotify.inotify_fd >= 0);
     
     const int mask = IN_ATTRIB | IN_CLOSE_WRITE | IN_CLOSE_NOWRITE | IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF; 
-    if(inotify_add_watch(handler->inotify.inotify_fd, file_path, mask) < 0)
+    if(inotify_add_watch(handler->inotify.inotify_fd, path, mask) < 0)
     {
-        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for File: %s, Error was: %s", path, strerror(errno));
         return PLUTO_SE_ERRROR;
     }
     return PLUTO_SE_OK;
