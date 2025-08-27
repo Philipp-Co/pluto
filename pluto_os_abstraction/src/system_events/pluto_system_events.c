@@ -277,7 +277,7 @@ int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t 
     assert(handler->inotify.inotify_fd >= 0);
     
     const int mask = IN_ATTRIB | IN_CLOSE_WRITE | IN_CLOSE_NOWRITE | IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF; 
-    if(inotify_add_watch(handler->inotify.inotify_fd, file_path, ) < 0)
+    if(inotify_add_watch(handler->inotify.inotify_fd, file_path, mask) < 0)
     {
         PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
         return PLUTO_SE_ERRROR;
@@ -358,8 +358,8 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     int filedescriptors[2] = 
     {
         handler->epoll.epoll_fd,
-        handker->inotify.inotify_fd
-    }
+        handler->inotify.inotify_fd
+    };
     for(int i=0;i<(sizeof(filedescriptors)/sizeof(int));++i)
     {
         int res = epoll_wait(filedescriptors[i], events, PLUTO_MAX_EPOLL_EVENTS_BUFFER, 0);
