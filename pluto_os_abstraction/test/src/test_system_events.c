@@ -84,7 +84,7 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
         0,
         PLUTO_SystemEventsHandlerRegisterObserver(handler, filedescriptor)
     );
-    TEST_ASSERT_EQUAL(0, PLUTO_SystemEventsHandlerDeregisterObserver(handler, filedescriptor));
+    TEST_ASSERT_EQUAL(0, PLUTO_SystemEventsHandlerDeregisterFileObserver(handler, filedescriptor));
     
     char buffer[1024]; 
     snprintf(buffer, sizeof(buffer), "test");

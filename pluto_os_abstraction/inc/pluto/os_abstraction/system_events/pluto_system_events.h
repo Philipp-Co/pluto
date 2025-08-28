@@ -72,6 +72,7 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler);
 int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor);
 int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor);
 int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const char *path);
+int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler_t handler, int descriptor);
 ///
 /// \brief  Check if any observed Filedescriptor has generated a System Event and return it.
 /// \param[out] event   On Success the Functions will store Events in this Localtion.
