@@ -82,7 +82,7 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
     TEST_ASSERT_TRUE(filedescriptor >= 0);
     TEST_ASSERT_EQUAL(
         0,
-        PLUTO_SystemEventsHandlerRegisterObserver(handler, filedescriptor)
+        PLUTO_SystemEventHandlerRegisterFileObserver(handler, path)
     );
     TEST_ASSERT_EQUAL(0, PLUTO_SystemEventsHandlerDeregisterFileObserver(handler, filedescriptor));
     
