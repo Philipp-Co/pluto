@@ -403,6 +403,36 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
 
     if(res > 0)
     {
+        if(events[0].data.fd == handler->inotify.inotify_fd)
+        {
+            const struct inotify_event *file_event;
+            char file_event_buffer[4096] __attribute__((aligned(struct inotify_event)));
+            const int file_buffer_size = read(
+                handler->inotify.inotify_fd, 
+                &file_event_buffer, 
+                sizeof(file_event_buffer)
+            );
+            if(file_buffer_size > 0)
+            {
+                for(
+                    char *ptr=file_event_buffer;
+                    ptr < (file_event_buffer + file_buffer_size); 
+                    ptr += (sizeof(struct inotify_event) + file_event->len)
+                )
+                {
+                    file_event = (const struct inotify_event *) ptr;
+                    if (event->mask & IN_OPEN)
+                        printf("IN_OPEN: ");
+                    if (event->mask & IN_CLOSE_NOWRITE)
+                        printf("IN_CLOSE_NOWRITE: ");
+                    if (event->mask & IN_CLOSE_WRITE)
+                        printf("IN_CLOSE_WRITE: ");
+                    
+                    event->descriptor = file_event->wd;
+                    event->timestamp = PLUTO_TimeNow();
+                }
+            }
+        }
         printf("Epollin %i\n", EPOLLIN);
         printf("Event... 0x%x\n", events[0].events);
         return PLUTO_SE_OK;
