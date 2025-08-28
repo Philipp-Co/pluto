@@ -94,7 +94,12 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
     //
     sleep(1);
 
-    TEST_ASSERT_TRUE((PLUTO_SE_NO_EVENT | PLUTO_SE_OK) & PLUTO_SystemEventsPoll(handler, event));
+    const int32_t res = PLUTO_SystemEventsPoll(handler, event);
+    //
+    // inotify returns an event for an opened file...
+    // kqueue does not...
+    //
+    TEST_ASSERT_TRUE(PLUTO_SE_OK == res || PLUTO_SE_NO_EVENT == res);
 
     close(filedescriptor);
     remove(path);
