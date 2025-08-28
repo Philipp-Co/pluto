@@ -421,6 +421,9 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
                 )
                 {
                     file_event = (const struct inotify_event *) ptr;
+
+                    printf("Fileevent Mask. %i\n", file_event->mask);
+
                     if (file_event->mask & IN_OPEN)
                         printf("IN_OPEN: ");
                     if (file_event->mask & IN_CLOSE_NOWRITE)
