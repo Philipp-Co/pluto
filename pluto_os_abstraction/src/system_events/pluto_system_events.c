@@ -312,6 +312,10 @@ int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler
     const int res = inotify_rm_watch(handler->inotify.inotify_fd, descriptor);
     if(res < 0)
     {
+        if(EINVAL == errno)
+        {
+            return PLUTO_SE_OK;
+        }
         PLUTO_LoggerWarning(
             handler->logger, 
             "Unable to deregister Observer for File: %i, Errno was: %i, Error was: %s", 
