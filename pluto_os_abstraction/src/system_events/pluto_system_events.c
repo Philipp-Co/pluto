@@ -432,6 +432,22 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
                         printf("IN_CLOSE_WRITE: ");
                     if (file_event->mask & IN_IGNORED)
                         printf("IN_IGNORE: ");
+                    if (file_event->mask & IN_DELETE_SELF)
+                        printf("IN_DELETE_SELF: ");
+                    if (file_event->mask & IN_DELETE)
+                        printf("IN_DELETE: ");
+                    if (file_event->mask & IN_MOVE_SELF)
+                        printf("IN_MOVE_SELF: ");
+                    if (file_event->mask & IN_MOVED_FROM)
+                        printf("IN_MOVED_FROM: ");
+                    if (file_event->mask & IN_MOVED_TO)
+                        printf("IN_MOVED_TO: ");
+                    if (file_event->mask & IN_MODIFY)
+                        printf("IN_MODIFY: ");
+                    if (file_event->mask & IN_ACCESS)
+                        printf("IN_ACCESS: ");
+                    if (file_event->mask & IN_ATTRIB)
+                        printf("IN_ATTRIB: ");
                     
                     event->descriptor = file_event->wd;
                     event->timestamp = PLUTO_TimeNow();
