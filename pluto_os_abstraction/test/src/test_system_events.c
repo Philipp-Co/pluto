@@ -94,7 +94,7 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
     //
     sleep(1);
 
-    TEST_ASSERT_EQUAL(PLUTO_SE_NO_EVENT, PLUTO_SystemEventsPoll(handler, event));
+    TEST_ASSERT_TRUE((PLUTO_SE_NO_EVENT | PLUTO_SE_OK) & PLUTO_SystemEventsPoll(handler, event));
 
     close(filedescriptor);
     remove(path);

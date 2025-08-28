@@ -406,7 +406,9 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         if(events[0].data.fd == handler->inotify.inotify_fd)
         {
             const struct inotify_event *file_event;
-            char file_event_buffer[4096] __attribute__ ((aligned(__alignof__(struct inotify_event))));
+            char file_event_buffer[
+                sizeof(struct inotify_event)
+            ] __attribute__ ((aligned(__alignof__(struct inotify_event))));
             const int file_buffer_size = read(
                 handler->inotify.inotify_fd, 
                 &file_event_buffer, 
@@ -414,6 +416,9 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
             );
             if(file_buffer_size > 0)
             {
+                //
+                // this loop should have exactely 1 pass...
+                //
                 for(
                     char *ptr=file_event_buffer;
                     ptr < (file_event_buffer + file_buffer_size); 
@@ -421,9 +426,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
                 )
                 {
                     file_event = (const struct inotify_event *) ptr;
-
-                    printf("Fileevent Mask. %i\n", file_event->mask);
-
+                    /*
                     if (file_event->mask & IN_OPEN)
                         printf("IN_OPEN: ");
                     if (file_event->mask & IN_CLOSE_NOWRITE)
@@ -448,14 +451,12 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
                         printf("IN_ACCESS: ");
                     if (file_event->mask & IN_ATTRIB)
                         printf("IN_ATTRIB: ");
-                    
+                    */
                     event->descriptor = file_event->wd;
                     event->timestamp = PLUTO_TimeNow();
                 }
             }
         }
-        printf("Epollin %i\n", EPOLLIN);
-        printf("Event... 0x%x\n", events[0].events);
         return PLUTO_SE_OK;
     }
     return PLUTO_SE_NO_EVENT;
