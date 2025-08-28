@@ -427,6 +427,8 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
                         printf("IN_CLOSE_NOWRITE: ");
                     if (file_event->mask & IN_CLOSE_WRITE)
                         printf("IN_CLOSE_WRITE: ");
+                    if (file_event->mask & IN_IGNORE)
+                        printf("IN_IGNORE: ");
                     
                     event->descriptor = file_event->wd;
                     event->timestamp = PLUTO_TimeNow();
