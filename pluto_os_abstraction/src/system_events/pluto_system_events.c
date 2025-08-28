@@ -406,7 +406,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
         if(events[0].data.fd == handler->inotify.inotify_fd)
         {
             const struct inotify_event *file_event;
-            char file_event_buffer[4096] ___attribute__ ((aligned(__alignof__(struct inotify_event))));
+            char file_event_buffer[4096] __attribute__ ((aligned(__alignof__(struct inotify_event))));
             const int file_buffer_size = read(
                 handler->inotify.inotify_fd, 
                 &file_event_buffer, 
