@@ -448,7 +448,7 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
             //
             // inotify
             //
-            const struct inotify_event *file_event;
+            const struct inotify_event *file_event = NULL;
             char file_event_buffer[
                 sizeof(struct inotify_event)
             ] __attribute__ ((aligned(__alignof__(struct inotify_event))));
