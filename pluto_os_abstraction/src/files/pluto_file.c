@@ -71,7 +71,7 @@ int32_t PLUTO_FileWrite(PLUTO_File_t file, const char *buffer, size_t nbytes)
     while(res != nbytes)
     {
         const size_t tmp = (size_t)write(PLUTO_FileGetDescriptor(file), buffer, nbytes);
-        if(tmp < 0 && EAGAIN != errno)
+        if((tmp < 0U) && (EAGAIN != errno))
         {
             return -1;
         }
