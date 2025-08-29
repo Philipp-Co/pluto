@@ -9,7 +9,6 @@
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/file.h>
@@ -26,7 +25,6 @@
 struct PLUTO_File
 {
     int descriptor;
-    int kqueue;
     char *path;
 };
 
@@ -35,8 +33,6 @@ PLUTO_File_t PLUTO_CreateFile(PLUTO_Logger_t logger, const char *filename, unsig
 {
     PLUTO_LoggerInfo(logger, "Create File \"%s\".\n", filename);
     PLUTO_File_t file = (PLUTO_File_t)PLUTO_Malloc(sizeof(struct PLUTO_File));
-    file->kqueue = -1;
-    //file->descriptor = open(filename, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     file->descriptor = open(filename, mode, permission);
     if(file->descriptor >= 0)
     {
@@ -56,10 +52,6 @@ PLUTO_File_t PLUTO_CreateFile(PLUTO_Logger_t logger, const char *filename, unsig
 void PLUTO_DestroyFile(PLUTO_File_t *file)
 {
     assert(NULL != *file);
-    if((*file)->kqueue > 0)
-    {
-        (void)close((*file)->kqueue);
-    }
     (void)close((*file)->descriptor);
     PLUTO_Free(*file);
     *file = NULL;
