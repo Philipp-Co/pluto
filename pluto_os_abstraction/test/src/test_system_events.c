@@ -34,7 +34,7 @@ void PLUTO_TEST_SystemEventsFileEvent(void)
     
     char path[1024];
     snprintf(path, sizeof(path), "%ssystem_event_dummy.txt", PLUTO_TEST_RESSOURCE_DIR);
-    PLUTO_File_t file = PLUTO_CreateFile(path);
+    PLUTO_File_t file = PLUTO_CreateFile(logger, path, PLUTO_FILE_MODE_RDWR, PLUTO_FILE_PERMISSION_ALL);
     // int filedescriptor = open(path, O_RDWR | O_CREAT, 0777);
     //TEST_ASSERT_TRUE(filedescriptor >= 0);
     TEST_ASSERT_EQUAL(
@@ -82,7 +82,7 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
     
     char path[1024];
     snprintf(path, sizeof(path), "%ssystem_event_dummy.txt", PLUTO_TEST_RESSOURCE_DIR);
-    PLUTO_File_t file = PLUTO_CreateFile(path);
+    PLUTO_File_t file = PLUTO_CreateFile(logger, path, PLUTO_FILE_MODE_RDWR, PLUTO_FILE_PERMISSION_ALL);
     //int filedescriptor = open(path, O_RDWR | O_CREAT, 0777);
     //TEST_ASSERT_TRUE(filedescriptor >= 0);
     TEST_ASSERT_EQUAL(

@@ -2,10 +2,12 @@
 #define __PLUTO_FILES_H__
 
 #include <pluto/os_abstraction/pluto_time.h>
+#include <pluto/os_abstraction/pluto_logger.h>
 
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <fcntl.h>
 
 #if PLUTO_CONFIG_ENABLE_INOTIFY
 #include <sys/inotify.h>
@@ -25,6 +27,10 @@ typedef struct PLUTO_File* PLUTO_File_t;
 
 #endif
 
+
+#define PLUTO_FILE_MODE_RDWR (O_CREAT | O_RDWR)
+#define PLUTO_FILE_PERMISSION_ALL (S_IRUSR | S_IWUSR)
+
 typedef struct
 {
     PLUTO_Time_t timestamp;
@@ -34,7 +40,7 @@ typedef struct
 ///
 ///
 ///
-PLUTO_File_t PLUTO_CreateFile(const char *filename);
+PLUTO_File_t PLUTO_CreateFile(PLUTO_Logger_t logger, const char *filename, unsigned int mode, unsigned int permission);
 ///
 ///
 ///

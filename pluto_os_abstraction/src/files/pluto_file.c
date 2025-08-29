@@ -31,18 +31,23 @@ struct PLUTO_File
 };
 
 
-PLUTO_File_t PLUTO_CreateFile(const char *filename)
+PLUTO_File_t PLUTO_CreateFile(PLUTO_Logger_t logger, const char *filename, unsigned int mode, unsigned int permission)
 {
-    printf("Create File \"%s\".\n", filename);
+    PLUTO_LoggerInfo(logger, "Create File \"%s\".\n", filename);
     PLUTO_File_t file = (PLUTO_File_t)PLUTO_Malloc(sizeof(struct PLUTO_File));
     file->kqueue = -1;
-    file->descriptor = open(filename, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    //file->descriptor = open(filename, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    file->descriptor = open(filename, mode, permission);
     if(file->descriptor >= 0)
     {
         file->path = PLUTO_Malloc(strlen(filename) + 1);
         memcpy(file->path, filename, strlen(filename));
         file->path[strlen(filename)] = '\0';
         return file;
+    }
+    else
+    {
+        PLUTO_LoggerWarning(logger, "Error while opening File \"%s\".\n", filename);
     }
     PLUTO_Free(file);
     return NULL;
