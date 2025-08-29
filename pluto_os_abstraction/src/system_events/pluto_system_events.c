@@ -312,7 +312,7 @@ int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t 
         PLUTO_LoggerWarning(
             handler->logger, 
             "Unable to register Observer for File: %s, Error was: %s", 
-            path, 
+            PLUTO_FilePath(file), 
             strerror(errno)
         );
         return PLUTO_SE_ERRROR;
@@ -335,7 +335,7 @@ int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler
         PLUTO_LoggerWarning(
             handler->logger, 
             "Unable to deregister Observer for File: %i, Errno was: %i, Error was: %s", 
-            descriptor, 
+            PLUTO_FileGetDescriptor(file), 
             errno,
             strerror(errno)
         );
