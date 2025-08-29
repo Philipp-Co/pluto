@@ -65,6 +65,11 @@ int PLUTO_FileGetDescriptor(const PLUTO_File_t file)
     return file->descriptor;
 }
 
+const char* PLUTO_FilePath(const PLUTO_File_t file)
+{
+    return file->path;
+}
+
 int32_t PLUTO_FileWrite(PLUTO_File_t file, const char *buffer, size_t nbytes)
 {
     size_t res = 0;
