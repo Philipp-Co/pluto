@@ -1,6 +1,7 @@
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+#include "pluto/os_abstraction/files/pluto_file.h"
 #include "pluto/os_abstraction/pluto_logger.h"
 #include <pluto/os_abstraction/system_events/pluto_system_events.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
@@ -18,7 +19,9 @@
 #include <fcntl.h>
 
 #else
-
+//
+// inotify and others
+//
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -77,17 +80,20 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
     return handler;
 }
 
-int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const char *path)
+int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const PLUTO_File_t file)
 {
-    (void)handler;
-    (void)path;
-    return -1;
+    /*
+    int fd = open(path, O_RDONLY);
+    if(fd < 0)
+    {
+        return PLUTO_SE_ERRROR;
+    }
+    */
+    return PLUTO_SystemEventsHandlerRegisterObserver(handler, PLUTO_FileGetDescriptor(file));
 }
-int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
+int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler_t handler, PLUTO_File_t file)
 {
-    (void)handler;
-    (void)descriptor;
-    return -1;
+    return PLUTO_SystemEventsHandlerDeregisterObserver(handler, PLUTO_FileGetDescriptor(file));
 }
 
 void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
@@ -270,7 +276,12 @@ PLUTO_SystemEventHandler_t PLUTO_CreateSystemEventHandler(PLUTO_Logger_t logger)
         .events = EPOLLIN | EPOLLOUT,
         .data.fd = handler->inotify.inotify_fd,
     };
-    const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, handler->inotify.inotify_fd, &event);
+    const int res = epoll_ctl(
+        handler->epoll.epoll_fd, 
+        EPOLL_CTL_ADD, 
+        handler->inotify.inotify_fd, 
+        &event
+    );
     if(res < 0)
     {
         close(handler->epoll.epoll_fd);
@@ -290,26 +301,31 @@ void PLUTO_DestroySystemEventHandler(PLUTO_SystemEventHandler_t *handler)
     *handler = NULL;
 }
 
-int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const char *path)
+int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const PLUTO_File_t file)
 {
     assert(NULL != handler);
     assert(handler->inotify.inotify_fd >= 0);
     
     const int mask = IN_ATTRIB | IN_CLOSE_WRITE | IN_CLOSE_NOWRITE | IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF; 
-    if(inotify_add_watch(handler->inotify.inotify_fd, path, mask) < 0)
+    if(inotify_add_watch(handler->inotify.inotify_fd, PLUTO_FilePath(file), mask) < 0)
     {
-        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for File: %s, Error was: %s", path, strerror(errno));
+        PLUTO_LoggerWarning(
+            handler->logger, 
+            "Unable to register Observer for File: %s, Error was: %s", 
+            path, 
+            strerror(errno)
+        );
         return PLUTO_SE_ERRROR;
     }
     return PLUTO_SE_OK;
 }
 
-int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler_t handler, int descriptor)
+int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler_t handler, PLUTO_File_t file)
 {
     assert(NULL != handler);
     assert(handler->inotify.inotify_fd >= 0);
 
-    const int res = inotify_rm_watch(handler->inotify.inotify_fd, descriptor);
+    const int res = inotify_rm_watch(handler->inotify.inotify_fd, PLUTO_FileGetDescriptor(file));
     if(res < 0)
     {
         if(EINVAL == errno)
@@ -333,7 +349,12 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
     struct stat fstat_buffer;
     if(fstat(descriptor, &fstat_buffer) < 0)
     {
-        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        PLUTO_LoggerWarning(
+            handler->logger, 
+            "Unable to register Observer for Filedescriptor %i, Error was: %s", 
+            descriptor, 
+            strerror(errno)
+        );
         return PLUTO_SE_ERRROR;
     }
     if(S_ISREG(fstat_buffer.st_mode) || S_ISDIR(fstat_buffer.st_mode))
@@ -355,7 +376,10 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
         }
         return PLUTO_SE_OK;
         */
-        PLUTO_LoggerWarning(handler->logger, "Files can not be registered for System Events, use the Fileinterface instead.");
+        PLUTO_LoggerWarning(
+            handler->logger, 
+            "Files can not be registered for System Events, use the Fileinterface instead."
+        );
         return PLUTO_SE_ERRROR;
     }
     else if(S_ISFIFO(fstat_buffer.st_mode) || S_ISSOCK(fstat_buffer.st_mode))
@@ -366,14 +390,23 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
         const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_ADD, descriptor, NULL);
         if(res < 0)
         {
-            PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+            PLUTO_LoggerWarning(
+                handler->logger, 
+                "Unable to register Observer for Filedescriptor %i, Error was: %s", 
+                descriptor, 
+                strerror(errno)
+            );
             return PLUTO_SE_ERRROR;
         }
         return PLUTO_SE_OK;
     }
     else
     {
-        PLUTO_LoggerWarning(handler->logger, "Unable to register Observer for Filedescriptor %i, unknown Mode...", descriptor);
+        PLUTO_LoggerWarning(
+            handler->logger, 
+            "Unable to register Observer for Filedescriptor %i, unknown Mode...", 
+            descriptor
+        );
         return PLUTO_SE_ERRROR;
     }
 }
@@ -383,7 +416,12 @@ int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t h
     const int res = epoll_ctl(handler->epoll.epoll_fd, EPOLL_CTL_DEL, descriptor, NULL);
     if(res < 0)
     {
-        PLUTO_LoggerWarning(handler->logger, "Unable to deregister Observer for Filedescriptor %i, Error was: %s", descriptor, strerror(errno));
+        PLUTO_LoggerWarning(
+            handler->logger, 
+            "Unable to deregister Observer for Filedescriptor %i, Error was: %s", 
+            descriptor, 
+            strerror(errno)
+        );
         return PLUTO_SE_ERRROR;
     }
     return PLUTO_SE_OK;
@@ -391,7 +429,9 @@ int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t h
 
 int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event) 
 {
-    (void)event;
+    //
+    // - Implementation with inotify for File Events.
+    //
 #define PLUTO_MAX_EPOLL_EVENTS_BUFFER 64
     struct epoll_event events[PLUTO_MAX_EPOLL_EVENTS_BUFFER];
     int res = epoll_wait(handler->epoll.epoll_fd, events, 1, 0);
@@ -405,6 +445,9 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
     {
         if(events[0].data.fd == handler->inotify.inotify_fd)
         {
+            //
+            // inotify
+            //
             const struct inotify_event *file_event;
             char file_event_buffer[
                 sizeof(struct inotify_event)
@@ -455,6 +498,14 @@ int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemE
                     event->descriptor = file_event->wd;
                     event->timestamp = PLUTO_TimeNow();
                 }
+            }
+            else 
+            {
+                //
+                // other Filedescriptors.
+                //
+                event->descriptor = file_event->wd;
+                event->timestamp = PLUTO_TimeNow();
             }
         }
         return PLUTO_SE_OK;

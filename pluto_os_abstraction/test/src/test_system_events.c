@@ -1,4 +1,5 @@
 #include <pluto/os_abstraction/system_events/pluto_system_events.h>
+#include <pluto/os_abstraction/files/pluto_file.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <Unity/src/unity.h>
@@ -33,16 +34,18 @@ void PLUTO_TEST_SystemEventsFileEvent(void)
     
     char path[1024];
     snprintf(path, sizeof(path), "%ssystem_event_dummy.txt", PLUTO_TEST_RESSOURCE_DIR);
-    int filedescriptor = open(path, O_RDWR | O_CREAT, 0777);
-    TEST_ASSERT_TRUE(filedescriptor >= 0);
+    PLUTO_File_t file = PLUTO_CreateFile(path);
+    // int filedescriptor = open(path, O_RDWR | O_CREAT, 0777);
+    //TEST_ASSERT_TRUE(filedescriptor >= 0);
     TEST_ASSERT_EQUAL(
         0,
-        PLUTO_SystemEventHandlerRegisterFileObserver(handler, path)
+        PLUTO_SystemEventHandlerRegisterFileObserver(handler, file)
     );
     
     char buffer[1024]; 
     snprintf(buffer, sizeof(buffer), "test");
-    write(filedescriptor, buffer, strlen(buffer));
+    PLUTO_FileWrite(file, buffer, strlen(buffer));
+    //write(filedescriptor, buffer, strlen(buffer));
     //
     // since events are async, we have to wait a little bit...
     //
@@ -59,7 +62,8 @@ void PLUTO_TEST_SystemEventsFileEvent(void)
         result = PLUTO_SystemEventsPoll(handler, event);
     }
     TEST_ASSERT_EQUAL(PLUTO_SE_OK, result);
-    close(filedescriptor);
+    PLUTO_DestroyFile(&file);
+    //close(filedescriptor);
     remove(path);
     PLUTO_DestroySystemEvent(&event);
     PLUTO_DestroySystemEventHandler(&handler);
@@ -78,17 +82,19 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
     
     char path[1024];
     snprintf(path, sizeof(path), "%ssystem_event_dummy.txt", PLUTO_TEST_RESSOURCE_DIR);
-    int filedescriptor = open(path, O_RDWR | O_CREAT, 0777);
-    TEST_ASSERT_TRUE(filedescriptor >= 0);
+    PLUTO_File_t file = PLUTO_CreateFile(path);
+    //int filedescriptor = open(path, O_RDWR | O_CREAT, 0777);
+    //TEST_ASSERT_TRUE(filedescriptor >= 0);
     TEST_ASSERT_EQUAL(
         0,
-        PLUTO_SystemEventHandlerRegisterFileObserver(handler, path)
+        PLUTO_SystemEventHandlerRegisterFileObserver(handler, file)
     );
-    TEST_ASSERT_EQUAL(0, PLUTO_SystemEventsHandlerDeregisterFileObserver(handler, filedescriptor));
+    TEST_ASSERT_EQUAL(0, PLUTO_SystemEventsHandlerDeregisterFileObserver(handler, file));
     
     char buffer[1024]; 
     snprintf(buffer, sizeof(buffer), "test");
-    write(filedescriptor, buffer, strlen(buffer));
+    PLUTO_FileWrite(file, buffer, strlen(buffer));
+    //write(filedescriptor, buffer, strlen(buffer));
     //
     // since events are async, we have to wait a little bit...
     //
@@ -101,7 +107,8 @@ void PLUTO_TEST_SystemEventsDeregisterFileObserver(void)
     //
     TEST_ASSERT_TRUE(PLUTO_SE_OK == res || PLUTO_SE_NO_EVENT == res);
 
-    close(filedescriptor);
+    //close(filedescriptor);
+    PLUTO_DestroyFile(&file);
     remove(path);
     PLUTO_DestroySystemEvent(&event);
     PLUTO_DestroySystemEventHandler(&handler);

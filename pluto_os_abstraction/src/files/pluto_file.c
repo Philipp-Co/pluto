@@ -60,27 +60,36 @@ void PLUTO_DestroyFile(PLUTO_File_t *file)
     *file = NULL;
 }
 
+int PLUTO_FileGetDescriptor(const PLUTO_File_t file)
+{
+    return file->descriptor;
+}
+
 int32_t PLUTO_FileWrite(PLUTO_File_t file, const char *buffer, size_t nbytes)
 {
-    (void)file;
-    (void)buffer;
-    (void)nbytes;
-    printf("Write to file\n.");
-    return -1;
+    size_t res = 0;
+    while(res != nbytes)
+    {
+        const size_t tmp = (size_t)write(PLUTO_FileGetDescriptor(file), buffer, nbytes);
+        if(tmp < 0 && EAGAIN != errno)
+        {
+            return -1;
+        }
+        res += tmp;
+    }
+    return 0;
 }
 
 int32_t PLUTO_FileRead(PLUTO_File_t file, char *buffer, size_t nbytes)
 {
-    (void)file;
-    (void)buffer;
-    (void)nbytes;
-    printf("Read from file\n");
-    return -1;
+    return read(PLUTO_FileGetDescriptor(file), buffer, nbytes);
 }
 
 int32_t PLUTO_FileLockAquire(PLUTO_File_t file)
 {
+    (void)file;
     // https://linux.die.net/man/2/flock
+    /*
     const int result = flock(file->descriptor, LOCK_EX | LOCK_NB);
     if(0 == result)
     {
@@ -89,10 +98,14 @@ int32_t PLUTO_FileLockAquire(PLUTO_File_t file)
     }
     printf("Error while aquirering a flock: %i, %s\n", result, strerror(errno));
     return PLUTO_FILE_LOCK_ALREADY_LOCKED;
+    */
+    return -1;
 }
 
 int32_t PLUTO_FileUnlockRelease(PLUTO_File_t file)
 {
+    (void)file;
+    /*
     const int result = flock(file->descriptor, LOCK_UN);
     if(0 == result)
     {
@@ -101,15 +114,7 @@ int32_t PLUTO_FileUnlockRelease(PLUTO_File_t file)
     }
     printf("Release Lock on File Error: %i, %s.\n", result, strerror(errno));
     return PLUTO_FILE_LOCK_ERROR;
+    */
+    return -1;
 }
 
-int32_t PLUTO_FileRegisterObserver(PLUTO_File_t file, PLUTO_SystemEventHandler_t handler)
-{
-#if PLUTO_KQUEUE_AVAILABLE
-    return PLUTO_SystemEventsHandlerRegisterObserver(handler, file->descriptor);
-#elif PLUTO_INOTIFY_AVAILABLE
-    return PLUTO_SystemEventHandlerRegisterFileObserver(handler, file->path);
-#else
-    return -1;
-#endif
-}

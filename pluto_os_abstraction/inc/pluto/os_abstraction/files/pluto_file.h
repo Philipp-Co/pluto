@@ -1,7 +1,6 @@
 #ifndef __PLUTO_FILES_H__
 #define __PLUTO_FILES_H__
 
-#include <pluto/os_abstraction/system_events/pluto_system_events.h>
 #include <pluto/os_abstraction/pluto_time.h>
 
 #include <stddef.h>
@@ -40,6 +39,8 @@ PLUTO_File_t PLUTO_CreateFile(const char *filename);
 ///
 ///
 void PLUTO_DestroyFile(PLUTO_File_t *file);
+int PLUTO_FileGetDescriptor(const PLUTO_File_t file);
+const char* PLUTO_FilePath(const PLUTO_File_t file);
 ///
 ///
 ///
@@ -65,10 +66,5 @@ int32_t PLUTO_FileUnlockRelease(PLUTO_File_t file);
 
 #define PLUTO_FE_OBS_OK 0
 #define PLUTO_FE_OBS_ERROR -1
-
-///
-/// inotify?
-///
-int32_t PLUTO_FileRegisterObserver(PLUTO_File_t file, PLUTO_SystemEventHandler_t handler);
 
 #endif

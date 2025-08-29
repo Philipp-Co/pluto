@@ -23,6 +23,7 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/system_events/pluto_system_events.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/signals/pluto_signal.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/files/pluto_file.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_logger.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_types.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_malloc.c
