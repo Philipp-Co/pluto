@@ -31,7 +31,7 @@ struct PLUTO_File
 
 PLUTO_File_t PLUTO_CreateFile(PLUTO_Logger_t logger, const char *filename, unsigned int mode, unsigned int permission)
 {
-    PLUTO_LoggerInfo(logger, "Create File \"%s\".\n", filename);
+    PLUTO_LoggerInfo(logger, "Create File \"%s\".", filename);
     PLUTO_File_t file = (PLUTO_File_t)PLUTO_Malloc(sizeof(struct PLUTO_File));
     file->descriptor = open(filename, mode, permission);
     if(file->descriptor >= 0)
@@ -43,7 +43,7 @@ PLUTO_File_t PLUTO_CreateFile(PLUTO_Logger_t logger, const char *filename, unsig
     }
     else
     {
-        PLUTO_LoggerWarning(logger, "Error while opening File \"%s\".\n", filename);
+        PLUTO_LoggerWarning(logger, "Error while opening File \"%s\".", filename);
     }
     PLUTO_Free(file);
     return NULL;
