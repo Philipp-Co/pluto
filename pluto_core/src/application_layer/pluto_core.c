@@ -27,12 +27,18 @@
 //  - SIGINT is received -> kill all Subprocesses -> Wait for all Subprocesses to terminate -> Terminate yourselve
 //
 
+///
+/// \brief  Getter for the Directory where PLUTOs Executables are stored.
+///
+static const char* PLUTO_GetBinaryDirectory(PLUTO_Logger_t logger);
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
 {
-    char *binary_dir = getenv("PLUTO_BINARY_DIR");
+    //char *binary_dir = getenv("PLUTO_BINARY_DIR");
+    const char* binary_dir = PLUTO_GetBinaryDirectory(logger);
     if(!binary_dir)
     {
         PLUTO_LoggerError(logger, "Error: PLUTO_BINARY_DIR ist not set!");
@@ -155,3 +161,15 @@ bool PLUTO_CoreProcess(PLUTO_Core_t core)
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+static const char* PLUTO_GetBinaryDirectory(PLUTO_Logger_t logger)
+{
+    char *binary_dir = getenv("PLUTO_BINARY_DIR");
+    if(binary_dir)
+    {
+        PLUTO_LoggerInfo(logger, "Set PLUTO_BINARY_DIR to %s", binary_dir);
+        return binary_dir;
+    }
+    static const char *default_binary_dir = "/usr/local/bin/";
+    PLUTO_LoggerInfo(logger, "PLUTO_BINARY_DIR not set, fall back to Default %s", default_binary_dir);
+    return default_binary_dir;
+}
