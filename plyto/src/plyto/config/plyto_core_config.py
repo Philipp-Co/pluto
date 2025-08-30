@@ -19,16 +19,14 @@ class PlytoCoreConfig:
     def from_dict(content) -> 'PlytoCoreConfig':
         core_config: PlytoCoreConfig = PlytoCoreConfig()
         for config in content['nodes']:
-            print(f'Parse {config}')
             with open(config['configuration-file'], 'r') as file:
                 node_config: PlytoNodeConfig = PlytoNodeConfig.from_dict(
-                    loads(
+                    name=config['name'],
+                    content=loads(
                         file.read(),
                     )
                 ).set_type(
                     PlytoNodeType(config['type'])
-                ).set_name(
-                    config['name']
                 )
                 core_config.add(node_config)
         return core_config
