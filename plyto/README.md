@@ -31,7 +31,7 @@ Now you want to build a distributable Package which contain Plyto.
 
     python -m build --sdist
 
-This will package Plyto and store it in the directory dist/plyto.x.y.z.tar.gz
+This will package Plyto and store it in the directory dist/plyto-x.y.z.tar.gz
 
 # Useage
 
@@ -45,7 +45,7 @@ For each Meaning of the Variables see the Sections bellow.
 
 Copy the Packge to its destination and install this package using 
 
-    pip install plyto.x.y.z.tar.gz
+    pip install plyto-x.y.z.tar.gz
 
 ## Environment Variable PLUTO_WORKDIR
 
