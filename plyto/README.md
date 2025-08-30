@@ -2,7 +2,7 @@
 
 Plyto is a Framework for writing Event driven Applications.
 
-# Prequisits 
+# Prerequisits 
 
 Plyto is a Wrapper around a Set of binary Executables and shared Libraries.
 You have to make sure, that these Executables and Libraries are installed properly before going of with Plyto.
