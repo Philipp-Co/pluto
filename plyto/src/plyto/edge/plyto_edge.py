@@ -1,4 +1,6 @@
-
+#
+# -------------------------------------------------------------------------------------------------
+#
 from typing import Self, Optional
 from ctypes import byref, POINTER
 from ctypes import CDLL, c_void_p, c_int, c_char_p, c_uint32
@@ -9,19 +11,35 @@ from plyto.config.plyto_core_config import PlytoCoreConfig
 from typing import Set
 from json import loads
 
+#
+# -------------------------------------------------------------------------------------------------
+#
+
+
 class MessageQueueFullError(Exception):
     pass
+
+
+#
+# -------------------------------------------------------------------------------------------------
+#
+
 
 class MessageQueueEmptyError(Exception):
     pass
 
-class PlytoEvent:
 
+#
+# -------------------------------------------------------------------------------------------------
+#
+
+
+class PlytoEvent:
     def __init__(self, cdll: CDLL):
         self.__cdll: CDLL = cdll
         self.__event_pointer: c_void_p = c_void_p(self.__cdll.PLUTO_CreateEvent())
         pass
-    
+
     def __del__(self):
         if self.__event_pointer is not None:
             self.__cdll.PLUTO_DestroyEvent(
@@ -34,18 +52,14 @@ class PlytoEvent:
         from plyto.edge import CDLL, _lib_pluto_edge
         from datetime import datetime, UTC
         from time import time
+
         event: PlytoEvent = PlytoEvent(
             cdll=_lib_pluto_edge,
         )
-        return event.set_timestamp(
-            _lib_pluto_edge.PLUTO_TimeNow()
-        )
+        return event.set_timestamp(_lib_pluto_edge.PLUTO_TimeNow())
 
     def set_id(self, id: int) -> Self:
-        self.__cdll.PLUTO_EventSetId(
-            self.__event_pointer,
-            id
-        )
+        self.__cdll.PLUTO_EventSetId(self.__event_pointer, id)
         return self
 
     def set_event_id(self, event_id: int) -> Self:
@@ -61,9 +75,10 @@ class PlytoEvent:
             timestamp,
         )
         return self
-    
+
     def set_payload(self, msg: str) -> Self:
-        from ctypes import c_size_t 
+        from ctypes import c_size_t
+
         self.__cdll.PLUTO_EventCopyBufferToPayload(
             self.__event_pointer,
             msg.encode(),
@@ -73,20 +88,24 @@ class PlytoEvent:
 
     def __str__(self) -> str:
         from ctypes import create_string_buffer
-        buffer = create_string_buffer(
-            1024
-        )
+
+        buffer = create_string_buffer(1024)
         self.__cdll.PLUTO_EventToBuffer(
             self.__event_pointer,
             buffer,
             len(buffer),
         )
         return buffer.raw.decode()
-    
+
     def pointer(self) -> c_void_p:
         return self.__event_pointer
 
     pass
+
+
+#
+# -------------------------------------------------------------------------------------------------
+#
 
 
 class PlytoEdge:
@@ -98,17 +117,16 @@ class PlytoEdge:
 
     def __create_logger(self, cdll: CDLL) -> c_void_p:
         from ctypes import create_string_buffer
-        NAME: str = 'Edge'
-        name = create_string_buffer(len(NAME)+1)
+
+        NAME: str = "Edge"
+        name = create_string_buffer(len(NAME) + 1)
         name.value = NAME.encode()
-        return cdll.PLUTO_CreateLogger(
-            name
-        )
-    
+        return cdll.PLUTO_CreateLogger(name)
+
     @staticmethod
     def read_core_config() -> PlytoCoreConfig:
         data: str
-        with open('/tmp/pluto/workdir/core.txt', 'r') as file:
+        with open("/tmp/pluto/workdir/core.txt", "r") as file:
             data = file.read()
         return PlytoCoreConfig.from_dict(loads(data))
 
@@ -120,28 +138,30 @@ class PlytoEdge:
 
     def __init__(self, node_name: str, queue_name: str, core_config: PlytoCoreConfig):
         from plyto.edge import _lib_pluto_edge, CDLL
+
         self.__dll: CDLL = _lib_pluto_edge
         from ctypes import create_string_buffer
-        
+
         self.__core_config: PlytoCoreConfig = core_config
-        
+
         node_config: Optional[PlytoNodeConfig] = self.__find_node_by_name(node_name)
         if node_config is None:
-            raise ValueError(
-                f'Known Nodes are: {self.nodes()}'
-            )
-        path: str = f'{node_config.workdir()}'
+            raise ValueError(f"Known Nodes are: {self.nodes()}")
+        path: str = f"{node_config.workdir()}"
 
-        if queue_name != node_config.name_of_input_queue() and queue_name not in node_config.names_of_output_queues():
+        if (
+            queue_name != node_config.name_of_input_queue()
+            and queue_name not in node_config.names_of_output_queues()
+        ):
             raise ValueError(
-                f'Known Queues are: {node_config.name_of_input_queue()} / {node_config.names_of_output_queues()}'
+                f"Known Queues are: {node_config.name_of_input_queue()} / {node_config.names_of_output_queues()}"
             )
 
-        path_buffer = create_string_buffer(len(path)+1)
+        path_buffer = create_string_buffer(len(path) + 1)
         path_buffer.value = path.encode()
-        name_buffer = create_string_buffer(len(queue_name)+1)
+        name_buffer = create_string_buffer(len(queue_name) + 1)
         name_buffer.value = queue_name.encode()
-        
+
         self.__edge: c_void_p = c_void_p(
             self.__dll.PLUTO_EDGE_CreateEdge(
                 path_buffer, name_buffer, 0x777, self.__create_logger(self.__dll)
@@ -155,27 +175,23 @@ class PlytoEdge:
 
     def __del__(self):
         if self.__edge is not None:
-            self.__dll.PLUTO_EDGE_DestroyEdge(
-                byref(self.__edge)
-            )
+            self.__dll.PLUTO_EDGE_DestroyEdge(byref(self.__edge))
         pass
 
     def send(self, msg: str, id: int, event: int) -> Self:
-        event: PlytoEvent = PlytoEvent.create().set_id(
-            id
-        ).set_event_id(
-            event
-        ).set_payload(
-            msg
+        event: PlytoEvent = (
+            PlytoEvent.create().set_id(id).set_event_id(event).set_payload(msg)
         )
         if not self.__dll.PLUTO_EDGE_EdgeSendEvent(
-            self.__edge, event.pointer(),
+            self.__edge,
+            event.pointer(),
         ):
             raise MessageQueueFullError
         return self
-    
+
     def receive(self) -> str:
         from ctypes import POINTER
+
         event: PlytoEvent = PlytoEvent.create()
         if self.__dll.PLUTO_EDGE_EdgeReceiveEvent(
             self.__edge,
@@ -183,6 +199,10 @@ class PlytoEdge:
         ):
             return self.__dll.PLUTO_EventPayload(event.pointer()).decode()
         raise MessageQueueEmptyError
-         
+
     pass
 
+
+#
+# -------------------------------------------------------------------------------------------------
+#

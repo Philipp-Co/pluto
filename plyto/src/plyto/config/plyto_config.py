@@ -1,4 +1,6 @@
-
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
 from pathlib import Path
 from typing import Self, List
 from json import dumps, loads
@@ -9,58 +11,50 @@ from plyto.config.plyto_node_config import PlytoNodeConfig
 from plyto.config.plyto_core_config import PlytoCoreConfig
 from os import environ
 
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
+
 
 class PlytoConfig:
-
     def __init__(self):
         pass
 
     @staticmethod
     def core_config_file() -> str:
-        return 'core.txt'
-    
+        return "core.txt"
+
     @staticmethod
     def core_config_absolut_path() -> str:
-        return f'{PlytoConfig.read_workdir()}{PlytoConfig.core_config_file()}'
+        return f"{PlytoConfig.read_workdir()}{PlytoConfig.core_config_file()}"
 
     @staticmethod
     def read_workdir() -> str:
-        return environ.get('PLUTO_WORKDIR', '/tmp/pluto/workdir/')
-    
+        return environ.get("PLUTO_WORKDIR", "/tmp/pluto/workdir/")
+
     @staticmethod
     def read_binarydir() -> str:
-        return environ.get('PLUTO_BINARYDIR', '/usr/local/bin/')
-    
+        return environ.get("PLUTO_BINARYDIR", "/usr/local/bin/")
+
     @staticmethod
     def generate_default(filename: str) -> None:
         with open(filename, "w+") as file:
-            file.write(
-                dumps(
-                    PlytoCoreConfig().to_string()
-                    
-                )
-            )
+            file.write(dumps(PlytoCoreConfig().to_string()))
         pass
 
     @staticmethod
     def from_file(filename: str) -> PlytoCoreConfig:
-        with open(filename, "r") as file: 
+        with open(filename, "r") as file:
             content: str = file.read()
-            return  PlytoCoreConfig.from_dict(loads(content))
+            return PlytoCoreConfig.from_dict(loads(content))
         raise RuntimeError
-    
+
     @staticmethod
     def to_file(filename: str, config: PlytoCoreConfig) -> None:
         if Path(filename).is_file():
-            raise AssertionError(
-                'File already exists.'
-            )
+            raise AssertionError("File already exists.")
         with open(filename, "w+") as file:
-            file.write(
-                dumps(
-                    config.to_string()
-                )
-            )
+            file.write(dumps(config.to_string()))
         pass
 
     @staticmethod
@@ -69,13 +63,12 @@ class PlytoConfig:
             raise AssertionError
 
         with open(filename, "w+") as file:
-            file.write(
-                dumps(
-                    config.to_string()
-                )
-            )
+            file.write(dumps(config.to_string()))
         pass
 
     pass
 
 
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#

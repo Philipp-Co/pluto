@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 75"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,13 +10,16 @@ authors = [
 ]
 description = "Low Latency Event Driven Programming."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+
+[project.license]
+file = "LICENSE"
 license = "MIT"
-license-files = ["LICEN[CS]E*"]
+license-files = ["LICENSE"]
 
 [project.urls]
 Homepage = "https://github.com/Philipp-Co/pluto"
