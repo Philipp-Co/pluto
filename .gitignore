@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/linux,vim,c,cmake
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,vim,c,cmake
 
+plyto/main.py
+plyto/emain.py
+
 .cache/
 build/
 external/
