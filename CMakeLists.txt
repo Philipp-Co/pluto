@@ -23,19 +23,11 @@ add_subdirectory(
 )
 
 add_subdirectory(
-    pluto_event
-)
-
-add_subdirectory(
     pluto_config
 )
 
 add_subdirectory(
     pluto_core
-)
-
-add_subdirectory(
-    pluto_info
 )
 
 add_subdirectory(

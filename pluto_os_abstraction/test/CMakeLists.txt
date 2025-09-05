@@ -31,7 +31,7 @@ add_executable(
 )
 
 target_compile_definitions(
-    pluto_os_abstraction_test 
+    pluto_os_abstraction_test
     PUBLIC
     #PLUTO_TEST=1
     PLUTO_TEST_RESSOURCE_DIR="${CMAKE_CURRENT_LIST_DIR}/ressources/"
@@ -49,6 +49,8 @@ target_include_directories(
 target_compile_definitions(
     pluto_os_abstraction_test
     PUBLIC
+    PLUTO_TARGET_OS=${PLUTO_TARGET_OS}
+    PLUTO_OS_INTERFACE=${PLUTO_OS_INTERFACE}
     _XOPEN_SOURCE=700
     PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
 )

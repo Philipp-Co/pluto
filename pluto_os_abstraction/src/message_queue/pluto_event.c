@@ -2,7 +2,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-#include <pluto/pluto_event/pluto_event.h>
+#include <pluto/os_abstraction/message_queue/pluto_event.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 
@@ -82,7 +82,7 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
     jsmntok_t token[128];
     jsmn_parser parser;
     jsmn_init(&parser);
-    
+
     event->nbytes_payload = 0;
     const int len = strlen(buffer);
 
@@ -110,7 +110,7 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
         */
         return false;
     }
-    
+
     if(event->nbytes_payload <= (sizeof(event->payload.text)-len))
     {
         memcpy(event->payload.text, buffer + len + 1, event->nbytes_payload);
@@ -126,13 +126,13 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
     return false;
 }
 
-bool PLUTO_EventToBuffer(const PLUTO_Event_t event, char *buffer, size_t nbytes)
+bool PLUTO_EventToBuffer(const PLUTO_Event_t event, char *buffer, uint16_t nbytes)
 {
     char timestamp[128];
     PLUTO_TimeToString(PLUTO_EventTimestamp(event), timestamp, sizeof(timestamp));
     const int result = snprintf(
-        buffer, 
-        nbytes, 
+        buffer,
+        nbytes,
         "{\"id\":%i,\"event\":%i,\"time\":\"%s\",\"payload\":%lu}",
         event->id,
         event->eventid,
@@ -192,7 +192,7 @@ size_t PLUTO_EventSizeOfPayloadBuffer(const PLUTO_Event_t event)
     return sizeof(event->payload.text);
 }
 
-void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, size_t nbytes_payload)
+void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, uint16_t nbytes_payload)
 {
     event->nbytes_payload = nbytes_payload;
 }
@@ -232,9 +232,9 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
     {
         return false;
     }
-    
-    char buffer[1024]; 
-    unsigned int result = 0U; 
+
+    char buffer[1024];
+    unsigned int result = 0U;
     char *tmp;
     for(size_t i=1U;i<size;)
     {
@@ -277,11 +277,11 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
                 return false;
         }
         result |= obj;
-    } 
+    }
 
     return (
-        PLUTO_PARSER_TOKEN_ID | 
-        PLUTO_PARSER_TOKEN_EVENT | 
+        PLUTO_PARSER_TOKEN_ID |
+        PLUTO_PARSER_TOKEN_EVENT |
         PLUTO_PARSER_TOKEN_TIMESTAMP |
         PLUTO_PARSER_TOKEN_PAYLOAD
     ) == result;
@@ -291,13 +291,13 @@ static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data)
 {
     (void)data;
     char key_buffer[128];
-    
+
     const size_t strl = key->end - key->start;
-    memcpy(key_buffer, data + key->start, strl); 
+    memcpy(key_buffer, data + key->start, strl);
     key_buffer[strl] = '\0';
-        
+
     #define PLUTO_PARSER_N_KEYS 4
-    static const char *expected_keys[PLUTO_PARSER_N_KEYS] = 
+    static const char *expected_keys[PLUTO_PARSER_N_KEYS] =
     {
         "id",
         "event",
@@ -318,7 +318,7 @@ static unsigned int PLUTO_ReadKey(const jsmntok_t *key, const char *data)
         PLUTO_PARSER_TOKEN_TIMESTAMP,
         PLUTO_PARSER_TOKEN_PAYLOAD
     };
-    
+
     for(size_t i=0U;i<PLUTO_PARSER_N_KEYS;++i)
     {
         if(strl == expected_strl[i])

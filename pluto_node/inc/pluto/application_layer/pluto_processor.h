@@ -9,9 +9,9 @@
 //
 
 #include "pluto/os_abstraction/files/pluto_file.h"
-#include "pluto/pluto_event/pluto_event.h"
+#include "pluto/os_abstraction/message_queue/pluto_event.h"
 #include <pluto/pluto_config/pluto_config.h>
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/application_layer/pluto_info.h>
 #include <pluto/os_abstraction/signals/pluto_signal.h>
@@ -26,18 +26,18 @@ typedef PLUTO_ProcessorCallbackOutput_t (*PLUTO_ProcessCallback_t)(PLUTO_Process
 
 struct PLUTO_Processor
 {
-    PLUTO_Logger_t logger;
     PLUTO_SignalHandler_t signal_handler;
+    PLUTO_Logger_t logger;
     PLUTO_ProcessCallback_t callback;
     PLUTO_MessageQueue_t input_queue;
     int32_t number_of_output_queues;
     PLUTO_MessageQueue_t *output_queues; // Allocated. Owned by this Struct.
     PLUTO_SystemEventHandler_t system_event_handler;
-    
+
     struct PLUTO_Event event_buffer;
-    struct PLUTO_Event output_event; 
+    struct PLUTO_Event output_event;
     struct PLUTO_SystemEvent system_event;
-} __attribute__((aligned(64))); 
+} __attribute__((aligned(64)));
 typedef struct PLUTO_Processor* PLUTO_Processor_t;
 
 //
@@ -48,9 +48,9 @@ typedef struct PLUTO_Processor* PLUTO_Processor_t;
 /// \brief  Create a Processor.
 ///
 PLUTO_Processor_t PLUTO_CreateProcessor(
-    PLUTO_Config_t config, 
+    PLUTO_Config_t config,
     PLUTO_SignalHandler_t signal_handler,
-    PLUTO_ProcessCallback_t callback, 
+    PLUTO_ProcessCallback_t callback,
     PLUTO_Logger_t logger
 );
 ///
@@ -61,16 +61,16 @@ void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor);
 /// \brief  Read the next input Event, if there is one, pass it to the Applicationlogic and output the Result as the next
 ///         output Event.
 ///
-bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor);
+bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Emit an Event.
 ///         The Event is written to the Inputqueue of the Processor.
-///         Be careful with this Function: 
+///         Be careful with this Function:
 ///         If to many Events are emitted the Inputqueue can overflow very fast!!!
 ///
 /// \returns bool - true if the Event was emitted successfully, false otherwise.
 ///
-bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event);
+bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
 
 //
 // --------------------------------------------------------------------------------------------------------------------

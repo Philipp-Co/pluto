@@ -45,7 +45,6 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../external/
-    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../pluto_os_abstraction/inc/
 )
 
@@ -53,13 +52,11 @@ target_link_directories(
     pluto_edge_shared
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
 )
 
 target_link_libraries(
     pluto_edge_shared
     PUBLIC
-    pluto_event
     pluto_os_abstraction
 )
 
@@ -122,7 +119,6 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../external/
-    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../pluto_os_abstraction/inc/
 )
 
@@ -130,13 +126,11 @@ target_link_directories(
     pluto_edge_static
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
 )
 
 target_link_libraries(
     pluto_edge_static
     PUBLIC
-    pluto_event
     pluto_os_abstraction
 )
 
@@ -185,13 +179,11 @@ endif()
 #
 add_dependencies(
     pluto_edge_static
-    pluto_event
     pluto_os_abstraction
 )
 
 add_dependencies(
     pluto_edge_shared
-    pluto_event
     pluto_os_abstraction
 )
 #
@@ -199,7 +191,7 @@ add_dependencies(
 #
 
 install(
-    TARGETS pluto_edge_shared DESTINATION lib 
+    TARGETS pluto_edge_shared DESTINATION lib
 )
 #
 # ---------------------------------------------------------------------------------------------------------------------

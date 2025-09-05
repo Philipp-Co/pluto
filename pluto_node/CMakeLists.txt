@@ -74,7 +74,6 @@ endif()
 set(
     PLUTO_INC
     ${CMAKE_CURRENT_LIST_DIR}/inc/
-    ${CMAKE_CURRENT_LIST_DIR}/../pluto_event/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../pluto_config/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../pluto_os_abstraction/inc/
     ${CMAKE_CURRENT_LIST_DIR}/../external/
@@ -84,12 +83,10 @@ set(
     PLUTO_LINK_DIRS
     ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_os_abstraction/
     ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_config/
-    ${CMAKE_CURRENT_LIST_DIR}/../build/pluto_event/
 )
 
 set(
     PLUTO_LINK_LIBS
-    pluto_event
     pluto_config
     pluto_os_abstraction
 )
@@ -117,12 +114,12 @@ set(
 #
 
 add_executable(
-    pluto_node_pt 
+    pluto_node_pt
     ${SRC}
 )
 
 target_compile_definitions(
-    pluto_node_pt 
+    pluto_node_pt
     PUBLIC
     PLUTO_CTS_RTM_PASSTHROUGH
 )
@@ -185,9 +182,15 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     )
 endif()
 
+add_custom_command(
+    TARGET pluto_node_pt
+    POST_BUILD
+    COMMAND strip ${CMAKE_BINARY_DIR}/pluto_node/pluto_node_pt
+    COMMENT "Stripping off Symbols from pluto_node_pt..."
+)
+
 add_dependencies(
     pluto_node_pt
-    pluto_event
     pluto_config
     pluto_os_abstraction
 )
@@ -196,13 +199,13 @@ add_dependencies(
 # ---------------------------------------------------------------------------------------------------------------------
 #
 add_executable(
-    pluto_node_py 
+    pluto_node_py
     ${SRC}
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/python/pluto_python.c
 )
 
 target_compile_definitions(
-    pluto_node_py 
+    pluto_node_py
     PUBLIC
     PLUTO_CTS_RTM_PYTHON
 )
@@ -272,13 +275,13 @@ endif()
 #
 
 add_executable(
-    pluto_node_sh 
-    ${SRC} 
+    pluto_node_sh
+    ${SRC}
     ${CMAKE_CURRENT_LIST_DIR}/src/application_layer/shared_library/pluto_shared_library.c
 )
 
 target_compile_definitions(
-    pluto_node_sh 
+    pluto_node_sh
     PUBLIC
     PLUTO_CTS_RTM_SHARED_LIB
 )
@@ -297,8 +300,8 @@ target_link_directories(
 )
 
 target_link_libraries(
-    pluto_node_sh 
-    PUBLIC 
+    pluto_node_sh
+    PUBLIC
     ${CMAKE_DL_LIBS}
     ${PLUTO_LINK_LIBS}
 )
@@ -352,7 +355,7 @@ endif()
 # https://cmake.org/cmake/help/latest/command/install.html
 #
 install(
-    TARGETS pluto_node_sh pluto_node_pt pluto_node_py DESTINATION bin 
+    TARGETS pluto_node_sh pluto_node_pt pluto_node_py DESTINATION bin
 )
 
 #

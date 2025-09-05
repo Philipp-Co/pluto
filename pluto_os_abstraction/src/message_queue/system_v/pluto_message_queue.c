@@ -1,4 +1,5 @@
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include "pluto/os_abstraction/pluto_types.h"
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 
 #ifdef PLUTO_MESSAGE_QUEUE_SYSTEM_V
 
@@ -13,7 +14,7 @@
 #include <pluto/os_abstraction/pluto_semaphore.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 
-#include <unistd.h> 
+#include <unistd.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,9 +35,9 @@
 //
 
 PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
-    const char *path, 
-    const char *name, 
-    unsigned int permissions, 
+    const char *path,
+    const char *name,
+    unsigned int permissions,
     PLUTO_Logger_t logger
 )
 {
@@ -48,49 +49,51 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
         PLUTO_LoggerWarning(logger, "Unable to allocate Memory for MessageQueue.");
         return NULL;
     }
+    queue->internal = PLUTO_Malloc(sizeof(struct PLUTO_MessageQueueInternal));
 
     char buffer[1024];
     snprintf(buffer, sizeof(buffer), "%s-sem", name);
-    queue->semaphore = PLUTO_CreateSemaphore(path, buffer, logger);
-    if(!queue->semaphore)
+    queue->internal->semaphore = PLUTO_CreateSemaphore(path, buffer, logger);
+    if(!queue->internal->semaphore)
     {
         PLUTO_LoggerWarning(logger, "Unable to create Semaphore.");
         goto error;
     }
 
-    if(PLUTO_SEM_OK != PLUTO_SemaphoreSignal(queue->semaphore))
+    if(PLUTO_SEM_OK != PLUTO_SemaphoreSignal(queue->internal->semaphore))
     {
         PLUTO_LoggerWarning(logger, "Unable to signal Semaphore.");
         goto error;
     }
 
-    if(!PLUTO_CreateKey(path, name, &queue->key))
+    queue->internal->key = PLUTO_Malloc(sizeof(PLUTO_Key_t));
+    if(!PLUTO_CreateKey(path, name, queue->internal->key))
     {
         PLUTO_LoggerWarning(
-            logger, 
-            "Unable to create System V Key for Name: %s - %s", 
-            name, 
+            logger,
+            "Unable to create System V Key for Name: %s - %s",
+            name,
             strerror(errno)
         );
         goto error;
     }
 
-    PLUTO_LoggerInfo(logger, "Create Queue with Key 0x%x", queue->key.key);
+    PLUTO_LoggerInfo(logger, "Create Queue with Key 0x%x", queue->internal->key->key);
     const int identifier = msgget(
-        queue->key.key, 
+        queue->internal->key->key,
         IPC_CREAT | IPC_NOWAIT | MSG_NOERROR | permissions
     );
-    queue->filedescriptor = identifier;  
+    queue->filedescriptor = identifier;
     if(identifier < 0)
     {
         PLUTO_LoggerWarning(
-            logger, 
+            logger,
             "Error, unable to create Message Queue: %s...",
             strerror(errno)
         );
         goto error;
     }
-    queue->logger = logger;
+    queue->internal->logger = logger;
     return queue;
 error:
     PLUTO_LoggerWarning(logger, "Unable to \"create\" MessageQueue abort with error.");
@@ -103,38 +106,40 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)PLUTO_Malloc(
         sizeof(struct PLUTO_MessageQueue)
     );
+    queue->internal = PLUTO_Malloc(sizeof(struct PLUTO_MessageQueueInternal));
 
     queue->filedescriptor = -1;
-    queue->key.file = NULL;
-    queue->key.key = 0;
-    queue->key.path_to_file = NULL;
-    queue->logger = NULL;
-    queue->semaphore = NULL;
-    
+    queue->internal->logger = NULL;
+    queue->internal->semaphore = NULL;
+
     char buffer[1024];
     snprintf(buffer, sizeof(buffer), "%s-sem", name);
-    queue->semaphore = PLUTO_SemaphoreGet(path, buffer, logger);
-    if(!queue->semaphore)
+    queue->internal->semaphore = PLUTO_SemaphoreGet(path, buffer, logger);
+    if(!queue->internal->semaphore)
     {
         PLUTO_LoggerWarning(logger, "Unable to get Semaphore on Path %s with Name %s-sem", path, name);
         goto error;
     }
-    
-    if(PLUTO_SEM_OK != PLUTO_SemaphoreSignal(queue->semaphore))
+
+    if(PLUTO_SEM_OK != PLUTO_SemaphoreSignal(queue->internal->semaphore))
     {
         PLUTO_LoggerWarning(logger, "Unable to signal Semaphore.");
         goto error;
     }
-    
-    if(!PLUTO_KeyGet(path, name, &queue->key))
+
+    queue->internal->key = PLUTO_Malloc(sizeof(PLUTO_Key_t));
+    queue->internal->key->file = NULL;
+    queue->internal->key->key = 0;
+    queue->internal->key->path_to_file = NULL;
+    if(!PLUTO_KeyGet(path, name, queue->internal->key))
     {
         PLUTO_LoggerWarning(logger, "Unable to get Key on Path %s with Name %s", path, name);
         goto error;
     }
 
-    PLUTO_LoggerInfo(logger, "Get Queue with Key 0x%x", queue->key.key);
+    PLUTO_LoggerInfo(logger, "Get Queue with Key 0x%x", queue->internal->key->key);
     queue->filedescriptor = msgget(
-        queue->key.key, 0
+        queue->internal->key->key, 0
     );
     if(queue->filedescriptor < 0)
     {
@@ -142,13 +147,13 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
         goto error;
     }
 
-    queue->logger = logger;
-    
-    const int32_t semaphore_value = PLUTO_SemaphoreValue(queue->semaphore);
+    queue->internal->logger = logger;
+
+    const int32_t semaphore_value = PLUTO_SemaphoreValue(queue->internal->semaphore);
     PLUTO_LoggerInfo(
-        logger, 
-        "Queue %s Ref. Count %i", 
-        queue->key.path_to_file != NULL ? queue->key.path_to_file : "NULL", 
+        logger,
+        "Queue %s Ref. Count %i",
+        queue->internal->key->path_to_file != NULL ? queue->internal->key->path_to_file : "NULL",
         semaphore_value
     );
     return queue;
@@ -167,30 +172,30 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
         //
         // Decrement Reference Count.
         //
-        if((*queue)->semaphore)
+        if((*queue)->internal->semaphore)
         {
-            const PLUTO_SEM_ReturnValue_t result = PLUTO_SemaphoreWait((*queue)->semaphore);
+            const PLUTO_SEM_ReturnValue_t result = PLUTO_SemaphoreWait((*queue)->internal->semaphore);
             PLUTO_LoggerInfo(
-                (*queue)->logger,
+                (*queue)->internal->logger,
                 "Sem Wait Result: %i",
                 result
             );
-            const int32_t semaphore_value = PLUTO_SemaphoreValue((*queue)->semaphore);
+            const int32_t semaphore_value = PLUTO_SemaphoreValue((*queue)->internal->semaphore);
             PLUTO_LoggerInfo(
-                (*queue)->logger, 
-                "Queue %s Ref. Count %i", 
-                (*queue)->key.path_to_file != NULL ? (*queue)->key.path_to_file : "NULL", 
+                (*queue)->internal->logger,
+                "Queue %s Ref. Count %i",
+                (*queue)->internal->key->path_to_file != NULL ? (*queue)->internal->key->path_to_file : "NULL",
                 semaphore_value
             );
             if(semaphore_value <= 0)
             {
                 PLUTO_LoggerInfo(
-                    (*queue)->logger,
-                    "Destroy Queue %s", 
-                    (*queue)->key.path_to_file != NULL ? (*queue)->key.path_to_file : "NULL" 
+                    (*queue)->internal->logger,
+                    "Destroy Queue %s",
+                    (*queue)->internal->key->path_to_file != NULL ? (*queue)->internal->key->path_to_file : "NULL"
                 );
                 //
-                // Only destroy Queue if the Reference Count indicates, 
+                // Only destroy Queue if the Reference Count indicates,
                 // that this is the last Instance which holds a Queue.
                 //
                 if((*queue)->filedescriptor >= 0)
@@ -198,16 +203,18 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
                     if(msgctl((*queue)->filedescriptor, IPC_RMID, NULL) < 0)
                     {
                         PLUTO_LoggerInfo(
-                            (*queue)->logger, 
+                            (*queue)->internal->logger,
                             "Error, unable to delete MQ: %s",
                             strerror(errno)
                         );
                     }
                 }
             }
-            PLUTO_DestroySemaphore(&(*queue)->semaphore);
+            PLUTO_DestroySemaphore(&(*queue)->internal->semaphore);
         }
-        PLUTO_DestroyKey(&(*queue)->key);
+        PLUTO_DestroyKey((*queue)->internal->key);
+        PLUTO_Free((*queue)->internal->key);
+        PLUTO_Free((*queue)->internal);
         PLUTO_Free(*queue);
         *queue = NULL;
     }
@@ -216,15 +223,15 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
 bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
 {
     assert(NULL != queue);
-    
+
     long msgtype = 0L;
     int msgflags = IPC_NOWAIT | MSG_NOERROR;
     buffer->msgtype = 1;
     const int nbytes = msgrcv(
-        queue->filedescriptor, 
-        buffer, 
-        sizeof(buffer->text) - 1, 
-        msgtype, 
+        queue->filedescriptor,
+        buffer,
+        sizeof(buffer->text) - 1,
+        msgtype,
         msgflags
     );
     if(nbytes < 0)
@@ -232,15 +239,15 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buf
         if(EAGAIN != errno && ENOMSG != errno)
         {
             PLUTO_LoggerWarning(
-                queue->logger,
-                "Error receiving from Queue: (%i) %s", 
-                errno, 
+                queue->internal->logger,
+                "Error receiving from Queue: (%i) %s",
+                errno,
                 strerror(errno)
             );
         }
         return false;
     }
-    buffer->text[nbytes] = '\0'; 
+    buffer->text[nbytes] = '\0';
     return true;
 }
 
@@ -260,8 +267,8 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *bu
         if((status < 0) && (errno != EAGAIN))
         {
             PLUTO_LoggerWarning(
-                queue->logger,
-                "Error writing to Queue %i, (errno: %i): %s - Data (size: %lu): %s", 
+                queue->internal->logger,
+                "Error writing to Queue %i, (errno: %i): %s - Data (size: %lu): %s",
                 queue->filedescriptor,
                 errno,
                 strerror(errno),

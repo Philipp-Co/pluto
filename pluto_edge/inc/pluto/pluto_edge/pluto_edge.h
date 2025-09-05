@@ -1,10 +1,10 @@
 #ifndef __PLUTO_EDGE_H__
 #define __PLUTO_EDGE_H__
 
-#include <pluto/pluto_event/pluto_event.h>
+#include <pluto/os_abstraction/message_queue/pluto_event.h>
 #include <pluto/os_abstraction/files/pluto_file.h>
 #include <pluto/os_abstraction/pluto_logger.h>
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 
 #include <stdbool.h>
@@ -14,9 +14,9 @@ struct PLUTO_EDGE_Edge;
 typedef struct PLUTO_EDGE_Edge* PLUTO_EDGE_Edge_t;
 
 PLUTO_EDGE_Edge_t PLUTO_EDGE_CreateEdge(
-    const char *path, 
-    const char *name, 
-    unsigned int permission, 
+    const char *path,
+    const char *name,
+    unsigned int permission,
     PLUTO_Logger_t logger
 );
 void PLUTO_EDGE_DestroyEdge(PLUTO_EDGE_Edge_t *edge);

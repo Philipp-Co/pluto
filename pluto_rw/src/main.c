@@ -1,5 +1,5 @@
 
-#include "pluto/pluto_event/pluto_event.h"
+#include <pluto/os_abstraction/message_queue/pluto_event.h>
 #include "pluto_rw/prw_message_queue.h"
 #include <pluto/pluto_edge/pluto_edge.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 #ifdef PLUTO_PRINT_ARGS
     PLUTO_RW_PrintArgs(&args);
 #endif
-    
+
     struct PLUTO_RW_MessageQueueIdentifier mqid = PLUTO_RW_FromName(args.name);
     unsigned int permission = 0777;
     PLUTO_Logger_t logger = PLUTO_CreateLogger("rw");
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
             PLUTO_EventPayload(event),
             PLUTO_EventSizeOfPayloadBuffer(event),
             "%s",
-            args.data 
+            args.data
         );
         PLUTO_EventSetSizeOfPayload(event, strlen(args.data));
         return PLUTO_EDGE_EdgeSendEvent(edge, event) ? 0 : -1;
@@ -94,11 +94,11 @@ static bool PLUTO_RW_ParseArgs(int argc, char **argv, struct PLUTO_RW_CmdArgs *a
             break;
         }
         //
- 
+
         switch(c)
         {
             case 'n':
-                args->name = optarg; 
+                args->name = optarg;
                 break;
             case 'w':
                 if(rw)
@@ -135,7 +135,7 @@ static bool PLUTO_RW_ParseArgs(int argc, char **argv, struct PLUTO_RW_CmdArgs *a
                     printf("Unknown Argument! %i -> %c\n", optopt, c);
                     PLUTO_RW_PrintHelp();
                 }
-                else 
+                else
                 {
                     printf("Unknown Argument! 0x%i\n", (int)optopt);
                     PLUTO_RW_PrintHelp();

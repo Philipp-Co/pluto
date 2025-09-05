@@ -1,6 +1,5 @@
 
-#include "pluto/os_abstraction/pluto_message_queue.h"
-#include "pluto/pluto_event/pluto_event.h"
+#include <pluto/os_abstraction/message_queue/pluto_event.h>
 #include <pluto/pluto_edge/pluto_edge.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 
@@ -18,8 +17,8 @@ PLUTO_EDGE_Edge_t PLUTO_EDGE_CreateEdge(
 {
     (void)permission;
     PLUTO_LoggerInfo(
-        logger, 
-        "Create Edge Object for Path %s, Name %s", 
+        logger,
+        "Create Edge Object for Path %s, Name %s",
         path,
         name
     );

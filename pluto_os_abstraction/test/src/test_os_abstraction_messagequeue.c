@@ -1,5 +1,5 @@
 #include <pluto/os_abstraction/test/test_os_abstraction_messagequeue.h>
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 
 #include <Unity/src/unity.h>
@@ -76,7 +76,7 @@ void PLUTO_TEST_MessageQueueSendAndRead(void)
     );
     const bool result = PLUTO_MessageQueueWrite(queue, &buffer);
     TEST_ASSERT_TRUE(result);
-    
+
     struct PLUTO_MsgBuf read_buffer;
     const bool read_result = PLUTO_MessageQueueRead(queue_get, &read_buffer);
     TEST_ASSERT_TRUE(read_result);

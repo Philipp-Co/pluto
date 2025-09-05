@@ -10,6 +10,7 @@
 #include <pluto/os_abstraction/pluto_time.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/os_abstraction/files/pluto_file.h>
+#include <pluto/os_abstraction/signals/pluto_signal.h>
 #include <stdint.h>
 #include <limits.h>
 //
@@ -74,15 +75,17 @@ int32_t PLUTO_SystemEventsHandlerRegisterObserver(PLUTO_SystemEventHandler_t han
 int32_t PLUTO_SystemEventsHandlerDeregisterObserver(PLUTO_SystemEventHandler_t handler, int descriptor);
 int32_t PLUTO_SystemEventHandlerRegisterFileObserver(PLUTO_SystemEventHandler_t handler, const PLUTO_File_t file);
 int32_t PLUTO_SystemEventsHandlerDeregisterFileObserver(PLUTO_SystemEventHandler_t handler, PLUTO_File_t file);
+int32_t PLUTO_SystemEventsHandlerRegisterSignalObserver(PLUTO_SystemEventHandler_t handler, PLUTO_Signal_t signal);
+int32_t PLUTO_SystemEventsHandlerDeregisterSignalObserver(PLUTO_SystemEventHandler_t handler, PLUTO_Signal_t signal);
 ///
 /// \brief  Check if any observed Filedescriptor has generated a System Event and return it.
 /// \param[out] event   On Success the Functions will store Events in this Localtion.
-/// \return int32_t Returns PLUTO_SE_OK if the function was able to return a System Event through the 
-///                 "event" Argument.     
+/// \return int32_t Returns PLUTO_SE_OK if the function was able to return a System Event through the
+///                 "event" Argument.
 ///                 PLUTO_SE_NO_EVENT if there was not Event to return, the "event" Argument was not changed.
 ///                 PLUTO_SE_ERROR if there was an Error, the "event" Argument was not changed.
 ///
-int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event); 
+int32_t PLUTO_SystemEventsPoll(PLUTO_SystemEventHandler_t handler, PLUTO_SystemEvent_t event);
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

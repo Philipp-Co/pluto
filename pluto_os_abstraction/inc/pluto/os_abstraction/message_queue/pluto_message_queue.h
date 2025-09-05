@@ -1,13 +1,13 @@
 ///
 /// \brief  This Module contains the Interfacedefinition of a Messagequeue.
-/// 
+///
 /// \requirements   1. The Queue must be usable for inter Process Communication.
 ///
 #ifndef __PLUTO_MESSAGE_QUEUE_H__
 #define __PLUTO_MESSAGE_QUEUE_H__
 
 
-#if PLUTO_OS_INTERFACE == (PLUTO_OS_INTERFACE_SYSTEM_V)
+//#if (PLUTO_OS_INTERFACE) == (PLUTO_OS_INTERFACE_SYSTEM_V)
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -32,16 +32,21 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-struct PLUTO_MessageQueue
+struct PLUTO_MessageQueueInternal
 {
-    PLUTO_Key_t key __attribute__((aligned(64)));
+    PLUTO_Key_t *key;
     PLUTO_Semaphore_t semaphore;
     PLUTO_Logger_t logger;
+};
+
+struct PLUTO_MessageQueue
+{
     int filedescriptor;
+    struct PLUTO_MessageQueueInternal *internal;
 } __attribute__((aligned(64)));
 typedef struct PLUTO_MessageQueue* PLUTO_MessageQueue_t;
 
-struct PLUTO_MsgBuf 
+struct PLUTO_MsgBuf
 {
     long msgtype __attribute__((aligned(16)));
     char text[PLUTO_MAX_BODY_SIZE] __attribute__((aligned(16)));
@@ -55,8 +60,8 @@ struct PLUTO_MsgBuf
 /// \brief  Create a Message Queue.
 ///
 PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
-    const char *path, 
-    const char *name, 
+    const char *path,
+    const char *name,
     unsigned int permissions,
     PLUTO_Logger_t logger
 );
@@ -69,15 +74,15 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue);
 /// \brief  Read a Message from the Queue.
 ///         Remove the oldest Element from the Queue and return it.
 ///
-bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer);
+bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Write a Message to the Queue.
 ///         Append it at the End of the Queue.
 ///
-bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer);
-int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue);
+bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer) __attribute__((section("__TEXT,message_queue")));
+int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue) __attribute__((section("__TEXT,message_queue")));
 
-#endif 
+//#endif
 
 //
 // --------------------------------------------------------------------------------------------------------------------

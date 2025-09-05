@@ -1,9 +1,8 @@
-#include "pluto/pluto_event/pluto_event.h"
 #include <Unity/src/unity.h>
 #include <pluto/pluto_edge/test/test_pluto_edge.h>
 #include <pluto/pluto_edge/pluto_edge.h>
 #include <pluto/os_abstraction/pluto_logger.h>
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 
 #include <string.h>
 
@@ -60,4 +59,3 @@ void PLUTO_TEST_EdgeSendAndReceive(void)
     PLUTO_DestroyEvent(&recv_event);
     PLUTO_EDGE_DestroyEdge(&edge);
 }
-

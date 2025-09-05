@@ -1,7 +1,7 @@
 #include "Unity/src/unity_internals.h"
 #include <Unity/src/unity.h>
 #include <pluto/pluto_edge/test/test_pluto_edge.h>
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 
 
@@ -16,8 +16,8 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
     UNITY_BEGIN();
-    RUN_TEST(PLUTO_TEST_EdgeInitial); 
-    RUN_TEST(PLUTO_TEST_EdgeSendAndReceive); 
+    RUN_TEST(PLUTO_TEST_EdgeInitial);
+    RUN_TEST(PLUTO_TEST_EdgeSendAndReceive);
     return UNITY_END();
 }
 
@@ -35,7 +35,7 @@ void setUp(void)
         PLUTO_TEST_logger
     );
     printf("--- setup ende --\n");
-}   
+}
 
 void tearDown(void)
 {

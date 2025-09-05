@@ -15,7 +15,7 @@
 //
 
 #include <pluto/os_abstraction/pluto_time.h>
-#include <pluto/os_abstraction/pluto_message_queue.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -26,8 +26,16 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-struct PLUTO_Event 
+struct PLUTO_Event
 {
+    ///
+    /// \brief  Buffer.
+    ///
+    struct PLUTO_MsgBuf payload;
+    ///
+    /// \brief  A Timestamp.
+    ///
+    PLUTO_Time_t timestamp;
     ///
     /// \brief  User provided Id.
     ///
@@ -37,18 +45,10 @@ struct PLUTO_Event
     ///
     uint32_t eventid;
     ///
-    /// \brief  A Timestamp.
-    ///
-    PLUTO_Time_t timestamp;
-    ///
     /// \brief  Number of usable Bytes in "payload".
     ///
-    size_t nbytes_payload;
-    ///
-    /// \brief  A Buffer.
-    /// 
-    struct PLUTO_MsgBuf payload;
-};
+    uint16_t nbytes_payload;
+} __attribute__((aligned(64)));
 typedef struct PLUTO_Event* PLUTO_Event_t;
 
 //
@@ -59,86 +59,97 @@ typedef struct PLUTO_Event* PLUTO_Event_t;
 /// \brief  Create a Event with a specific Buffersize.
 /// \returns NULL on Error. On Success this Function returns a new Instance of a Event.
 ///
-PLUTO_Event_t PLUTO_CreateEvent(void);
+PLUTO_Event_t PLUTO_CreateEvent(void) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Destroy a given Event.
 /// \param[in/out] event - Destroys the given Event *event and sets the Pointer to NULL.
 ///
-void PLUTO_DestroyEvent(PLUTO_Event_t *event);
+void PLUTO_DestroyEvent(PLUTO_Event_t *event) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Create a new Event Instance from a given Buffer.
 /// \param[in] buffer - A Buffer.
 /// \param[in] nbytes - Size of the given Buffer in Bytes.
 ///
-bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t nbytes);
+bool PLUTO_CreateEventFromBuffer(
+    PLUTO_Event_t event,
+    const char *buffer,
+    size_t nbytes
+) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Dump the given Event Instance to the given Buffer.
 /// \param[in] event - The Event that shall be dumped. Must not be NULL.
 /// \param[out] buffer - The Destinationbuffer where the Event will be dumped to.
 /// \param[in] nbytes - Size of the Buffer in Bytes.
 /// \returns    false on Error.
-///             true on Success, which means the given buffer was large enough to hold 
+///             true on Success, which means the given buffer was large enough to hold
 ///             all data stored in the given Event.
 ///
-bool PLUTO_EventToBuffer(const PLUTO_Event_t event, char *buffer, size_t nbytes);
+bool PLUTO_EventToBuffer(
+    const PLUTO_Event_t event,
+    char *buffer,
+    uint16_t nbytes
+) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Set the Id of the given Event.
 /// \param[in] event - The Event. Must not be NULL.
 /// \param[in] id - User defined Id.
 ///
-void PLUTO_EventSetId(PLUTO_Event_t event, uint32_t id);
+void PLUTO_EventSetId(
+    PLUTO_Event_t event,
+    uint32_t id
+) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Set the User defined Event Id.
 /// \param[in] event - The Event. Must not be NULL.
 /// \param[in] eventid - The Event Id.
 ///
-void PLUTO_EventSetEvent(PLUTO_Event_t event, uint32_t eventid);
+void PLUTO_EventSetEvent(PLUTO_Event_t event, uint32_t eventid) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Getter for the User defined Event Id.
 /// \returns uint32_t - Event Id.
 ///
-uint32_t PLUTO_EventEventId(const PLUTO_Event_t event);
+uint32_t PLUTO_EventEventId(const PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Getter for the User defined Id.
 /// \returns uint32_t - Id.
 ///
-uint32_t PLUTO_EventId(const PLUTO_Event_t event);
+uint32_t PLUTO_EventId(const PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Getter for the Events Timestamp.
 /// \returns PLUTO_Time_t - Timestamp.
 ///
-PLUTO_Time_t PLUTO_EventTimestamp(const PLUTO_Event_t event);
+PLUTO_Time_t PLUTO_EventTimestamp(const PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Set a Timestamp for the given Event.
 /// \param[out] event - The Event Instance. Must not be NULL.
 /// \param[in] timestamp - The Timestamp to set.
 ///
-void PLUTO_EventSetTimestamp(PLUTO_Event_t event, PLUTO_Time_t timestamp);
+void PLUTO_EventSetTimestamp(PLUTO_Event_t event, PLUTO_Time_t timestamp) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief Getter for the preallocated Buffer for a possible Payload.
 /// \param[in] event - The Event. Must not be NULL.
 /// \returns char* - A Buffer. Use PLUTO_EventSizeOfPayloadBuffer(event) to retrieve the Size of this Buffer in Bytes.
 ///
-char* PLUTO_EventPayload(PLUTO_Event_t event);
-bool PLUTO_EventCopyBufferToPayload(PLUTO_Event_t event, const void *buffer, size_t nbytes);
+char* PLUTO_EventPayload(PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
+bool PLUTO_EventCopyBufferToPayload(PLUTO_Event_t event, const void *buffer, size_t nbytes) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Set the number of Bytes of the payload.
 /// \param[out] event - The Event.
-/// \param[in] nbytes_payload - Number of Bytes in the Payload Buffer. 
+/// \param[in] nbytes_payload - Number of Bytes in the Payload Buffer.
 ///
-void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, size_t nbytes_payload);
+void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, uint16_t nbytes_payload) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Get the number of usable Bytes in the Payload.
 /// \param[in] event - The Event. Must not be NULL.
-/// \param[out] size_t - Number of usable Bytes. 
+/// \param[out] size_t - Number of usable Bytes.
 ///
-size_t PLUTO_EventSizeOfPayload(const PLUTO_Event_t event);
+size_t PLUTO_EventSizeOfPayload(const PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
 ///
 /// \brief  Sie of the Payload Buffer.
 /// \param[in] event - The Event.
 /// \returns Size of the Payload Buffer in Bytes.
 ///
-size_t PLUTO_EventSizeOfPayloadBuffer(const PLUTO_Event_t event);
+size_t PLUTO_EventSizeOfPayloadBuffer(const PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
 
 //
 // --------------------------------------------------------------------------------------------------------------------

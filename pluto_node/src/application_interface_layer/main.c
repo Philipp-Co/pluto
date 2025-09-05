@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     {
         printf("Uanble to allocate Memory for Arugments...\n");
         goto end;
-    } 
+    }
     memset(args, '\0', sizeof(*args));
     if(!PLUTO_ParseArguments(args, argc, argv))
     {
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
         goto end;
     }
     PLUTO_node_logger = PLUTO_CreateLogger(args->name);
-    
+
     PLUTO_SignalHandler_t signal_handler = PLUTO_NodeInitializeSignals(PLUTO_node_logger);
 
 /*
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         PLUTO_Free(args);
         goto end;
     }
-    
+
     PLUTO_LoggerInfo(PLUTO_node_logger, "Run main Program...");
     PLUTO_processor = PLUTO_CreateProcessor(
         config,
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
     // Deinitialize Shared Library.
     PLUTO_SHLIB_Destroy();
 #endif
-    
+
     PLUTO_Free(args);
     return_value = 0;
 end:
@@ -260,7 +260,7 @@ static PLUTO_ProcessorCallbackOutput_t PLUTO_ProcessCallback(PLUTO_ProcessorCall
     if(result >= args->output_buffer_size)
     {
         output.return_value = false;
-        output.output_size = 0;   
+        output.output_size = 0;
     }
     else
     {
@@ -302,11 +302,11 @@ static PLUTO_SignalHandler_t PLUTO_NodeInitializeSignals(PLUTO_Logger_t logger)
             sig
         );
     }
-    return signal_handler; 
+    return signal_handler;
 }
 
 #if defined(PLUTO_CTS_RTM_PYTHON)
-#include <pluto/pluto_event/pluto_event.h>
+#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_time.h>
 #include <pluto/os_abstraction/system_events/pluto_system_events.h>
 static int PLUTO_NodePythonCAPI_RegisterObserver(int filedescriptor)
@@ -340,7 +340,7 @@ static int PLUTO_NodePythonCAPI_EmitEvent(int id, int event, const char *payload
         payload
     );
     const int result = PLUTO_ProcessorEmitEvent(PLUTO_processor, event_object)? 0 : -1;
-    PLUTO_DestroyEvent(&event_object); 
+    PLUTO_DestroyEvent(&event_object);
     return result;
 }
 #endif
