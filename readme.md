@@ -23,14 +23,6 @@ injeziert werden.
 Sollen bestehende Anwendungen in die Plutoinfrastruktur eingebunden werden, stellt Pluto pluto_edge bereit.
 pluto_edge definiert eine C API zum Zugriff auf die von Pluto erstellte inter Prozess Kommunikations Infrastruktur.
 
-### pluto_info
-
-pluto_info ist ein Hilfswerkzeug mit dem es moglich ist Informationen ueber die bestehende Infrastuktur auszulesen.
-
-### pluto_rw
-
-pluto_rw ist ein Hilfswerkzeug mit dem ein R/W Zugriff auf die bestehende Infrastruktur moeglich ist.
-
 ## Projektaufbau
 
     +--------+--------+---------+
@@ -74,17 +66,4 @@ Folgendes Flag wird beim generieren hinzugefuegt:
 
 Zusaetzliche Testfunktionen beinhalten:
     - Pruefungen fuer das Speichermanagement
-
-## Einen Node starten
-
-Terminal 1
-
-    cd build/
-    ./pluto_node/pluto_node_pt
-
-Terminal 2
-    
-    cd build/
-    ./pluto_rw/pluto_rw -n /Pfad/zu/Key/File/pluto-0_iq -w -d '{"id":0,"queue":0,"payload":"test"}'
-    ./pluto_rw/pluto_rw -n /Pfad/zu/Key/File/pluto-0_oq_1 -r
 
