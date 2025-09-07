@@ -1,4 +1,4 @@
-""""""
+"""This Module provides Classes to configure and run Pluto Node Objects."""
 # ---------------------------------------------------------------------------------------------------------------------
 from typing import Self, Set, List, Any
 from json import dumps
@@ -10,6 +10,10 @@ from plyto.config.plyto_node_config import PlytoNodeConfig, PlytoNodeType
 
 
 class PlytoNode:
+    """A PlytoNode Object.
+
+    A Node executes User Code based on Events received through Plutos Node and Edge Network.
+    """
     def __init__(self, name: str) -> None:
         self.__name: str = name
         self.__type: PlytoNodeType = PlytoNodeType.PASSTHROUGH
@@ -58,6 +62,7 @@ class PlytoNode:
     def config(self) -> PlytoNodeConfig:
         return (
             PlytoNodeConfig(
+                name=self.name(),
                 work_dir=self.__workdir,
                 name_of_input_queue=self.__name_of_input_queue,
                 names_of_output_queues=self.__names_of_output_queues,

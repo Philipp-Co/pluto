@@ -1,10 +1,14 @@
-""""""
+"""This Module provides Classes that represent a Pluto Core Instance.
+
+Pluto Core manages Pluto Nodes.
+"""
 # ---------------------------------------------------------------------------------------------------------------------
 from typing import Self, List
 from json import dumps, loads
 from logging import Logger
-from plyto.run.plyto_node import PlytoNode, PlytoNodeConfig
+from plyto.core.plyto_node import PlytoNode, PlytoNodeConfig
 from typing import Self, Any
+from plyto.config.plyto_config import PlytoConfig
 from plyto.config.plyto_node_config import PlytoNodeConfig
 from plyto.config.plyto_core_config import PlytoCoreConfig
 from os import environ
@@ -13,11 +17,12 @@ from os import environ
 
 
 class PlytoCore:
+    """A PlytoCore Object."""
     def __init__(self, logger: Logger):
         self.__logger: Logger = logger.getChild(self.__class__.__name__)
         self.__nodes = {}
-        self.__workdir: str = self.read_workdir()
-        self.__binarydir: str = f"{self.read_binarydir()}pluto_core"
+        self.__workdir: str = PlytoConfig.read_workdir()
+        self.__binarydir: str = f"{PlytoConfig.read_binarydir()}pluto_core"
         pass
 
     def set_binarydir(self, binarydir: str) -> Self:
