@@ -2,23 +2,35 @@
 # ---------------------------------------------------------------------------------------------------------------------
 from typing import Self, Any, Set
 from plyto.config.plyto_node_config import PlytoNodeConfig, PlytoNodeType
-from json import loads
+from json import loads, dumps
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 
 class PlytoCoreConfig:
-    def __init__(self):
+    def __init__(self, workdir: str):
         self.__configs = []
+        self.__workdir: str = workdir
         pass
-
+    
     def add(self, node_config: PlytoNodeConfig) -> Self:
         self.__configs.append(node_config)
         return self
 
+    def workdir(self) -> str:
+        return self.__workdir
+    
+    def equals(self, other: 'PlytoCoreConfig') -> bool:
+        print(dir(other)) 
+        if self.__workdir == other._PlytoCoreConfig__workdir:
+            this = {dumps(config.to_string()) for config in self.__configs}
+            otherc = {dumps(config.to_string()) for config in other._PlytoCoreConfig__configs}
+            return this == otherc
+        return False
+
     @staticmethod
-    def from_dict(content) -> "PlytoCoreConfig":
-        core_config: PlytoCoreConfig = PlytoCoreConfig()
+    def from_dict(content, workdir: str) -> "PlytoCoreConfig":
+        core_config: PlytoCoreConfig = PlytoCoreConfig(workdir=workdir)
         for config in content["nodes"]:
             with open(config["configuration-file"], "r") as file:
                 node_config: PlytoNodeConfig = PlytoNodeConfig.from_dict(
