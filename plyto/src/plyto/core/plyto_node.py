@@ -5,15 +5,16 @@ from json import dumps
 from enum import Enum
 from plyto._internal.plyto_venv import PlytoPythonInterpreter
 from plyto.config.plyto_node_config import PlytoNodeConfig, PlytoNodeType
+from plyto.core.plyto_core import PlytoCore, IManaged
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-class PlytoNode:
+class PlytoNode(IManaged):
     """A PlytoNode Object.
 
     A Node executes User Code based on Events received through Plutos Node and Edge Network.
     """
-    def __init__(self, name: str) -> None:
+    def __init__(self, core: PlytoCore, name: str) -> None:
         """C'tor."""
         self.__name: str = name
         self.__type: PlytoNodeType = PlytoNodeType.PASSTHROUGH
@@ -21,7 +22,22 @@ class PlytoNode:
         self.__name_of_input_queue: str = f"{name}-iq"
         self.__names_of_output_queues: Set[str] = set()
         self.__executable: str = None
+        self.__core: PlytoCore = core
+        self.__core.add(self)
         pass
+
+    def __rshift__(self, other):
+        self.connect(other) 
+        return self
+
+    def core(self) -> PlytoCore:
+        return self.__core
+
+    def connect(self, node: 'PlytoNode') -> Self:
+        if self.core() != node.core():
+            raise ValueError('The given Node is managed by another Core.')
+        self.add_name_of_output_queue(node.name_of_input_queue())
+        return self
 
     def input_queue(self) -> str:
         """Get the Name of the Input Queue for this Node."""

@@ -1,6 +1,7 @@
 #ifndef __PLUTO_OS_ABSTRACTION_LOGGER_H__
 #define __PLUTO_OS_ABSTRACTION_LOGGER_H__
 
+#include <pluto/os_abstraction/config/pluto_function_attributes.h>
 
 #define PLUTO_LOG_LEVEL_DEBUG   2000
 #define PLUTO_LOG_LEVEL_INFO    1000
@@ -16,12 +17,12 @@
 struct PLUTO_Logger;
 typedef struct PLUTO_Logger* PLUTO_Logger_t;
 
-PLUTO_Logger_t PLUTO_CreateLogger(const char *name);
-void PLUTO_DestroyLogger(PLUTO_Logger_t *logger);
+PLUTO_Logger_t PLUTO_CreateLogger(const char *name) PLUTO_FUNCTION_NO_INLINE;
+void PLUTO_DestroyLogger(PLUTO_Logger_t *logger) PLUTO_FUNCTION_NO_INLINE;
 
-void PLUTO_LoggerDebug(PLUTO_Logger_t logger, const char *format, ...);
-void PLUTO_LoggerInfo(PLUTO_Logger_t logger, const char *format, ...);
-void PLUTO_LoggerWarning(PLUTO_Logger_t logger, const char *format, ...);
-void PLUTO_LoggerError(PLUTO_Logger_t logger, const char *format, ...);
+void PLUTO_LoggerDebug(PLUTO_Logger_t logger, const char *format, ...) PLUTO_FUNCTION_NO_INLINE;
+void PLUTO_LoggerInfo(PLUTO_Logger_t logger, const char *format, ...) PLUTO_FUNCTION_NO_INLINE;
+void PLUTO_LoggerWarning(PLUTO_Logger_t logger, const char *format, ...) PLUTO_FUNCTION_NO_INLINE;
+void PLUTO_LoggerError(PLUTO_Logger_t logger, const char *format, ...) PLUTO_FUNCTION_NO_INLINE;
 
 #endif

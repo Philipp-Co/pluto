@@ -3,16 +3,33 @@
 Pluto Core manages Pluto Nodes.
 """
 # ---------------------------------------------------------------------------------------------------------------------
+from abc import ABC, abstractmethod
 from typing import Self, List, Dict
 from json import dumps, loads
 from logging import Logger
-from plyto.core.plyto_node import PlytoNode
 from typing import Self, Any
 from plyto.config.plyto_core_config import PlytoCoreConfig
+from plyto.config.plyto_node_config import PlytoNodeConfig
 from plyto.config.plyto_config import PlytoConfig
 from os import environ
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+class IManaged(ABC):
+    
+    @abstractmethod
+    def set_workdir(self, dirname: str) -> Self:
+        pass
+
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abstractmethod
+    def config(self) -> PlytoNodeConfig:
+        pass
+
+    pass
 
 
 class PlytoCore:
@@ -25,10 +42,10 @@ class PlytoCore:
         """C'tor."""
         self.__logger: Logger = logger.getChild(self.__class__.__name__)
         self.__workdir: str = workdir
-        self.__nodes = {}
+        self.__nodes: Dict[str, IManaged] = {}
         pass
     
-    def add(self, node: PlytoNode) -> Self:
+    def add(self, node: IManaged) -> Self:
         """Add a Node to this Core Object.
 
         You can only add a Node once.
@@ -43,20 +60,7 @@ class PlytoCore:
         node.set_workdir(self.__workdir)
         return self
 
-    def connect(self, node0: PlytoNode, node1: PlytoNode) -> Self:
-        """Connect two Nodes.
-        
-        Creates a Connection from node0 to node1.
-
-        Raises:
-            ValueError: If at least one of the given Nodes is not known by this Object.  
-        """
-        if node0.name() in self.__nodes and node1.name() in self.__nodes:
-            node0.add_name_of_output_queue(node1.name_of_input_queue())
-            return self
-        raise ValueError(f"One or both given Nodes are not managed by this Object.")
-    
-    def nodes(self) -> Dict[str, PlytoNode]:
+    def nodes(self) -> Dict[str, IManaged]:
         """Get a List of known Nodes."""
         return self.__nodes
     

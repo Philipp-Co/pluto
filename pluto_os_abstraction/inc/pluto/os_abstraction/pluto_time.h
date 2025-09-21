@@ -1,6 +1,8 @@
 #ifndef __PLUTO_OS_ABSTRACTION_TIME_H__
 #define __PLUTO_OS_ABSTRACTION_TIME_H__
 
+#include <pluto/os_abstraction/config/pluto_function_attributes.h>
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -22,7 +24,7 @@ typedef struct
 /// \brief  Create a Timestamp for "now".
 ///         The Timestamp is calculated for UTC.
 ///
-PLUTO_Time_t PLUTO_TimeNow(void);
+PLUTO_Time_t PLUTO_TimeNow(void) PLUTO_FUNCTION_INLINE;
 ///
 /// \brief  Convert a String to a Timestamp.
 ///         The String must be formatted %Y-%m-%dT%H:%M:%S.%u

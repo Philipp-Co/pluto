@@ -1,3 +1,4 @@
+#include "pluto/os_abstraction/config/pluto_function_attributes.h"
 #include "pluto/os_abstraction/pluto_types.h"
 #include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 
@@ -220,12 +221,27 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
     }
 }
 
+
+static void PLUTO_MessageQueueReadError(PLUTO_MessageQueue_t queue, int err) PLUTO_FUNCTION_NO_INLINE;
+static void PLUTO_MessageQueueReadError(PLUTO_MessageQueue_t queue, int err)
+{
+    if(EAGAIN != errno && ENOMSG != errno)
+    {
+        PLUTO_LoggerWarning(
+            queue->internal->logger,
+            "Error receiving from Queue: (%i) %s",
+            err,
+            strerror(err)
+        );
+    }
+}
+
 bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
 {
     assert(NULL != queue);
 
     long msgtype = 0L;
-    int msgflags = IPC_NOWAIT | MSG_NOERROR;
+    const int msgflags = IPC_NOWAIT | MSG_NOERROR;
     buffer->msgtype = 1;
     const int nbytes = msgrcv(
         queue->filedescriptor,
@@ -236,36 +252,41 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buf
     );
     if(nbytes < 0)
     {
-        if(EAGAIN != errno && ENOMSG != errno)
-        {
-            PLUTO_LoggerWarning(
-                queue->internal->logger,
-                "Error receiving from Queue: (%i) %s",
-                errno,
-                strerror(errno)
-            );
-        }
+        PLUTO_MessageQueueReadError(queue, errno);
         return false;
     }
     buffer->text[nbytes] = '\0';
     return true;
 }
 
+static void PLUTO_MessageQueueWriteError(PLUTO_MessageQueue_t queue, int err) PLUTO_FUNCTION_NO_INLINE;
+static void PLUTO_MessageQueueWriteError(PLUTO_MessageQueue_t queue, int err)
+{
+    PLUTO_LoggerWarning(
+        queue->internal->logger,
+        "Error writing to Queue %i, (errno: %i): %s",
+        queue->filedescriptor,
+        err,
+        strerror(err)
+    );
+}
+
 bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
 {
     assert(NULL != queue);
-    bool return_value = true;
+    // bool return_value = true;
     buffer->msgtype = 1;
     size_t strl = sizeof(buffer->text) - 1;
     int msgflags = IPC_NOWAIT;
-    int retry_count = 100;
+    //int retry_count = 100;
 
-    int status;
-    do
-    {
-        status = msgsnd(queue->filedescriptor, buffer, strl + 1, msgflags);
-        if((status < 0) && (errno != EAGAIN))
+    //do
+    //{
+        const int status = msgsnd(queue->filedescriptor, buffer, strl + 1, msgflags);
+        //if((status < 0) && (errno != EAGAIN))
+        if(status < 0)
         {
+            /*
             PLUTO_LoggerWarning(
                 queue->internal->logger,
                 "Error writing to Queue %i, (errno: %i): %s - Data (size: %lu): %s",
@@ -275,9 +296,12 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *bu
                 strl,
                 buffer->text
             );
-            return_value = false;
-            break;
+            */
+            PLUTO_MessageQueueWriteError(queue, errno);
+            // return_value = false;
+            //break;
         }
+        /*
         else if((status < 0) && (EAGAIN == errno))
         {
             if(retry_count <= 0)
@@ -307,13 +331,15 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *bu
             return_value = false;
             break;
         }
-        else
-        {
-            return_value = true;
-            break;
-        }
-    } while(1);
-    return return_value;
+        */
+        //else
+        //{
+            // return_value = true;
+            //break;
+        //}
+    //} while(1);
+    // return return_value;
+    return status >= 0;
 }
 
 int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue)
