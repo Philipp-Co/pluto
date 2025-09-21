@@ -3,6 +3,8 @@
 #include <pluto/application_layer/python/pluto_python.h>
 #include <pluto/pluto_node/test/prepare.h>
 
+#include <stdio.h>
+
 static PLUTO_Processor_t PLUTO_TEST_PythonCreateProcessor(void);
 static void PLUTO_TEST_PythonDestroyProcessor(PLUTO_Processor_t processor);
 

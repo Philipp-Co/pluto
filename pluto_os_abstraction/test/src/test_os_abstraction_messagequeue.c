@@ -1,3 +1,4 @@
+#include "pluto/os_abstraction/message_queue/pluto_event.h"
 #include <pluto/os_abstraction/test/test_os_abstraction_messagequeue.h>
 #include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_logger.h>
@@ -68,19 +69,20 @@ void PLUTO_TEST_MessageQueueSendAndRead(void)
         logger
     );
 
-    struct PLUTO_MsgBuf buffer;
+    PLUTO_Event_t event = PLUTO_CreateEvent();
     snprintf(
-        buffer.text,
-        sizeof(buffer.text),
+        PLUTO_EventPayload(event),
+        PLUTO_EventSizeOfPayloadBuffer(event),
         "test"
     );
-    const bool result = PLUTO_MessageQueueWrite(queue, &buffer);
+    PLUTO_EventSetSizeOfPayload(event, strlen("test"));
+    const bool result = PLUTO_MessageQueueWrite(queue, event);
     TEST_ASSERT_TRUE(result);
 
-    struct PLUTO_MsgBuf read_buffer;
-    const bool read_result = PLUTO_MessageQueueRead(queue_get, &read_buffer);
+    PLUTO_Event_t received_event = PLUTO_CreateEvent();
+    const bool read_result = PLUTO_MessageQueueRead(queue_get, received_event);
     TEST_ASSERT_TRUE(read_result);
-    TEST_ASSERT_EQUAL(0, strncmp(read_buffer.text, "test", strlen("test")));
+    TEST_ASSERT_EQUAL(0, strncmp(PLUTO_EventPayload(received_event), "test", strlen("test")));
 
 
     PLUTO_DestroyMessageQueue(&queue_get);

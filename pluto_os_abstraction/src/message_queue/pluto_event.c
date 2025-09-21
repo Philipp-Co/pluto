@@ -52,16 +52,14 @@ PLUTO_Event_t PLUTO_CreateEvent(void)
     */
 
     PLUTO_Time_t timestamp = {
-        .time = {0},
-        .milliseconds = 0
+        0
     };
     PLUTO_Event_t event = PLUTO_Malloc(sizeof(struct PLUTO_Event));
-    event->id = 0;
-    event->eventid = 0;
-    event->timestamp = timestamp;
-    event->nbytes_payload = 0LU;
-    event->payload.msgtype = 0;
-    memset(event->payload.text, '\0', sizeof(event->payload.text));
+    event->header.id = 0;
+    event->header.eventid = 0;
+    event->header.timestamp = timestamp;
+    event->header.nbytes_payload = 0LU;
+    memset(event->payload, '\0', sizeof(event->payload));
     return event;
 }
 
@@ -75,6 +73,12 @@ void PLUTO_DestroyEvent(PLUTO_Event_t *event)
 
 bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t nbytes)
 {
+    if(nbytes < sizeof(struct PLUTO_Event))
+    {
+        return false;
+    }
+    memcpy(event, buffer, sizeof(struct PLUTO_Event));
+    /*
     (void)nbytes;
     assert(NULL != buffer);
     assert(NULL != event);
@@ -83,118 +87,106 @@ bool PLUTO_CreateEventFromBuffer(PLUTO_Event_t event, const char *buffer, size_t
     jsmn_parser parser;
     jsmn_init(&parser);
 
-    event->nbytes_payload = 0;
+    event->header.nbytes_payload = 0;
     const int len = strlen(buffer);
 
     const int result = jsmn_parse(&parser, buffer, len, token, sizeof(token));
     if(result < 0)
     {
-        /*
-        PLUTO_LoggerWarning(
-            PLUTO_event_logger,
-            "JSON parse Error: %i",
-            result
-        );
-        */
         return false;
     }
 
     if(!PLUTO_ReadTopLevelJSON(token, result, buffer, event))
     {
-        /*
-        PLUTO_LoggerWarning(
-            PLUTO_event_logger,
-            "JSON parse Error: Unable to parse Top-Level JSON Object.",
-            result
-        );
-        */
         return false;
     }
 
-    if(event->nbytes_payload <= (sizeof(event->payload.text)-len))
+    if(event->header.nbytes_payload <= (sizeof(event->payload)-len))
     {
-        memcpy(event->payload.text, buffer + len + 1, event->nbytes_payload);
+        memcpy(event->payload, buffer + len + 1, event->header.nbytes_payload);
         return true;
     }
-/*
-    PLUTO_LoggerWarning(
-        PLUTO_event_logger,
-        "JSON parse Error: Buffer to small.",
-        result
-    );
     */
-    return false;
+    return true;
 }
 
-bool PLUTO_EventToBuffer(const PLUTO_Event_t event, char *buffer, uint16_t nbytes)
+size_t PLUTO_EventToBuffer(const PLUTO_Event_t event, char *buffer, uint16_t nbytes)
 {
+    if(nbytes < sizeof(struct PLUTO_Event))
+    {
+        return 0;
+    }
+    memcpy(buffer, (const void*)event, sizeof(struct PLUTO_Event));
+    /*
     char timestamp[128];
     PLUTO_TimeToString(PLUTO_EventTimestamp(event), timestamp, sizeof(timestamp));
     const int result = snprintf(
         buffer,
         nbytes,
         "{\"id\":%i,\"event\":%i,\"time\":\"%s\",\"payload\":%lu}",
-        event->id,
-        event->eventid,
+        event->header.id,
+        event->header.eventid,
         timestamp,
         PLUTO_EventSizeOfPayload(event)
     );
-    if((result > 0) && ((result + event->nbytes_payload) < nbytes))
+    if((result > 0) && ((result + event->header.nbytes_payload) < nbytes))
     {
-        memcpy(buffer + result + 1, event->payload.text, event->nbytes_payload);
+        memcpy(buffer + result + 1, event->payload, event->header.nbytes_payload);
         return true;
     }
     return false;
+    */
+    return sizeof(struct PLUTO_Event);
 }
 
 void PLUTO_EventSetTimestamp(PLUTO_Event_t event, PLUTO_Time_t timestamp)
 {
-    event->timestamp = timestamp;
+    event->header.timestamp = timestamp;
 }
 
 void PLUTO_EventSetId(PLUTO_Event_t event, uint32_t id)
 {
-    event->id = id;
+    event->header.id = id;
 }
 
 void PLUTO_EventSetEvent(PLUTO_Event_t event, uint32_t eventid)
 {
-    event->eventid = eventid;
+    event->header.eventid = eventid;
 }
 
 uint32_t PLUTO_EventEventId(const PLUTO_Event_t event)
 {
-    return event->eventid;
+    return event->header.eventid;
 }
 
 uint32_t PLUTO_EventId(const PLUTO_Event_t event)
 {
-    return event->id;
+    return event->header.id;
 }
 
 PLUTO_Time_t PLUTO_EventTimestamp(const PLUTO_Event_t event)
 {
-    return event->timestamp;
+    return event->header.timestamp;
 }
 
 char* PLUTO_EventPayload(PLUTO_Event_t event)
 {
-    return event->payload.text;
+    return event->payload;
 }
 
 size_t PLUTO_EventSizeOfPayload(const PLUTO_Event_t event)
 {
-    return event->nbytes_payload;
+    return event->header.nbytes_payload;
 }
 
 size_t PLUTO_EventSizeOfPayloadBuffer(const PLUTO_Event_t event)
 {
-    return sizeof(event->payload.text);
+    return sizeof(event->payload);
 }
 
 void PLUTO_EventSetSizeOfPayload(PLUTO_Event_t event, uint16_t nbytes_payload)
 {
-    event->nbytes_payload = nbytes_payload;
+    event->header.nbytes_payload = nbytes_payload > sizeof(event->payload) ? sizeof(event->payload) : nbytes_payload;
 }
 
 bool PLUTO_EventCopyBufferToPayload(PLUTO_Event_t event, const void *buffer, size_t nbytes)
@@ -225,8 +217,8 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
     assert(NULL != data);
     assert(NULL != event);
 
-    event->id = 0U;
-    memset(event->payload.text, '\0', sizeof(event->payload.text));
+    event->header.id = 0U;
+    memset(event->payload, '\0', sizeof(event->payload));
 
     if(JSMN_OBJECT != token[0].type)
     {
@@ -249,7 +241,7 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
                 if('-' == buffer[0]) return false;
-                event->id = (uint32_t)strtoul(buffer, &tmp, 10);
+                event->header.id = (uint32_t)strtoul(buffer, &tmp, 10);
                 if(buffer == tmp) return false;
                 i += 2;
                 break;
@@ -257,19 +249,19 @@ bool PLUTO_ReadTopLevelJSON(jsmntok_t *token, size_t size, const char *data, PLU
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
                 if('-' == buffer[0]) return false;
-                event->eventid = (uint32_t)strtoul(buffer, &tmp, 10);
+                event->header.eventid = (uint32_t)strtoul(buffer, &tmp, 10);
                 if(buffer == tmp) return false;
                 i += 2;
                 break;
             case PLUTO_PARSER_TOKEN_TIMESTAMP:
-                event->timestamp = PLUTO_TimeFromString(buffer);
+                event->header.timestamp = PLUTO_TimeFromString(buffer);
                 i += 2;
                 break;
             case PLUTO_PARSER_TOKEN_PAYLOAD:
                 memcpy(buffer, data + token[i+1].start, token[i+1].end - token[i+1].start);
                 buffer[token[i+1].end - token[i+1].start] = '\0';
                 if('-' == buffer[0]) return false;
-                event->nbytes_payload = (uint32_t)strtoul(buffer, &tmp, 10);
+                event->header.nbytes_payload = (uint32_t)strtoul(buffer, &tmp, 10);
                 if(buffer == tmp) return false;
                 i += 2;
                 break;

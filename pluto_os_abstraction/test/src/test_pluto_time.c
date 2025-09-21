@@ -8,9 +8,8 @@
 void PLUTO_TEST_TimeInitial(void)
 {
     PLUTO_Time_t time = PLUTO_TimeNow();
-    (void)time;
+    TEST_ASSERT_EQUAL(8, sizeof(time));
 }
-
 
 void PLUTO_TEST_TimeFromString(void)
 {
@@ -20,33 +19,33 @@ void PLUTO_TEST_TimeFromString(void)
 
     TEST_ASSERT_EQUAL_INT(
         2025 - 1900,
-        time.time.tm_year
+        PLUTO_TimeYear(time)
     );
     TEST_ASSERT_EQUAL_INT( 
         1,
-        time.time.tm_mon + 1
+        PLUTO_TimeMonth(time) + 1
     );
     TEST_ASSERT_EQUAL_INT( 
         2,
-        time.time.tm_mday
+        PLUTO_TimeDay(time)
     );
 
     TEST_ASSERT_EQUAL_INT(
         23,
-        time.time.tm_hour
+        PLUTO_TimeHour(time)
     );
     TEST_ASSERT_EQUAL_INT(
         59,
-        time.time.tm_min
+        PLUTO_TimeMinutes(time)
     );
     TEST_ASSERT_EQUAL_INT(
         32,
-        time.time.tm_sec
+        PLUTO_TimeSeconds(time)
     );
 
     TEST_ASSERT_EQUAL_INT(
         999,
-        time.milliseconds
+        PLUTO_TimeMilliseconds(time)
     );
 }
 
@@ -67,3 +66,36 @@ void PLUTO_TEST_TimeToString(void)
     );
 }
 
+void PLUTO_TEST_TimeSmallerThen(void)
+{
+    static const char *greater[7] = {
+        "2025-01-02T23:59:33.0",    // millis
+        "2025-01-02T23:59:34.0",    // secs
+        "2025-01-02T23:59:00.0",    // min
+        "2025-01-02T23:59:00.0",    // h
+        "2025-01-02T23:59:00.0",    // d
+        "2025-02-02T23:59:00.0",    // m
+        "2025-01-02T23:59:00.0"     // y
+    };
+    static const char *smaller[7] = {
+        "2025-01-02T23:59:32.999",  // millis
+        "2025-01-02T23:59:33.0",    // secs
+        "2025-01-02T23:58:00.0",    // min
+        "2025-01-02T22:59:00.0",    // h
+        "2025-01-01T23:59:00.0",    // d
+        "2025-01-02T23:59:00.0",    // m
+        "2024-01-02T23:59:00.0"     // y
+    };
+
+    for(size_t i=0;i<7;++i)
+    {
+        PLUTO_Time_t time_a = PLUTO_TimeFromString(
+            greater[i]
+        );
+        PLUTO_Time_t time_b = PLUTO_TimeFromString(
+            smaller[i]
+        );
+        TEST_ASSERT_TRUE(PLUTO_TimeSmallerThan(time_b, time_a));
+        TEST_ASSERT_FALSE(PLUTO_TimeSmallerThan(time_a, time_b));
+    }
+}

@@ -1,4 +1,5 @@
 #include "pluto/os_abstraction/config/pluto_function_attributes.h"
+#include "pluto/os_abstraction/message_queue/pluto_event.h"
 #include "pluto/os_abstraction/pluto_types.h"
 #include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 
@@ -236,17 +237,21 @@ static void PLUTO_MessageQueueReadError(PLUTO_MessageQueue_t queue, int err)
     }
 }
 
-bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
+bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
 {
     assert(NULL != queue);
 
     long msgtype = 0L;
     const int msgflags = IPC_NOWAIT | MSG_NOERROR;
-    buffer->msgtype = 1;
+    struct PLUTO_MsgBuf buffer = {
+        .msgtype = 1,
+        .text = {0}
+    };
+
     const int nbytes = msgrcv(
         queue->filedescriptor,
-        buffer,
-        sizeof(buffer->text) - 1,
+        &buffer,
+        sizeof(buffer.text),
         msgtype,
         msgflags
     );
@@ -255,7 +260,10 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buf
         PLUTO_MessageQueueReadError(queue, errno);
         return false;
     }
-    buffer->text[nbytes] = '\0';
+    if(!PLUTO_CreateEventFromBuffer(event, buffer.text, nbytes))
+    {
+        return false;
+    }
     return true;
 }
 
@@ -271,74 +279,21 @@ static void PLUTO_MessageQueueWriteError(PLUTO_MessageQueue_t queue, int err)
     );
 }
 
-bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, struct PLUTO_MsgBuf *buffer)
+bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
 {
     assert(NULL != queue);
-    // bool return_value = true;
-    buffer->msgtype = 1;
-    size_t strl = sizeof(buffer->text) - 1;
+    
     int msgflags = IPC_NOWAIT;
-    //int retry_count = 100;
-
-    //do
-    //{
-        const int status = msgsnd(queue->filedescriptor, buffer, strl + 1, msgflags);
-        //if((status < 0) && (errno != EAGAIN))
-        if(status < 0)
-        {
-            /*
-            PLUTO_LoggerWarning(
-                queue->internal->logger,
-                "Error writing to Queue %i, (errno: %i): %s - Data (size: %lu): %s",
-                queue->filedescriptor,
-                errno,
-                strerror(errno),
-                strl,
-                buffer->text
-            );
-            */
-            PLUTO_MessageQueueWriteError(queue, errno);
-            // return_value = false;
-            //break;
-        }
-        /*
-        else if((status < 0) && (EAGAIN == errno))
-        {
-            if(retry_count <= 0)
-            {
-                return_value = false;
-                break;
-            }
-            retry_count--;
-            struct timespec ts;
-            int res;
-            const long msec = 1000;
-            if (msec < 0)
-            {
-                errno = EINVAL;
-                return -1;
-            }
-
-            ts.tv_sec = msec / 1000;
-            ts.tv_nsec = (msec % 1000) * 1000000;
-
-            do {
-                res = nanosleep(&ts, &ts);
-            } while (res && errno == EINTR);
-        }
-        else if((status < 0) && (EINTR == errno))
-        {
-            return_value = false;
-            break;
-        }
-        */
-        //else
-        //{
-            // return_value = true;
-            //break;
-        //}
-    //} while(1);
-    // return return_value;
+    struct PLUTO_MsgBuf buffer = {
+        .msgtype = 1,
+        .text = {0}
+    };
+    const size_t nbytes_transfered = PLUTO_EventToBuffer(event, buffer.text, sizeof(buffer.text));
+    const int status = msgsnd(queue->filedescriptor, &buffer, nbytes_transfered, msgflags);
+    if(status < 0)
+    {
+        PLUTO_MessageQueueWriteError(queue, errno);
+    }
     return status >= 0;
 }
 

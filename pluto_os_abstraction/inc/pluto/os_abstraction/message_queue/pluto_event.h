@@ -15,7 +15,7 @@
 //
 
 #include <pluto/os_abstraction/pluto_time.h>
-#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
+//#include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -28,26 +28,29 @@
 
 struct PLUTO_Event
 {
-    ///
-    /// \brief  Buffer.
-    ///
-    struct PLUTO_MsgBuf payload;
-    ///
-    /// \brief  A Timestamp.
-    ///
-    PLUTO_Time_t timestamp;
-    ///
-    /// \brief  User provided Id.
-    ///
-    uint32_t id;
-    ///
-    /// \breif  User provided Event Id.
-    ///
-    uint32_t eventid;
-    ///
-    /// \brief  Number of usable Bytes in "payload".
-    ///
-    uint16_t nbytes_payload;
+    //
+    // A Event. 
+    // One Event Instance shall have the size of 64 Byte (exectely the size of 1 Cacheline).
+    //
+    struct {
+        ///
+        /// \brief  A Timestamp.
+        ///
+        PLUTO_Time_t timestamp;                         // 8 Bytes
+        ///
+        /// \brief  User provided Id.
+        ///
+        uint32_t id : 32;
+        ///
+        /// \breif  User provided Event Id.
+        ///
+        uint32_t eventid : 26;
+        ///
+        /// \brief  Number of usable Bytes in "payload".
+        ///
+        uint32_t nbytes_payload : 6;
+    } header;
+    char payload[48];
 } __attribute__((aligned(64)));
 typedef struct PLUTO_Event* PLUTO_Event_t;
 
@@ -84,7 +87,7 @@ bool PLUTO_CreateEventFromBuffer(
 ///             true on Success, which means the given buffer was large enough to hold
 ///             all data stored in the given Event.
 ///
-bool PLUTO_EventToBuffer(
+size_t PLUTO_EventToBuffer(
     const PLUTO_Event_t event,
     char *buffer,
     uint16_t nbytes

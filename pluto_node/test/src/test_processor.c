@@ -104,6 +104,11 @@ void PLUTO_TEST_ProcessorProcessWithStandardPayload(void)
 
 void PLUTO_TEST_ProcessorProcessWithBigPayload(void)
 {
+    //
+    // Invalid Testcase: Size of Payload Buffer from Event has fixed Size.
+    // -> Content will be clipped
+    //
+    /*
     PLUTO_ProcessCallback_t callback = PLUTO_TEST_SimpleCallback;
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         PLUTO_TEST_config,
@@ -143,6 +148,7 @@ void PLUTO_TEST_ProcessorProcessWithBigPayload(void)
     TEST_ASSERT_FALSE(
         result
     );
+    */
 }
 
 void PLUTO_TEST_ProcessorProcessWithMultipleMessages(void)

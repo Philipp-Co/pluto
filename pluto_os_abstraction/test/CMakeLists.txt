@@ -20,6 +20,7 @@ add_executable(
 
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_time.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/message_queue/system_v/pluto_message_queue.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/message_queue/pluto_event.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/system_events/pluto_system_events.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/signals/pluto_signal.c
@@ -27,6 +28,7 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_logger.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_types.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_malloc.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/jsmn.c
     ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
 

@@ -5,5 +5,6 @@
 void PLUTO_TEST_TimeInitial(void);
 void PLUTO_TEST_TimeFromString(void);
 void PLUTO_TEST_TimeToString(void);
+void PLUTO_TEST_TimeSmallerThen(void);
 
 #endif

@@ -15,10 +15,42 @@ typedef struct
 {
     //
     // https://pubs.opengroup.org/onlinepubs/7908799/xsh/time.h.html
+    // Size on MacOs:
+    //  9 * sizeof(int)     9 * 4       9 * 4
+    //  1 * sizeof(long)    1 * 4       1 * 8
+    //  1 * sizeof(char*)   1 * 8       1 * 8
+    //                      ------------------
+    //                      48          52
     //
-    struct tm time;
-    uint32_t milliseconds;
-} PLUTO_Time_t;
+    //struct tm time; 
+    // ---
+    /*
+    union 
+    {
+        struct
+        {
+            uint32_t year           : 28;   // year since 1900  16      2
+            uint32_t month          : 4;    // 0 - 11           4       1
+            uint32_t day            : 5;    // 0 - 31           5       1
+            uint32_t hour           : 5;    // 0 - 23           5       1
+            uint32_t minutes        : 6;    // 0 - 59           6       1
+            uint32_t seconds        : 6;    // 0 - 60           6       1
+            uint32_t milliseconds   : 10;   // 0 - 999          10      2
+        } as_time;
+        uint64_t as_uint64;
+    };
+    */
+    uint64_t time;
+} PLUTO_Time_t __attribute__((aligned(8)));
+
+void PLUTO_TimeSet(PLUTO_Time_t *time, uint32_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minutes, uint8_t seconds, uint32_t milliseconds);
+uint32_t PLUTO_TimeYear(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeMonth(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeDay(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeHour(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeMinutes(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeSeconds(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeMilliseconds(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
 
 ///
 /// \brief  Create a Timestamp for "now".

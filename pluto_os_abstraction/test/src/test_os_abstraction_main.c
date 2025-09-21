@@ -21,6 +21,7 @@ int main(int argc, char **argv)
     RUN_TEST(PLUTO_TEST_TimeInitial);
     RUN_TEST(PLUTO_TEST_TimeFromString);
     RUN_TEST(PLUTO_TEST_TimeToString);
+    RUN_TEST(PLUTO_TEST_TimeSmallerThen);
 
     RUN_TEST(PLUTO_TEST_SemaphoreInitialCreate);
     RUN_TEST(PLUTO_TEST_SemaphoreInitialGet);

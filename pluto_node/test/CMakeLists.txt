@@ -57,7 +57,6 @@ target_link_directories(
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/build/
     ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_edge/
-    ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_event/
     ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_config/
     ${CMAKE_CURRENT_LIST_DIR}/../../build/pluto_os_abstraction/
     #/lib/python3.10/
@@ -67,7 +66,6 @@ target_link_libraries(
     pluto_node_test
     PUBLIC
     pluto_edge_static
-    pluto_event
     pluto_config
     pluto_os_abstraction
     Python3::Python

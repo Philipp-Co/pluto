@@ -49,6 +49,7 @@ void PLUTO_EDGE_DestroyEdge(PLUTO_EDGE_Edge_t *edge)
 
 bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
 {
+    /*
     struct PLUTO_MsgBuf buffer;
     buffer.msgtype = 1;
     if(
@@ -61,10 +62,12 @@ bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
     {
         return false;
     }
+    */
 
-    bool result = PLUTO_MessageQueueWrite(
+    const bool result = PLUTO_MessageQueueWrite(
         edge->queue,
-        &buffer
+        //&buffer
+        event
     );
     if(!result)
     {
@@ -72,24 +75,27 @@ bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
             edge->logger,
             "An Event could not be written to the Messagequeue."
         );
+        return false;
     }
     else
     {
         return true;
     }
-    return false;
 }
 
 bool PLUTO_EDGE_EdgeReceiveEvent(PLUTO_EDGE_Edge_t edge, PLUTO_Event_t event)
 {
-    struct PLUTO_MsgBuf buffer;
-    if(PLUTO_MessageQueueRead(edge->queue, &buffer))
+    //struct PLUTO_MsgBuf buffer;
+    if(PLUTO_MessageQueueRead(edge->queue, event)) //&buffer))
     {
+        /*
         return PLUTO_CreateEventFromBuffer(
             event,
             buffer.text,
             sizeof(buffer.text)
         );
+        */
+        return true;
     }
     return false;
 }
