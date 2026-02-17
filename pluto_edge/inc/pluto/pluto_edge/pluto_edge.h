@@ -9,6 +9,16 @@
 
 #include <stdbool.h>
 
+struct PLUTO_EDGE_Timestamp
+{
+    uint32_t year;
+    uint32_t month;
+    uint32_t day;
+    uint32_t hour;
+    uint32_t minutes;
+    uint32_t seconds;
+    uint32_t milliseconds;
+};
 
 struct PLUTO_EDGE_Edge;
 typedef struct PLUTO_EDGE_Edge* PLUTO_EDGE_Edge_t;
@@ -25,5 +35,11 @@ bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
 bool PLUTO_EDGE_EdgeReceiveEvent(PLUTO_EDGE_Edge_t edge, PLUTO_Event_t event);
 int32_t PLUTO_EDGE_NumberOfMessagesAvailable(PLUTO_EDGE_Edge_t edge);
 const char* PLUTO_EDGE_EdgeVersion(void);
+
+PLUTO_Event_t PLUTO_EDGE_CreateEvent(void);
+void PLUTO_EDGE_EventSetId(PLUTO_Event_t event, uint32_t id);
+void PLUTO_EDGE_EventSetEventId(PLUTO_Event_t event, uint32_t id);
+struct PLUTO_EDGE_Timestamp PLUTO_EDGE_EventsTimestamp(PLUTO_Event_t event); 
+void PLUTO_EDGE_DestroyEvent(PLUTO_Event_t *event);
 
 #endif

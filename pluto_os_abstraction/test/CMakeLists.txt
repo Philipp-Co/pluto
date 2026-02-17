@@ -20,7 +20,9 @@ add_executable(
 
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_time.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/message_queue/system_v/pluto_message_queue.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/message_queue/custom_0/pluto_custom_0_message_queue.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/message_queue/pluto_event.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_shared_memory.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/system_events/pluto_system_events.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/signals/pluto_signal.c
@@ -55,6 +57,7 @@ target_compile_definitions(
     PLUTO_OS_INTERFACE=${PLUTO_OS_INTERFACE}
     _XOPEN_SOURCE=700
     PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
+    #PLUTO_MESSAGE_QUEUE_CUSTOM_0=1
 )
 
 target_compile_options(

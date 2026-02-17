@@ -38,6 +38,7 @@ target_compile_definitions(
     pluto_edge_shared
     PUBLIC
     PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
+    #PLUTO_MESSAGE_QUEUE_CUSTOM_0=1
 )
 
 target_include_directories(
@@ -69,7 +70,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         PUBLIC
         "-fsanitize=address"
         "-fno-omit-frame-pointer"
-        "-Wno-unused-function"
+        #"-Wno-unused-function"
         "-Wall"
         "-Wextra"
         "-Werror"
@@ -89,8 +90,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         PUBLIC
         "-O2"
         "-fdata-sections"
-        "-ffunction-sections"
-        "-Wno-unused-function"
+        #"-ffunction-sections"
+        #"-Wno-unused-function"
         "-Wall"
         "-Wextra"
         "-Werror"

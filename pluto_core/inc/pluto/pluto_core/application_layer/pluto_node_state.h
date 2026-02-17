@@ -2,7 +2,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 ///
-/// \brief  This Module handles the Node State. 
+/// \brief  This Module handles the NodeState. 
 ///
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,6 +12,7 @@
 
 #include "pluto/pluto_config/pluto_config.h"
 #include <pluto/pluto_core/data_layer/pluto_core_register.h>
+#include <pluto/os_abstraction/pluto_logger.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -20,6 +21,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+///
+/// \brief  Structure of Node Data.
+///
 struct PLUTO_NodeStateData
 {
     PLUTO_CoreRegister_t core_register;
@@ -30,6 +34,7 @@ typedef struct
 {
     char *python_path;
 } PLUTO_NodeStatePythonConfig_t;
+
 ///
 /// \brief  State-Enum.
 ///
@@ -75,6 +80,7 @@ typedef enum
 struct PLUTO_NodeState
 {
     PLUTO_Config_t config;
+    PLUTO_Logger_t logger;
     struct PLUTO_NodeStateData data;
     int signum[3];
     time_t timestamps[3];
@@ -90,7 +96,7 @@ typedef struct PLUTO_NodeState* PLUTO_NodeState_t;
 ///
 /// \brief  Create a State-Object.
 ///
-struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config, struct PLUTO_NodeStateData data);
+struct PLUTO_NodeState PLUTO_NodeState(PLUTO_Config_t config, PLUTO_Logger_t logger, struct PLUTO_NodeStateData data);
 ///
 /// \brief  Destroy a State-Object.
 /// \pre    The "state" must not be NULL.

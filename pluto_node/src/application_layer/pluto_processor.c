@@ -15,6 +15,7 @@
 #include <pluto/os_abstraction/message_queue/pluto_message_queue.h>
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/application_layer/events/event_definitions.h>
+#include <pluto/config/config.h>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -102,8 +103,7 @@ bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event)
     struct PLUTO_MsgBuf buffer;
     PLUTO_EventToBuffer(
         event,
-        buffer.text,
-        sizeof(buffer.text)
+        &buffer.buffer
     );
     return PLUTO_MessageQueueWrite(
         processor->input_queue,
@@ -113,8 +113,8 @@ bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event)
 }
 
 static void PLUTO_ProcessorExecuteCallback(PLUTO_Processor_t processor, struct PLUTO_Event *event);
-static void PLUTO_ProcessorDispatchSignalEvents(PLUTO_Processor_t processor);
-static void PLUTO_ProcessorDispatchSystemEvents(PLUTO_Processor_t processor);
+//static void PLUTO_ProcessorDispatchSignalEvents(PLUTO_Processor_t processor);
+//static void PLUTO_ProcessorDispatchSystemEvents(PLUTO_Processor_t processor);
 static bool PLUTO_ProcessorDispatchExternalEvents(PLUTO_Processor_t processor);
 
 bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
@@ -122,11 +122,11 @@ bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor)
     //
     // Get System Events.
     //
-    PLUTO_ProcessorDispatchSystemEvents(processor);
+    //PLUTO_ProcessorDispatchSystemEvents(processor);
     //
     // Get Signal Events...
     //
-    PLUTO_ProcessorDispatchSignalEvents(processor);
+    //PLUTO_ProcessorDispatchSignalEvents(processor);
     //
     // Get Events from Queue...
     //
@@ -138,6 +138,9 @@ static void PLUTO_ProcessorExecuteCallback(PLUTO_Processor_t processor, struct P
 {
     //memset(buffer.text, '\0', sizeof(buffer.text));
     //PLUTO_Event_t output_event = PLUTO_CreateEvent();
+#if defined(PLUTO_DEBUG)
+    printf("A Event is about to be processed: %u", PLUTO_EventEventId(event));
+#endif
     PLUTO_Event_t output_event = &processor->output_event;
     memset(PLUTO_EventPayload(output_event), '\0', PLUTO_EventSizeOfPayloadBuffer(output_event));
 
@@ -183,6 +186,7 @@ static void PLUTO_ProcessorExecuteCallback(PLUTO_Processor_t processor, struct P
     //PLUTO_DestroyEvent(&output_event);
 }
 
+/*
 static void PLUTO_ProcessorDispatchSignalEvents(PLUTO_Processor_t processor)
 {
     char buffer[128];
@@ -233,11 +237,15 @@ static void PLUTO_ProcessorDispatchSystemEvents(PLUTO_Processor_t processor)
     }
     //PLUTO_DestroySystemEvent(&sevent);
 }
+*/
 
 static bool PLUTO_ProcessorDispatchExternalEvents(PLUTO_Processor_t processor)
 {
     //struct PLUTO_MsgBuf buffer;
     //memset(buffer.text, '\0', sizeof(buffer.text));
+#if defined(PLUTO_DEBUG)
+    printf("ProcessprDispatchExternalEvents...\n");
+#endif
     if(
         PLUTO_MessageQueueRead(
             processor->input_queue,
@@ -251,12 +259,21 @@ static bool PLUTO_ProcessorDispatchExternalEvents(PLUTO_Processor_t processor)
         //bool result = PLUTO_CreateEventFromBuffer(&processor->event_buffer, buffer.text, sizeof(buffer.text));
         //if(result)
         //{
+#if defined(PLUTO_DEBUG)
+            printf("ProcessprDispatchExternalEvents: Pass Event to Handler.\n");
+#endif
             PLUTO_ProcessorExecuteCallback(processor, &processor->event_buffer);
+#if defined(PLUTO_DEBUG)
+            printf("ProcessprDispatchExternalEvents: Event was processed.\n");
+#endif
             //PLUTO_DestroyEvent(&event);
             return true;
         //}
         //PLUTO_DestroyEvent(&event);
     }
+#if defined(PLUTO_DEBUG)
+    printf("ProcessprDispatchExternalEvents: No Events available.\n");
+#endif
     return false;
 }
 

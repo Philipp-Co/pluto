@@ -160,6 +160,7 @@ void PLUTO_TEST_ProcessorProcessWithMultipleMessages(void)
         callback,
         PLUTO_TEST_processor_logger
     );
+    TEST_ASSERT_NOT_NULL(processor);
     
     PLUTO_EDGE_Edge_t edge = PLUTO_EDGE_CreateEdge(
         PLUTO_TEST_config->base_path,

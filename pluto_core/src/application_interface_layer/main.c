@@ -1,3 +1,13 @@
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+///
+/// \brief  Main Function of this Program.
+///
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 #include <pluto/pluto_core/application_layer/pluto_core.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 
@@ -6,23 +16,69 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/time.h>
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
+///
+/// \brief  Structure for parsed Program Arguments.
+///
 typedef struct
 {
-    bool dry_run;
-    char config_path[4096];
+    char config_path[4096]; // Store the Path to the Configurationfile.
+    bool dry_run;           // Flag.
 } PLUTO_CORE_Args_t;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
+///
+/// \brief  Flag that tells the Main-Loop that the Program is running or not.
+///         0 = run
+///         1 = terminate
+///
 static atomic_int PLUTO_terminate = 0;
+
+///
+/// \brief  Core Object.
+///
 static PLUTO_Core_t PLUTO_core = NULL;
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
+///
+/// \brief  A Signalhandler.
+///         This Handler is used to handle all registered Signals.
+///
+static void PLUTO_CoreSignalHandler(int signum, siginfo_t *info, void *args);
+
+///
+/// \brief  Setup Programkontext.
+///         Register Signals and Handlers.
+///         Setup Timer.         
+///
+static void PLUTO_CoreSetUp(void);
+
+///
+/// \brief  Print a Helptext to the User.
+///         Usees printf to stderr.
+///
 static void PLUTO_CORE_PrintHelp(void);
 
-static void PLUTO_CoreSignalHandler(int signum, siginfo_t *info, void *args);
-static void PLUTO_CoreSetUp(void);
+///
+/// \brief Parse Programarguments.
+/// \return true if parsing was succesfull. false otherwise. 
+///
 static bool PLUTO_CORE_ParseArgs(PLUTO_CORE_Args_t *args, int argc, char **argv);
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 int main(int argc, char **argv)
 {
@@ -66,11 +122,19 @@ int main(int argc, char **argv)
     return 0;
 }
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 static void PLUTO_CoreSignalHandler(int signum, siginfo_t *info, void *args)
 {
     (void)args;
-    PLUTO_CoreSignalReceived(PLUTO_core, signum, info->si_pid);
+    (void)PLUTO_CoreSignalReceived(PLUTO_core, signum, info->si_pid);
 }
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static void PLUTO_CoreSetUp(void)
 {
@@ -80,6 +144,7 @@ static void PLUTO_CoreSetUp(void)
 
     static const int PLUTO_signums[] = 
     {
+        SIGALRM,
         SIGINT,
         SIGCHLD,
     };
@@ -97,7 +162,23 @@ static void PLUTO_CoreSetUp(void)
             NULL
         );
     }
+    
+    struct itimerval timer = {
+        .it_interval={
+            .tv_sec=1,
+            .tv_usec=0
+        },
+        .it_value={
+            .tv_sec=1,
+            .tv_usec=0
+        }
+    };
+    setitimer(ITIMER_REAL, &timer, NULL);
 }
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
 
 static bool PLUTO_CORE_ParseArgs(PLUTO_CORE_Args_t *args, int argc, char **argv)
 {
@@ -131,6 +212,10 @@ static bool PLUTO_CORE_ParseArgs(PLUTO_CORE_Args_t *args, int argc, char **argv)
     return 0x0U == required_arg;
 }
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 static void PLUTO_CORE_PrintHelp(void)
 {
     fprintf(
@@ -141,3 +226,6 @@ static void PLUTO_CORE_PrintHelp(void)
         "  -d, Dry-Run. Parse given Configurationfile and exit.\n"
     );
 }
+//
+// --------------------------------------------------------------------------------------------------------------------
+//

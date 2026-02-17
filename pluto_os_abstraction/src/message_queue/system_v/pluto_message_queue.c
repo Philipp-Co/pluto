@@ -36,6 +36,15 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+static struct PLUTO_MessageQueueAllocator PLUTO_allocator = {
+    .malloc = PLUTO_Malloc,
+    .free = PLUTO_Free
+};
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
     const char *path,
     const char *name,
@@ -43,15 +52,16 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
     PLUTO_Logger_t logger
 )
 {
-    PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)PLUTO_Malloc(
-        sizeof(struct PLUTO_MessageQueue)
-    );
+    PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t) PLUTO_allocator.malloc(sizeof(struct PLUTO_MessageQueue));
+    //PLUTO_Malloc(
+    //    sizeof(struct PLUTO_MessageQueue)
+    //);
     if(!queue)
     {
         PLUTO_LoggerWarning(logger, "Unable to allocate Memory for MessageQueue.");
         return NULL;
     }
-    queue->internal = PLUTO_Malloc(sizeof(struct PLUTO_MessageQueueInternal));
+    queue->internal = PLUTO_allocator.malloc(sizeof(struct PLUTO_MessageQueueInternal));//PLUTO_Malloc(sizeof(struct PLUTO_MessageQueueInternal));
 
     char buffer[1024];
     snprintf(buffer, sizeof(buffer), "%s-sem", name);
@@ -68,7 +78,7 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
         goto error;
     }
 
-    queue->internal->key = PLUTO_Malloc(sizeof(PLUTO_Key_t));
+    queue->internal->key = PLUTO_allocator.malloc(sizeof(PLUTO_Key_t));//PLUTO_Malloc(sizeof(PLUTO_Key_t));
     if(!PLUTO_CreateKey(path, name, queue->internal->key))
     {
         PLUTO_LoggerWarning(
@@ -105,10 +115,15 @@ error:
 
 PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, PLUTO_Logger_t logger)
 {
-    PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)PLUTO_Malloc(
+    PLUTO_MessageQueue_t queue = (PLUTO_MessageQueue_t)PLUTO_allocator.malloc(
         sizeof(struct PLUTO_MessageQueue)
     );
-    queue->internal = PLUTO_Malloc(sizeof(struct PLUTO_MessageQueueInternal));
+    //PLUTO_Malloc(
+    //    sizeof(struct PLUTO_MessageQueue)
+    //);
+    queue->internal = PLUTO_allocator.malloc(
+        sizeof(struct PLUTO_MessageQueueInternal)
+    );//PLUTO_Malloc(sizeof(struct PLUTO_MessageQueueInternal));
 
     queue->filedescriptor = -1;
     queue->internal->logger = NULL;
@@ -129,7 +144,9 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
         goto error;
     }
 
-    queue->internal->key = PLUTO_Malloc(sizeof(PLUTO_Key_t));
+    queue->internal->key = PLUTO_allocator.malloc(
+        sizeof(PLUTO_Key_t)
+    );//PLUTO_Malloc(sizeof(PLUTO_Key_t));
     queue->internal->key->file = NULL;
     queue->internal->key->key = 0;
     queue->internal->key->path_to_file = NULL;
@@ -215,9 +232,12 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
             PLUTO_DestroySemaphore(&(*queue)->internal->semaphore);
         }
         PLUTO_DestroyKey((*queue)->internal->key);
-        PLUTO_Free((*queue)->internal->key);
-        PLUTO_Free((*queue)->internal);
-        PLUTO_Free(*queue);
+        PLUTO_allocator.free((*queue)->internal->key);
+        PLUTO_allocator.free((*queue)->internal);
+        PLUTO_allocator.free(*queue);
+        //PLUTO_Free((*queue)->internal->key);
+        //PLUTO_Free((*queue)->internal);
+        //PLUTO_Free(*queue);
         *queue = NULL;
     }
 }
@@ -241,30 +261,26 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
 {
     assert(NULL != queue);
 
-    long msgtype = 0L;
-    const int msgflags = IPC_NOWAIT | MSG_NOERROR;
-    struct PLUTO_MsgBuf buffer = {
-        .msgtype = 1,
-        .text = {0}
-    };
+    static const long msgtype = 0L;
+    static const int msgflags = IPC_NOWAIT | MSG_NOERROR;
+    struct PLUTO_MsgBuf buffer;
+    buffer.msgtype = 1;
 
-    const int nbytes = msgrcv(
+    const int status = msgrcv(
         queue->filedescriptor,
         &buffer,
-        sizeof(buffer.text),
+        sizeof(buffer.buffer.buffer),
         msgtype,
         msgflags
-    );
-    if(nbytes < 0)
+    ) == sizeof(buffer.buffer);
+    if(!status)
     {
         PLUTO_MessageQueueReadError(queue, errno);
-        return false;
+        return status;
     }
-    if(!PLUTO_CreateEventFromBuffer(event, buffer.text, nbytes))
-    {
-        return false;
-    }
-    return true;
+    PLUTO_CreateEventFromBuffer(event, &buffer.buffer);
+    PLUTO_LoggerInfo(queue->internal->logger, "Read %s from Queue\n", buffer.buffer.buffer + 16);
+    return status;
 }
 
 static void PLUTO_MessageQueueWriteError(PLUTO_MessageQueue_t queue, int err) PLUTO_FUNCTION_NO_INLINE;
@@ -283,18 +299,18 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
 {
     assert(NULL != queue);
     
-    int msgflags = IPC_NOWAIT;
-    struct PLUTO_MsgBuf buffer = {
-        .msgtype = 1,
-        .text = {0}
-    };
-    const size_t nbytes_transfered = PLUTO_EventToBuffer(event, buffer.text, sizeof(buffer.text));
-    const int status = msgsnd(queue->filedescriptor, &buffer, nbytes_transfered, msgflags);
-    if(status < 0)
+    static const int msgflags = IPC_NOWAIT;
+    struct PLUTO_MsgBuf buffer;
+    buffer.msgtype = 1;
+    PLUTO_EventToBuffer(event, &buffer.buffer);
+    PLUTO_LoggerInfo(queue->internal->logger, "Write %s to Queue\n", buffer.buffer.buffer + 16);
+    const bool status = msgsnd(queue->filedescriptor, &buffer, sizeof(buffer.buffer), msgflags) >= 0;
+    if(!status)
     {
+        PLUTO_LoggerInfo(queue->internal->logger, "Queue Write Error...\n");
         PLUTO_MessageQueueWriteError(queue, errno);
     }
-    return status >= 0;
+    return status;
 }
 
 int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue)

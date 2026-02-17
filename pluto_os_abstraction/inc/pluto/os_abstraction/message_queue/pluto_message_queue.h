@@ -22,6 +22,12 @@
 #include <stdbool.h>
 #include <sys/msg.h>
 #include <stdio.h>
+#include <stdatomic.h>
+
+#ifdef PLUTO_MESSAGE_QUEUE_CUSTOM_0
+#include <pluto/os_abstraction/pluto_shared_memory.h>
+#include <stdatomic.h>
+#endif
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -31,26 +37,62 @@
 struct PLUTO_MsgBuf
 {
     long msgtype; //__attribute__((aligned(16)));
-    char text[PLUTO_MAX_BODY_SIZE]; // __attribute__((aligned(16)));
-} __attribute__((aligned(64)));
+    struct PLUTO_EventBuffer buffer;
+};
 
 struct PLUTO_MessageQueueInternal
 {
     PLUTO_Key_t *key;
+#ifdef PLUTO_MESSAGE_QUEUE_CUSTOM_0
+    PLUTO_SharedMemory_t shared_memory;
+#endif
     PLUTO_Semaphore_t semaphore;
     PLUTO_Logger_t logger;
 };
 
+#ifdef PLUTO_MESSAGE_QUEUE_CUSTOM_0
+struct PLUTO_DataRow
+{
+    char data[64];
+};
+
+struct PLUTO_DataHeader
+{
+    atomic_uint write_lock;// __attribute__((aligned(64)));
+    atomic_uint write_idx;// __attribute__((aligned(64)));
+    atomic_uint read_idx; //__attribute__((aligned(64)));
+} __attribute__((aligned(64)));
+
+struct PLUTO_Data
+{
+    struct PLUTO_DataHeader header;
+    struct PLUTO_DataRow data[64 * 31];
+} __attribute__((aligned(4096)));
+#endif
+
 struct PLUTO_MessageQueue
 {
     struct PLUTO_MessageQueueInternal *internal;
+#ifdef PLUTO_MESSAGE_QUEUE_CUSTOM_0
+    struct PLUTO_Data *data;
+#endif
     int filedescriptor;
 } __attribute__((aligned(64)));
 typedef struct PLUTO_MessageQueue* PLUTO_MessageQueue_t;
 
+typedef void* (*PLUTO_MessageQueueMalloc_t)(size_t size);
+typedef void (*PLUTO_MessageQueueFree_t)(void *ptr);
+struct PLUTO_MessageQueueAllocator
+{
+    PLUTO_MessageQueueMalloc_t malloc;
+    PLUTO_MessageQueueFree_t free;
+};
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+
+void PLUTO_MessageQueueSetAllocator(struct PLUTO_MessageQueueAllocator allocator);
 
 ///
 /// \brief  Create a Message Queue.

@@ -56,7 +56,8 @@ bool PLUTO_KeyGet(const char *path, const char *name, PLUTO_Key_t *key)
         PLUTO_DestroyKey(key);
         return false;
     }
-
+    
+    printf("GetKey %s\n", buffer);
     return true;
 }
 

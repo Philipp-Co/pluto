@@ -29,6 +29,7 @@ PLUTO_SharedMemory_t PLUTO_CreateSharedMemory(size_t nbytes, const char *path, c
     
     const size_t size = nbytes;
     int shm_fd = shmget(key.key, size, IPC_CREAT | 0777);
+    printf("Shared Memory fd %i\n", shm_fd);
     if(shm_fd < 0)
     {
         PLUTO_LoggerWarning(logger, "shmget returned with an Error, errno: %s", strerror(errno));
@@ -37,7 +38,8 @@ PLUTO_SharedMemory_t PLUTO_CreateSharedMemory(size_t nbytes, const char *path, c
     }
 
     void *address = shmat(shm_fd, NULL, 0);
-    if(!address)
+    printf("Shared Memory Address %p\n", address);
+    if(address == ((void*)-1))
     {
         PLUTO_LoggerWarning(logger, "shmat returned with an Error, errno: %s", strerror(errno));
         close(shm_fd);
@@ -49,6 +51,7 @@ PLUTO_SharedMemory_t PLUTO_CreateSharedMemory(size_t nbytes, const char *path, c
     shm->address = address;
     shm->shm_fd = shm_fd;
     PLUTO_DestroyKey(&key);
+    printf("Ende Sham Create %p\n", (void*)shm);
     return shm;
 }
 
@@ -59,6 +62,13 @@ void PLUTO_DestroySharedMemory(PLUTO_SharedMemory_t *shm)
     //
     assert(NULL != shm);
     assert(NULL != *shm);
+
+    const int result = shmdt((*shm)->address);
+    if(result < 0)
+    {
+        printf("Error detaching shm! %s\n", strerror(errno));
+    }
+
     PLUTO_Free(*shm);
     *shm = NULL;
 }

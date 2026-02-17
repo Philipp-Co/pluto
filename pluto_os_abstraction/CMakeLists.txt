@@ -33,6 +33,7 @@ add_library(
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_time.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_types.c
     ${CMAKE_CURRENT_LIST_DIR}/src/message_queue/system_v/pluto_message_queue.c
+    #${CMAKE_CURRENT_LIST_DIR}/src/message_queue/custom_0/pluto_custom_0_message_queue.c
     ${CMAKE_CURRENT_LIST_DIR}/src/message_queue/pluto_event.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_semaphore.c
     ${CMAKE_CURRENT_LIST_DIR}/src/pluto_logger.c
@@ -48,6 +49,7 @@ if (${PLUTO_TARGET_OS} EQUAL 2)
         pluto_os_abstraction
         PUBLIC
         PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
+        #PLUTO_MESSAGE_QUEUE_CUSTOM_0=1
         PLUTO_TARGET_OS=2
         PLUTO_OS_INTERFACE=1
         PLUTO_TEST=1
@@ -57,6 +59,7 @@ else()
         pluto_os_abstraction
         PUBLIC
         PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
+        #PLUTO_MESSAGE_QUEUE_CUSTOM_0=1
         PLUTO_TARGET_OS=1
         PLUTO_OS_INTERFACE=1
         PLUTO_TEST=1

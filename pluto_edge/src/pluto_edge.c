@@ -35,6 +35,12 @@ PLUTO_EDGE_Edge_t PLUTO_EDGE_CreateEdge(
     edge->queue = PLUTO_MessageQueueGet(
         path, name, logger
     );
+    if(!edge->queue)
+    {
+        PLUTO_Free(edge);
+        PLUTO_LoggerWarning(logger, "Error, unable to create Edge!");
+        return NULL;
+    }
     return edge;
 }
 
@@ -45,6 +51,40 @@ void PLUTO_EDGE_DestroyEdge(PLUTO_EDGE_Edge_t *edge)
     PLUTO_DestroyMessageQueue(&(*edge)->queue);
     PLUTO_Free(*edge);
     *edge = NULL;
+}
+
+PLUTO_Event_t PLUTO_EDGE_CreateEvent(void)
+{
+    return PLUTO_CreateEvent();
+}
+
+void PLUTO_EDGE_EventSetId(PLUTO_Event_t event, uint32_t id)
+{
+    event->header.id = id;
+}
+
+void PLUTO_EDGE_EventSetEventId(PLUTO_Event_t event, uint32_t id)
+{
+    event->header.eventid = id;
+}
+
+struct PLUTO_EDGE_Timestamp PLUTO_EDGE_EventsTimestamp(PLUTO_Event_t event)
+{
+    struct PLUTO_EDGE_Timestamp ts = {
+        .year=PLUTO_TimeYear(event->header.timestamp),
+        .month=PLUTO_TimeMonth(event->header.timestamp),
+        .day=PLUTO_TimeDay(event->header.timestamp),
+        .hour=PLUTO_TimeHour(event->header.timestamp),
+        .minutes=PLUTO_TimeMinutes(event->header.timestamp),
+        .seconds=PLUTO_TimeSeconds(event->header.timestamp),
+        .milliseconds=PLUTO_TimeMilliseconds(event->header.timestamp)
+    };
+    return ts;
+} 
+
+void PLUTO_EDGE_DestroyEvent(PLUTO_Event_t *event)
+{
+    PLUTO_DestroyEvent(event);
 }
 
 bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
@@ -63,7 +103,8 @@ bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
         return false;
     }
     */
-
+    printf("Edge addr: %p\n", (void*)edge);
+    printf("Queue addr: %p\n", (void*)edge->queue);
     const bool result = PLUTO_MessageQueueWrite(
         edge->queue,
         //&buffer
@@ -85,19 +126,7 @@ bool PLUTO_EDGE_EdgeSendEvent(PLUTO_EDGE_Edge_t edge, const PLUTO_Event_t event)
 
 bool PLUTO_EDGE_EdgeReceiveEvent(PLUTO_EDGE_Edge_t edge, PLUTO_Event_t event)
 {
-    //struct PLUTO_MsgBuf buffer;
-    if(PLUTO_MessageQueueRead(edge->queue, event)) //&buffer))
-    {
-        /*
-        return PLUTO_CreateEventFromBuffer(
-            event,
-            buffer.text,
-            sizeof(buffer.text)
-        );
-        */
-        return true;
-    }
-    return false;
+    return PLUTO_MessageQueueRead(edge->queue, event);
 }
 
 int32_t PLUTO_EDGE_NumberOfMessagesAvailable(PLUTO_EDGE_Edge_t edge)

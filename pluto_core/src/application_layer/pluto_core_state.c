@@ -61,6 +61,7 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
         };
         state.nodes[i] = PLUTO_NodeState(
             config->configurations[i],
+            logger,
             data 
         );
     }
@@ -74,9 +75,11 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
 
 void PLUTO_DestroyCoreState(struct PLUTO_CoreState *state)
 {
+    PLUTO_LoggerInfo(state->logger, "Destroy CoreState...");
     for(size_t i=0;i<state->n_nodes;++i)
     {
         PLUTO_DestroyNodeState(&state->nodes[i]);
+        PLUTO_LoggerInfo(state->logger, "    Destroy node %i...", i);
     }
     PLUTO_Free((*state).binary_directory);
     (*state).binary_directory = NULL;
@@ -91,16 +94,39 @@ void PLUTO_DestroyCoreState(struct PLUTO_CoreState *state)
 
 void PLUTO_CoreStateEventForSignal(PLUTO_CoreStateEvent_t *event, int signum, pid_t pid)
 {
+    static const char* PLUTO_CORESTATE_stringified_event_names[] = {
+        "timer_tick\0",
+        "sigint\0",
+        "sigchld\0",
+        "stop\0",
+        "start\0",
+        "unknown\0"
+    };
     switch(signum)
     {
+        case SIGALRM:
+             event->name = PLUTO_CORE_EVENT_NAME_TIMER_TICK;   
+             event->str_name = PLUTO_CORESTATE_stringified_event_names[0];
+             break;
         case SIGINT:
             event->name = PLUTO_CORE_EVENT_NAME_SIGINT; 
+            event->str_name = PLUTO_CORESTATE_stringified_event_names[1];
             break;
         case SIGCHLD:
             event->name = PLUTO_CORE_EVENT_NAME_SIGCHLD; 
+            event->str_name = PLUTO_CORESTATE_stringified_event_names[2];
+            break;
+        case SIGUSR1:
+            event->name = PLUTO_CORE_EVENT_NAME_STOP; 
+            event->str_name = PLUTO_CORESTATE_stringified_event_names[3];
+            break;
+        case SIGUSR2:
+            event->name = PLUTO_CORE_EVENT_NAME_START; 
+            event->str_name = PLUTO_CORESTATE_stringified_event_names[4];
             break;
         default:
             event->name = PLUTO_CORE_EVENT_NAME_SIG_UNKNOWN; 
+            event->str_name = PLUTO_CORESTATE_stringified_event_names[5];
             break;
     }
     event->event.signal.signum = signum;
@@ -122,6 +148,7 @@ void PLUTO_CoreStateEventForProcess(PLUTO_CoreStateEvent_t *event)
 //
 bool PLUTO_CoreStateDispatchEvent(struct PLUTO_CoreState *state, PLUTO_CoreStateEvent_t *event)
 {
+    PLUTO_LoggerInfo(state->logger, "[CoreState] - Dispatch Event %s", event->str_name);
     switch(state->current_state)
     {
         case PLUTO_CORE_STATE_NAME_INITIAL:
@@ -135,13 +162,12 @@ bool PLUTO_CoreStateDispatchEvent(struct PLUTO_CoreState *state, PLUTO_CoreState
             break;
         case PLUTO_CORE_STATE_NAME_TERMINATED:
         default:
-            PLUTO_LoggerInfo(state->logger, "Accepting...");
+            PLUTO_LoggerInfo(state->logger, "[CoreState] - Accepting...");
             state->current_state = PLUTO_CoreStateHandleTerminated(state, event);
             return true; 
     }
+    PLUTO_LoggerInfo(state->logger, "[CoreState] - Continue...");
     return false;
-
-
 }
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -151,18 +177,19 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleInitial(struct PLUTO_CoreState
 {
     switch(event->name)
     {
+        case PLUTO_CORE_EVENT_NAME_TIMER_TICK:
         case PLUTO_CORE_EVENT_NAME_PROCESS:
-            PLUTO_LoggerInfo(state->logger, "Starting nodes...");
+            PLUTO_LoggerInfo(state->logger, "[CoreState] - Starting nodes...");
             if(!PLUTO_CoreSetUpNodes(state))
             {
-                PLUTO_LoggerInfo(state->logger, "Transition to TERMINATED");
+                PLUTO_LoggerInfo(state->logger, "[CoreState] - Transition to TERMINATED");
                 return PLUTO_CORE_STATE_NAME_TERMINATED;
             }
 
-            PLUTO_LoggerInfo(state->logger, "Transition to RUNNING");
+            PLUTO_LoggerInfo(state->logger, "[CoreState] - Transition to RUNNING");
             return PLUTO_CORE_STATE_NAME_RUNNING;
         default:
-            PLUTO_LoggerInfo(state->logger, "Transition to TERMINATED");
+            PLUTO_LoggerInfo(state->logger, "[CoreState] - Transition to TERMINATED");
             return PLUTO_CORE_STATE_NAME_TERMINATED;
     }
 }
@@ -180,6 +207,7 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleRunning(struct PLUTO_CoreState
             return PLUTO_CoreStateHandleSigChld(state, event);
         case PLUTO_CORE_EVENT_NAME_SIG_UNKNOWN:
             return PLUTO_CORE_STATE_NAME_RUNNING;
+        case PLUTO_CORE_EVENT_NAME_TIMER_TICK:
         case PLUTO_CORE_EVENT_NAME_PROCESS:
         default:
             return PLUTO_CORE_STATE_NAME_RUNNING;
@@ -195,7 +223,7 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
         const pid_t result = waitpid(event->event.signal.pid, &return_value, WNOHANG);
         if(result < 0)
         {
-            PLUTO_LoggerError(state->logger, "Error while waiting in Subprocess: %s", strerror(errno));
+            PLUTO_LoggerError(state->logger, "[CoreState] - Error while waiting in Subprocess: %s", strerror(errno));
         }
         else if(result > 0)
         {
@@ -203,7 +231,7 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
             {
                 PLUTO_LoggerWarning(
                     state->logger,
-                    "Subprocess exited with Status %i", 
+                    "[CoreState] - Subprocess exited with Status %i", 
                     (int8_t)WEXITSTATUS(return_value)
                 );
                 PLUTO_NodeStateTerminated(
@@ -215,7 +243,7 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
             {
                 PLUTO_LoggerWarning(
                     state->logger,
-                    "Subprocess was terminated by Signal: \"%s\"", 
+                    "[CoreState] - Subprocess was terminated by Signal: \"%s\"", 
                     strsignal(WTERMSIG(return_value))
                 );
                 PLUTO_NodeStateTerminatedBySignal(
@@ -233,13 +261,13 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
 
     for(size_t i=0;i<state->n_nodes;++i)
     {
-        PLUTO_LoggerInfo(state->logger, "  Node %lu accepting => %i", i, (int)PLUTO_NodeStateAccepting(&state->nodes[i]));
+        PLUTO_LoggerInfo(state->logger, "[CoreState] - Node %lu accepting => %i", i, (int)PLUTO_NodeStateAccepting(&state->nodes[i]));
         if(!PLUTO_NodeStateAccepting(&state->nodes[i]))
         {
             return PLUTO_CORE_STATE_NAME_RUNNING;
         }
     }
-    PLUTO_LoggerInfo(state->logger, "Terminating, because no Subprocesses to manage are left...");
+    PLUTO_LoggerInfo(state->logger, "[CoreState] - Terminating, because no Subprocesses to manage are left...");
     return PLUTO_CORE_STATE_NAME_TERMINATED;
 }
 
@@ -253,13 +281,13 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigInt(struct PLUTO_CoreState *state,
     {
         const pid_t pid = PLUTO_NodeStateGetPid(&state->nodes[i]);
         (void)kill(pid, SIGINT);
-        PLUTO_LoggerInfo(state->logger, "Terminate Subprocess %i with SIGINT", pid);
+        PLUTO_LoggerInfo(state->logger, "[CoreState.HandleSigint] - Terminate Subprocess %i with SIGINT", pid);
     }
     //
     // Each terminated Process will emit a SIGCHLD.
     // The processing is defered and done at a later point in time.
     //
-    PLUTO_LoggerInfo(state->logger, "Handle SIGINT, return TERMINATING");
+    PLUTO_LoggerInfo(state->logger, "[CoreState.HandleSigint] - Handle SIGINT, return TERMINATING");
     return PLUTO_CORE_STATE_NAME_TERMINATING;
 }
 
@@ -269,32 +297,42 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigInt(struct PLUTO_CoreState *state,
 
 static PLUTO_CoreStateName_t PLUTO_CoreStateHandleTerminating(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event)
 {
-    (void)state;
     //
     // Wait for all Subprocesses to terminate.
     //
     switch(event->name)
     {
+        case PLUTO_CORE_EVENT_NAME_TIMER_TICK:
+            for(size_t i=0;i<state->n_nodes;++i)
+            {
+                if(!PLUTO_NodeStateAccepting(&state->nodes[i]))
+                {
+                    PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - Unable to terminate, waiting for more Subprocesses");
+                    return PLUTO_CORE_STATE_NAME_TERMINATING;
+                }
+            }
+            PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - No more Subprocesses... Terminated");
+            return PLUTO_CORE_STATE_NAME_TERMINATED;
         case PLUTO_CORE_EVENT_NAME_SIGCHLD:
-            PLUTO_LoggerInfo(state->logger, "Wait %lu", event->event.signal.pid);
+            PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - Wait %lu", event->event.signal.pid);
             int result;
             waitpid(event->event.signal.pid, &result, WNOHANG);
             int32_t index = PLUTO_CoreStateFindByPid(state, event->event.signal.pid);
             PLUTO_NodeStateTerminated(&state->nodes[index], 0);
-            PLUTO_LoggerInfo(state->logger, "Handle Terminating, return TERMINATING");
+            PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - Handle Terminating, return TERMINATING");
             for(size_t i=0;i<state->n_nodes;++i)
             {
                 if(!PLUTO_NodeStateAccepting(&state->nodes[index]))
                 {
-                    PLUTO_LoggerInfo(state->logger, "Unable to terminate, waiting for more Subprocesses");
+                    PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - Unable to terminate, waiting for more Subprocesses");
                     return PLUTO_CORE_STATE_NAME_TERMINATING;
                 }
             }
-            PLUTO_LoggerInfo(state->logger, "No no Subprocesses... Terminated");
+            PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - No more Subprocesses... Terminated");
             return PLUTO_CORE_STATE_NAME_TERMINATED;
         default:
-            PLUTO_LoggerInfo(state->logger, "Default Transition... TERMINATING");
-            return PLUTO_CORE_STATE_NAME_TERMINATING;
+            PLUTO_LoggerInfo(state->logger, "[CoreState.Terminating] - Default Transition... TERMINATING");
+            return PLUTO_CORE_STATE_NAME_TERMINATED;
     }
 }
 //

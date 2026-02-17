@@ -51,7 +51,7 @@ void PLUTO_TEST_EdgeSendAndReceive(void)
         PLUTO_EDGE_EdgeReceiveEvent(edge, recv_event)
     );
     TEST_ASSERT_EQUAL_STRING(
-        "This is a Test!",
+        PLUTO_EventPayload(event),
         PLUTO_EventPayload(recv_event)
     );
 

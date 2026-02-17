@@ -115,8 +115,7 @@ bool PLUTO_CoreSignalReceived(PLUTO_Core_t core, int signum, pid_t pid)
             return true;
         }
     }
-
-    if(SIGCHLD == signum)
+    else if(SIGCHLD == signum)
     {
         //PLUTO_LoggerInfo(core->logger, "SIGCHLD received.");
         if(PLUTO_CORE_SigQueueTop(core->signal_queue, &element) && (SIGCHLD == element.signum) && (pid == element.pid))

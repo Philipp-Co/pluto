@@ -10,7 +10,7 @@ PLUTO_CORE_SigQueue_t PLUTO_CORE_CreateSigQueue(size_t n_elements)
     PLUTO_CORE_SigQueue_t queue = PLUTO_Malloc(sizeof(struct PLUTO_CORE_SigQueue));
 
     queue->elements = PLUTO_Malloc(n_elements * sizeof(PLUTO_CORE_SigQueueElement_t));
-    queue->n_elements = n_elements + 1;
+    queue->n_elements = (n_elements > 4U) ? n_elements + 1 : 4U;
     queue->read_index = 0U;
     queue->write_index = 0U;
 

@@ -5,6 +5,9 @@
 
 #include <Unity/src/unity.h>
 #include <string.h>
+#include <errno.h>
+
+static bool PLUTO_TEST_CheckIpcState(const char *queue);
 
 void PLUTO_TEST_MessageQueueInitialCreate(void)
 {
@@ -22,6 +25,10 @@ void PLUTO_TEST_MessageQueueInitialCreate(void)
 
     PLUTO_DestroyMessageQueue(&queue);
     PLUTO_DestroyLogger(&logger);
+
+    TEST_ASSERT_TRUE(
+        PLUTO_TEST_CheckIpcState("testqueue")
+    );
 }
 
 void PLUTO_TEST_MessageQueueInitialGet(void)
@@ -47,6 +54,10 @@ void PLUTO_TEST_MessageQueueInitialGet(void)
     PLUTO_DestroyMessageQueue(&queue_get);
     PLUTO_DestroyMessageQueue(&queue);
     PLUTO_DestroyLogger(&logger);
+    
+    TEST_ASSERT_TRUE(
+        PLUTO_TEST_CheckIpcState("testqueue")
+    );
 }
 
 void PLUTO_TEST_MessageQueueSendAndRead(void)
@@ -88,4 +99,26 @@ void PLUTO_TEST_MessageQueueSendAndRead(void)
     PLUTO_DestroyMessageQueue(&queue_get);
     PLUTO_DestroyMessageQueue(&queue);
     PLUTO_DestroyLogger(&logger);
+
+    TEST_ASSERT_TRUE(
+        PLUTO_TEST_CheckIpcState("testqueue")
+    );
+}
+
+
+static bool PLUTO_TEST_CheckIpcState(const char *queue)
+{
+    const int flags = IPC_EXCL | IPC_CREAT | 0777;
+    key_t key = ftok(queue, 0);
+    const int msgid = msgget(key, flags);
+    if(msgid >= 0)
+    {
+        const int result = msgctl(msgid, IPC_RMID, NULL);
+        if(result < 0)
+        {
+            printf("Uanble to remove Queue: %s, Errno: %s\n", queue, strerror(errno));
+        }
+        return true;
+    }
+    return false;
 }

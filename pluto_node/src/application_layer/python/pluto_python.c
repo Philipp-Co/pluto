@@ -8,6 +8,7 @@
 #include "pluto/os_abstraction/pluto_malloc.h"
 #include "pluto/os_abstraction/pluto_time.h"
 #include <pluto/application_layer/python/pluto_python.h>
+#include <pluto/config/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -222,6 +223,15 @@ void PLUTO_DeinitializePython(void)
     }
 }
 
+static void PLUTO_PrintBufferAsHex(const char *buffer, size_t size)
+{
+    for(size_t i=0;i<size;++i)
+    {
+        printf("0x%x ", (unsigned int)(buffer[i]));
+    }
+    printf("\n");
+}
+
 PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
 {
     //
@@ -237,7 +247,7 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     PyObject *n_output_queues = PyLong_FromUnsignedLongLong(args->number_of_output_queues);
     PyObject *id = PyLong_FromLong(args->id);
     PyObject *event = PyLong_FromLong(args->event);
-    PyObject *payload = PyUnicode_FromString(args->input_buffer);
+    PyObject *payload = PyBytes_FromStringAndSize(args->input_buffer, args->input_buffer_size); // PyUnicode_FromString(args->input_buffer);
     
     // Call Memberfunction on Object
     PyObject *method = PyUnicode_FromString(
@@ -314,18 +324,18 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
                     PLUTO_PY_current_output_buffer.return_value = false;
                     goto error;
                 }
-                if(pypayload && PyUnicode_Check(pypayload))
+                if(pypayload)
                 {
                     memcpy(
                         PLUTO_PY_current_buffer->output_buffer,
-                        PyUnicode_AsUTF8(pypayload), 
-                        strlen(
-                            PyUnicode_AsUTF8(pypayload)
-                        )
+                        PyBytes_AsString(pypayload), 
+                        PyBytes_Size(pypayload)
                     );
                     //PyObject *bytes = PyUnicode_AsEncodedString(payload, "utf-8", NULL);
-                    //printf("Python Callback: %s, %lu\n", PyUnicode_AsUTF8(pypayload), strlen(PyUnicode_AsUTF8(pypayload)));
-                    PLUTO_PY_current_output_buffer.output_size = strlen(PyUnicode_AsUTF8(pypayload));
+                    PLUTO_PY_current_output_buffer.output_size = PyBytes_Size(pypayload);// strlen(PyUnicode_AsUTF8(pypayload));
+                    
+                    printf("Pypayload Size: %lu\n", PyBytes_Size(pypayload)); 
+                    PLUTO_PrintBufferAsHex(PLUTO_PY_current_buffer->output_buffer, PLUTO_PY_current_buffer->output_buffer_size);
                 }
                 else
                 {

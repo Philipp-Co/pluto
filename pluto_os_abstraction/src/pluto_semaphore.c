@@ -65,7 +65,7 @@ PLUTO_Semaphore_t PLUTO_SemaphoreGet(const char *path, const char *name, PLUTO_L
     semaphore->filedescriptor = semget(semaphore->key.key, 1, 0);
     if(semaphore->filedescriptor < 0)
     {
-        PLUTO_LoggerWarning(logger, "Unable to create Semaphore for key_t 0x%x", semaphore->key.key);
+        PLUTO_LoggerWarning(logger, "Unable to create Semaphore for key_t=0x%x, Path=%s, Name=%s, Error: %s", semaphore->key.key, path, name, strerror(errno));
         goto error;
     }
     return semaphore;
