@@ -137,7 +137,7 @@ bool PLUTO_CoreProcess(PLUTO_Core_t core)
     PLUTO_CORE_SigQueueElement_t element = {0};
     while(PLUTO_CORE_SigQueueGet(core->signal_queue, &element))
     {
-        PLUTO_LoggerInfo(core->logger, "Process Signal %i", element.signum);
+        //PLUTO_LoggerInfo(core->logger, "Process Signal %i", element.signum);
         //
         // SIGINT -> Terminate all Subprocesses
         // SIGCHLD -> Restart Subprocess, but log the Crash!

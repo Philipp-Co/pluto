@@ -178,6 +178,27 @@ endif()
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
+add_executable(
+    pluto_edge_cli 
+    ${CMAKE_CURRENT_LIST_DIR}/src/pluto_edge_cli.c
+)
+
+target_include_directories(
+    pluto_edge_cli
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/inc/
+    ${CMAKE_CURRENT_LIST_DIR}/../pluto_os_abstraction/inc/
+)
+
+target_link_libraries(
+    pluto_edge_cli
+    PUBLIC
+    pluto_os_abstraction
+    pluto_edge_static
+)
+#
+# ---------------------------------------------------------------------------------------------------------------------
+#
 add_dependencies(
     pluto_edge_static
     pluto_os_abstraction
@@ -186,6 +207,16 @@ add_dependencies(
 add_dependencies(
     pluto_edge_shared
     pluto_os_abstraction
+)
+
+add_dependencies(
+    pluto_edge_cli
+    pluto_os_abstraction
+)
+
+add_dependencies(
+    pluto_edge_cli
+    pluto_edge_static
 )
 #
 # ---------------------------------------------------------------------------------------------------------------------

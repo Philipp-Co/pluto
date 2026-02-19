@@ -265,6 +265,7 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
     static const int msgflags = IPC_NOWAIT | MSG_NOERROR;
     struct PLUTO_MsgBuf buffer;
     buffer.msgtype = 1;
+    memset(buffer.buffer.buffer, '\0', sizeof(buffer.buffer.buffer));
 
     const int status = msgrcv(
         queue->filedescriptor,
@@ -279,7 +280,8 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
         return status;
     }
     PLUTO_CreateEventFromBuffer(event, &buffer.buffer);
-    PLUTO_LoggerInfo(queue->internal->logger, "Read %s from Queue\n", buffer.buffer.buffer + 16);
+    PLUTO_LoggerInfo(queue->internal->logger, "Read event-id: %u, id: %u, len: %u, payload: %s from Queue.", event->header.eventid, event->header.id, event->header.nbytes_payload, event->payload);
+    
     return status;
 }
 
@@ -302,12 +304,13 @@ bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
     static const int msgflags = IPC_NOWAIT;
     struct PLUTO_MsgBuf buffer;
     buffer.msgtype = 1;
+    memset(buffer.buffer.buffer, '\0', sizeof(buffer.buffer.buffer));
     PLUTO_EventToBuffer(event, &buffer.buffer);
-    PLUTO_LoggerInfo(queue->internal->logger, "Write %s to Queue\n", buffer.buffer.buffer + 16);
+    PLUTO_LoggerInfo(queue->internal->logger, "Write event-id: %u, id: %u, payload: %s to Queue.", event->header.eventid, event->header.id, buffer.buffer.buffer + 16);
     const bool status = msgsnd(queue->filedescriptor, &buffer, sizeof(buffer.buffer), msgflags) >= 0;
     if(!status)
     {
-        PLUTO_LoggerInfo(queue->internal->logger, "Queue Write Error...\n");
+        PLUTO_LoggerInfo(queue->internal->logger, "Queue Write Error...");
         PLUTO_MessageQueueWriteError(queue, errno);
     }
     return status;

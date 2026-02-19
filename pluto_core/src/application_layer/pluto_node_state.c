@@ -122,6 +122,9 @@ void PLUTO_NodeStateReset(PLUTO_NodeState_t state)
 
 void PLUTO_NodeStateTerminatedBySignal(PLUTO_NodeState_t state, int signum)
 {
+    //
+    // Check if the Process was terminated by a User. In this case do not mark it as suspicious, but accept its termination.
+    //
     switch(state->current_state)
     {
         case PLUTO_CORE_NS_INITIAL:

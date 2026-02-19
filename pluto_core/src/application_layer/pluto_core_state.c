@@ -148,7 +148,7 @@ void PLUTO_CoreStateEventForProcess(PLUTO_CoreStateEvent_t *event)
 //
 bool PLUTO_CoreStateDispatchEvent(struct PLUTO_CoreState *state, PLUTO_CoreStateEvent_t *event)
 {
-    PLUTO_LoggerInfo(state->logger, "[CoreState] - Dispatch Event %s", event->str_name);
+    //PLUTO_LoggerInfo(state->logger, "[CoreState] - Dispatch Event %s", event->str_name);
     switch(state->current_state)
     {
         case PLUTO_CORE_STATE_NAME_INITIAL:
@@ -166,7 +166,7 @@ bool PLUTO_CoreStateDispatchEvent(struct PLUTO_CoreState *state, PLUTO_CoreState
             state->current_state = PLUTO_CoreStateHandleTerminated(state, event);
             return true; 
     }
-    PLUTO_LoggerInfo(state->logger, "[CoreState] - Continue...");
+    //PLUTO_LoggerInfo(state->logger, "[CoreState] - Continue...");
     return false;
 }
 //
