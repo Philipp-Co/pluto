@@ -88,8 +88,8 @@ bool PLUTO_TimeToString(PLUTO_Time_t time, char *buffer, size_t nbytes)
         .tm_wday=0,
         .tm_yday=0,
         .tm_isdst=0,
-        .tm_gmtoff=0,
-        .tm_zone="UTC"
+        //.tm_gmtoff=0,
+        //.tm_zone="UTC"
     };
     const int result = strftime(timebuffer, sizeof(timebuffer), "%Y-%m-%dT%H:%M:%S", &tm_time);
     if(result == 0)

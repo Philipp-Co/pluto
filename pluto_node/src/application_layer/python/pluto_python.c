@@ -130,7 +130,7 @@ bool PLUTO_InitializePython(
     char *buffer = PLUTO_Malloc(4096);
     if(!buffer) return false;
     // TODO: Memory Management...
-    const int N_PYTHON_PATHS = 128;
+    const size_t N_PYTHON_PATHS = 128;
     PLUTO_PY_PythonPath_t python_path_buffer = {
         .paths=PLUTO_Malloc(sizeof(char*) * N_PYTHON_PATHS),
         .n_paths=0

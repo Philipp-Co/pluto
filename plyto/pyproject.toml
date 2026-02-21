@@ -24,3 +24,7 @@ license-files = ["LICENSE"]
 [project.urls]
 Homepage = "https://github.com/Philipp-Co/pluto"
 Issues = "https://github.com/Philipp-Co/pluto/issues"
+
+[project.scripts]
+plyto_add_node_pt = "plyto.setup.plyto_add_pt_node:cli"
+plyto_connect_nodes = "plyto.setup.plyto_connect_nodes:cli"

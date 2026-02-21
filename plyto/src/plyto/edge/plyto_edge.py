@@ -10,7 +10,7 @@ from typing import Self, Optional
 from ctypes import create_string_buffer
 from ctypes import byref, POINTER
 from ctypes import CDLL, c_void_p, c_int, c_char_p, c_uint32
-from plyto.edge import PlutoTimestamp, tm
+from plyto.edge import PLUTO_EDGE_Timestamp
 import json
 from plyto.config.plyto_config import PlytoConfig
 from plyto.config.plyto_node_config import PlytoNodeConfig
@@ -49,13 +49,13 @@ class PlytoEvent:
     """A Pluto Event."""
     def __init__(self, cdll: CDLL):
         self.__cdll: CDLL = cdll
-        self.__event_pointer: c_void_p = c_void_p(self.__cdll.PLUTO_CreateEvent())
+        self.__event_pointer: c_void_p = c_void_p(self.__cdll.PLUTO_EDGE_CreateEvent())
         pass
 
     def __del__(self):
         """D'tor."""
         if self.__event_pointer is not None:
-            self.__cdll.PLUTO_DestroyEvent(
+            self.__cdll.PLUTO_EDGE_DestroyEvent(
                 byref(self.__event_pointer),
             )
         pass
@@ -73,23 +73,23 @@ class PlytoEvent:
         event: PlytoEvent = PlytoEvent(
             cdll=_lib_pluto_edge,
         )
-        return event.set_timestamp(_lib_pluto_edge.PLUTO_TimeNow())
+        return event #.set_timestamp(_lib_pluto_edge.PLUTO_TimeNow())
 
     def set_id(self, id: int) -> Self:
         """Assign an Id to this Object."""
-        self.__cdll.PLUTO_EventSetId(self.__event_pointer, id)
+        self.__cdll.PLUTO_EDGE_EventSetId(self.__event_pointer, id)
         return self
 
     def set_event_id(self, event_id: int) -> Self:
         """Assign a Event Id to this Object."""
-        self.__cdll.PLUTO_EventSetEvent(
+        self.__cdll.PLUTO_EDGE_EventSetEventId(
             self.__event_pointer,
             event_id,
         )
         return self
 
+    """
     def set_timestamp(self, timestamp: PlutoTimestamp) -> Self:
-        """Set a Timestamp."""
         self.__cdll.PLUTO_EventSetTimestamp(
             self.__event_pointer,
             timestamp,
@@ -97,7 +97,6 @@ class PlytoEvent:
         return self
 
     def set_payload(self, msg: str) -> Self:
-        """Copy the Payload to the internal Buffers."""
         from ctypes import c_size_t
 
         self.__cdll.PLUTO_EventCopyBufferToPayload(
@@ -106,6 +105,7 @@ class PlytoEvent:
             c_size_t(len(msg)),
         )
         return self
+    """
 
     def __str__(self) -> str:
         """To String Method."""
@@ -179,6 +179,9 @@ class PlytoEdge(ABC):
         name_buffer = create_string_buffer(len(queue_name) + 1)
         name_buffer.value = queue_name.encode()
 
+        print(
+            f'Create Edge Path={path}, Name={queue_name}'
+        )
         self._edge: c_void_p = c_void_p(
             self._dll.PLUTO_EDGE_CreateEdge(
                 path_buffer, name_buffer, 0x777, self.__create_logger(self._dll)
@@ -217,7 +220,7 @@ class PlytoInputEdge(PlytoEdge):
     """ 
     def send(self, msg: str, id: int, event: int) -> Self:
         event: PlytoEvent = (
-            PlytoEvent.create().set_id(id).set_event_id(event).set_payload(msg)
+            PlytoEvent.create().set_id(id).set_event_id(event)#.set_payload(msg)
         )
         if not self._dll.PLUTO_EDGE_EdgeSendEvent(
             self._edge,

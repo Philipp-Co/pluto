@@ -81,12 +81,6 @@ target_compile_definitions(
     PLUTO_LOG_LEVEL=2000
 )
 
-target_link_options(
-    pluto_os_abstraction
-    PUBLIC
-    "-Wl,-map,output.map"
-)
-
 set_property(
     TARGET pluto_os_abstraction
     PROPERTY

@@ -61,7 +61,7 @@ void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor);
 /// \brief  Read the next input Event, if there is one, pass it to the Applicationlogic and output the Result as the next
 ///         output Event.
 ///
-bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor) __attribute__((section("__TEXT,message_queue")));
+bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor);
 ///
 /// \brief  Emit an Event.
 ///         The Event is written to the Inputqueue of the Processor.
@@ -70,7 +70,7 @@ bool PLUTO_ProcessorProcess(PLUTO_Processor_t processor) __attribute__((section(
 ///
 /// \returns bool - true if the Event was emitted successfully, false otherwise.
 ///
-bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
+bool PLUTO_ProcessorEmitEvent(PLUTO_Processor_t processor, PLUTO_Event_t event);
 
 //
 // --------------------------------------------------------------------------------------------------------------------

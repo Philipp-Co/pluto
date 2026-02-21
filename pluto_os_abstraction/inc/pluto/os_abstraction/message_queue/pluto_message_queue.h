@@ -112,13 +112,13 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue);
 /// \brief  Read a Message from the Queue.
 ///         Remove the oldest Element from the Queue and return it.
 ///
-bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
+bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event);
 ///
 /// \brief  Write a Message to the Queue.
 ///         Append it at the End of the Queue.
 ///
-bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Event_t event) __attribute__((section("__TEXT,message_queue")));
-int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue) __attribute__((section("__TEXT,message_queue")));
+bool PLUTO_MessageQueueWrite(PLUTO_MessageQueue_t queue, PLUTO_Event_t event);
+int32_t PLUTO_MessageQueueNumberOfMessagesAvailable(PLUTO_MessageQueue_t queue);
 
 //#endif
 

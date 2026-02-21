@@ -8,6 +8,7 @@
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/pluto_core/data_layer/application_return_codes.h>
 
+#include <sys/wait.h>
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>

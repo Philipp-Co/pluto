@@ -1,4 +1,4 @@
-
+from typing import Tuple
 
 class PlutoEventHandler:
     
@@ -11,9 +11,12 @@ class PlutoEventHandler:
     def teardown(self):
         pass
 
-    def run(self, id: int, event: int, number_of_output_queues: int, payload: str) -> str:
-        result = '{' + f'\"python\":\"{payload}\"' + '}'
-        return (id, event, 0xffffffffffffffff, result)
+    def run(self, id: int, event: int, number_of_output_queues: int, payload: bytes) -> Tuple[int, int, int, bytes]:
+        # result = '{' + f'\"python\":\"{payload}\"' + '}'
+        print(
+            'Payload ist %s' % (payload)
+        )
+        return (id, event, 0xffffffffffffffff, 'empty'.encode())
 
     pass
 

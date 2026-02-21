@@ -56,12 +56,12 @@ void PLUTO_InfoDisplay(const PLUTO_Info_t info, const PLUTO_InfoValues_t *values
     );
     memset(buffer, '\0', 4096);
     
-    for(size_t i=0;i<values->n_names_of_output_queues;++i)
+    for(uint16_t i=0U;i<values->n_names_of_output_queues;++i)
     {
         strcat(buffer, "\"");
         strcat(buffer, values->names_of_output_queues[i]);
         strcat(buffer, "\"");
-        if(i < (values->n_names_of_output_queues - 1))
+        if(i < (values->n_names_of_output_queues - 1U))
             strcat(buffer, ",");
     }
 

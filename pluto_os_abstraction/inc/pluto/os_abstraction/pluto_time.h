@@ -44,19 +44,19 @@ typedef struct
 } PLUTO_Time_t __attribute__((aligned(8)));
 
 void PLUTO_TimeSet(PLUTO_Time_t *time, uint32_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minutes, uint8_t seconds, uint32_t milliseconds);
-uint32_t PLUTO_TimeYear(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
-uint32_t PLUTO_TimeMonth(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
-uint32_t PLUTO_TimeDay(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
-uint32_t PLUTO_TimeHour(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
-uint32_t PLUTO_TimeMinutes(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
-uint32_t PLUTO_TimeSeconds(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
-uint32_t PLUTO_TimeMilliseconds(PLUTO_Time_t time) PLUTO_FUNCTION_INLINE;
+uint32_t PLUTO_TimeYear(PLUTO_Time_t time);
+uint32_t PLUTO_TimeMonth(PLUTO_Time_t time);
+uint32_t PLUTO_TimeDay(PLUTO_Time_t time);
+uint32_t PLUTO_TimeHour(PLUTO_Time_t time);
+uint32_t PLUTO_TimeMinutes(PLUTO_Time_t time);
+uint32_t PLUTO_TimeSeconds(PLUTO_Time_t time);
+uint32_t PLUTO_TimeMilliseconds(PLUTO_Time_t time);
 
 ///
 /// \brief  Create a Timestamp for "now".
 ///         The Timestamp is calculated for UTC.
 ///
-PLUTO_Time_t PLUTO_TimeNow(void) PLUTO_FUNCTION_INLINE;
+PLUTO_Time_t PLUTO_TimeNow(void);
 ///
 /// \brief  Convert a String to a Timestamp.
 ///         The String must be formatted %Y-%m-%dT%H:%M:%S.%u

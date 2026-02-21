@@ -198,7 +198,7 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
     memset(args->python_path, '\0', sizeof(args->python_path));
 #endif
 
-    char c;
+    int c;
 #if defined(PLUTO_CTS_RTM_PYTHON)
     static const char *optstring = "n:c:e:p:";
 #elif defined(PLUTO_CTS_RTM_SHARED_LIB)
@@ -208,11 +208,11 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
 #endif
     while((c = getopt(argc, argv, optstring)) != -1)
     {
-        if(c == ((char)-1))
+        if(c == -1)
         {
             break;
         }
-        switch(c)
+        switch((char)c)
         {
 #if defined(PLUTO_CTS_RTM_PYTHON)
             case 'p':
