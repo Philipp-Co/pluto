@@ -124,6 +124,7 @@ bool PLUTO_InitializePython(
     PyImport_AppendInittab("pluto", &PLUTO_PythonInitPluto);
     PyConfig_InitIsolatedConfig(&config);
     config.isolated = 1;
+    config.buffered_stdio = 0;
     
     // TODO: Check if venvs are needed...
     //char *env = getenv("VIRTUAL_ENV");
