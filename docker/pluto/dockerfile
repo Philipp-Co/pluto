@@ -127,18 +127,10 @@ COPY --from=pluto_builder ./pluto/ /pluto/
 # RUN plyto_connect name_0 name_1
 # 
 # Example:
-# RUN plyto_add_node_pt name_0              # Create a passthrough Node with Name "name_0"
-# RUN plyto_add_node_pt name_1              # Create a passthrough Node with Name "name_1"
-# RUN plyto_add_node_pt name_2              # Create a passthrough Node with Name "name_2"
-# RUN plyto_connect_nodes name_0 name_1     # Connect Node name_0 with Node name_1: name_0 -> name_1
-# RUN plyto_connect_nodes name_0 name_2     # Connect Node name_0 with Node name_2: name_0 -> name_2
-
-COPY ./docker/demo/pluto_python_demo/dist/examplenode-0.0.0.tar.gz /examplenode.tar.gz
-RUN plyto_add_node_pt name_0              # Create a passthrough Node with Name "name_0"
-RUN plyto_add_node_py name_1 /examplenode.tar.gz examplenode              # Create a passthrough Node with Name "name_0"
-RUN plyto_connect_nodes name_0 name_1     # Connect Node name_0 with Node name_2: name_0 -> name_2
-
-# RUN plyto_add_node_py name_0 /examplenode.tar.gz examplenode             # Create a passthrough Node with Name "name_0"
+# COPY ./docker/demo/pluto_python_demo/dist/examplenode-0.0.0.tar.gz /examplenode.tar.gz
+# RUN plyto_add_node_pt name_0                                    # Create a passthrough Node with Name "name_0"
+# RUN plyto_add_node_py name_1 /examplenode.tar.gz examplenode    # Create a passthrough Node with Name "name_0"
+# RUN plyto_connect_nodes name_0 name_1                           # Connect Node name_0 with Node name_1: name_0 -> name_1
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
