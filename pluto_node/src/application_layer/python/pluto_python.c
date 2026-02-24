@@ -7,6 +7,7 @@
 #include "pluto/os_abstraction/pluto_logger.h"
 #include "pluto/os_abstraction/pluto_malloc.h"
 #include "pluto/os_abstraction/pluto_time.h"
+#include "pluto/types/pluto_types.h"
 #include <pluto/application_layer/python/pluto_python.h>
 #include <pluto/config/config.h>
 
@@ -43,7 +44,7 @@
 //      pass
 //
 
-#define PLUTO_PYTHON_INTERFACE_CLASS "PlutoEventHandler"
+#define PLUTO_PYTHON_INTERFACE_CLASS "PlutoNode"
 #define PLUTO_PYTHON_SETUP_METHOD "setup"
 #define PLUTO_PYTHON_TEARDOWN_METHOD "teardown"
 #define PLUTO_PYTHON_RUN_METHOD "run"
@@ -97,6 +98,7 @@ static PLUTO_PythonCAPI_t PLUTO_c_api = {
 // --------------------------------------------------------------------------------------------------------------------
 //
 bool PLUTO_InitializePython(
+    const char *python_home,
     const char *python_path,
     const char *executable,
     PLUTO_PythonCAPI_t *c_api, 
@@ -140,7 +142,11 @@ bool PLUTO_InitializePython(
         python_path_buffer.paths[i] = PLUTO_Malloc(256);
         memset(python_path_buffer.paths[i], '\0', 256);
     }
-
+    
+    PLUTO_LoggerInfo(
+        logger, "Use Python-Path %s for initialization.", python_path
+    );
+    /*
     PLUTO_PY_ReadPythonPathsFromEnv(python_path, &python_path_buffer);
     for(size_t i=0;i<python_path_buffer.n_paths;++i)
         PLUTO_LoggerInfo(logger, "    %s", python_path_buffer.paths[i]);
@@ -157,7 +163,30 @@ bool PLUTO_InitializePython(
         PyWideStringList_Append(&config.module_search_paths, wcstr);
         PLUTO_Free(wcstr);
     }
-    config.module_search_paths_set = 1;
+    */
+    PyStatus pps = PyConfig_SetBytesString(&config, &config.pythonpath_env, python_path);
+    if(PyStatus_Exception(pps))
+    {
+        PLUTO_LoggerError(logger, "Unable to set Python-Home!");
+        goto error;
+    }
+    //config.module_search_paths_set = 1;
+    //config.use_environment = 1;
+    
+
+    //
+    // set PYTHONHOME
+    //
+    PLUTO_LoggerInfo(
+        logger, "Use Python-Home %s", python_home
+    );
+    PyStatus phs = PyConfig_SetBytesString(&config, &config.home, python_home);
+    if(PyStatus_Exception(phs))
+    {
+        PLUTO_LoggerError(logger, "Unable to set Python-Home!");
+        goto error;
+    }
+    
     //
     PLUTO_LoggerInfo(logger, "Initialize Python Interpreter from Config.");
     status = Py_InitializeFromConfig(&config);
@@ -183,8 +212,8 @@ bool PLUTO_InitializePython(
     return true;
 
 exception:
-    PyConfig_Clear(&config);
     Py_ExitStatusException(status);
+    PyConfig_Clear(&config);
 error:
     if(buffer)
     {
@@ -232,6 +261,149 @@ static void PLUTO_PrintBufferAsHex(const char *buffer, size_t size)
     printf("\n");
 }
 
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
+static bool PLUTO_PY_ProcessReturnedId(PyObject *id, PLUTO_Logger_t logger, uint32_t *output)
+{
+    if(!id) return false;
+    if(!PyLong_Check(id))
+    {
+        PLUTO_LoggerInfo(
+            logger,
+            "Unexpected Value of %s.",
+            PyObject_Str(id)
+        );
+        return false;
+    }
+    *output = (uint32_t)PyLong_AsUnsignedLong(id);
+    if((*output == ((uint32_t)-1)) && PyErr_Occurred())
+    {
+        return false;
+    }
+    return true; 
+}
+
+static bool PLUTO_PY_ProcessReturnedEventId(PyObject *event_id, PLUTO_Logger_t logger, uint32_t *output)
+{
+    if(!event_id) return false;
+    if(!PyLong_Check(event_id))
+    {
+        PLUTO_LoggerInfo(
+            logger,
+            "Unexpected Value of %s.",
+            PyObject_Str(event_id)
+        );
+        return false;
+    }
+    *output = (uint32_t)PyLong_AsUnsignedLong(event_id);
+    if((*output == ((uint32_t)-1)) && PyErr_Occurred())
+    {
+        return false;
+    }
+    return true; 
+}
+
+static bool PLUTO_PY_ProcessReturnedNQueues(PyObject *nqueues, PLUTO_Logger_t logger, uint64_t *output)
+{
+    if(!nqueues)
+    {
+        PyErr_Print();
+        return false;
+    }
+    if(!PyLong_Check(nqueues))
+    {
+        PLUTO_LoggerInfo(
+            logger,
+            "Unexpected Value of %s.",
+            PyObject_Str(nqueues)
+        );
+        return false;
+    }
+    *output = (uint64_t)PyLong_AsUnsignedLongLong(nqueues);
+    if((*output == ((uint64_t)-1)) && PyErr_Occurred())
+    {
+        return false;
+    }
+    return true;
+}
+
+static bool PLUTO_PY_ProcessReturnedPayload(PyObject *payload, PLUTO_Logger_t logger, char **output_buffer, const size_t buffer_capacity, size_t *output_size)
+{
+    if(!payload) return false;
+    if(!PyBytes_Check(payload))
+    {
+        PLUTO_LoggerInfo(
+            logger,
+            "Unexpected Value of %s expected Bytes-Object.",
+            PyObject_Str(payload)
+        );
+        return false;
+    }
+    char *buffer;
+    Py_ssize_t size;
+    (void)PyBytes_AsStringAndSize(payload, &buffer, &size);
+    if((size_t)size > buffer_capacity)
+    {
+        PLUTO_LoggerInfo(
+            logger,
+            "Capacity of %lu is to small. Need %lu Bytes.",
+            buffer_capacity,
+            size
+        );
+        return false;
+    }
+    memcpy(*output_buffer, buffer, size);
+    *output_size = (size_t)size;
+    return true;
+}
+
+static bool PLUTO_PY_ProcessReturnedTuple(PyObject *tuple, PLUTO_ProcessorCallbackOutput_t *output, char **output_buffer, const size_t output_buffer_capacity, size_t *size, PLUTO_Logger_t logger)
+{
+    if(!tuple)
+    {
+        PyErr_Print();
+        return false;
+    }
+    
+    if(!PyTuple_Check(tuple)) 
+    {
+        PLUTO_LoggerInfo(logger, "Tuple expected got %s", Py_TYPE(tuple));
+        return false;
+    }
+
+    PyObject *pyid = PyTuple_GetItem(tuple, 0LU);
+    PyObject *pyevent = PyTuple_GetItem(tuple, 1LU);
+    PyObject *pyoutputqueues = PyTuple_GetItem(tuple, 2LU);
+    PyObject *pypayload = PyTuple_GetItem(tuple, 3LU);
+
+    if(!PLUTO_PY_ProcessReturnedId(pyid, PLUTO_PY_logger, &output->id))
+    {
+        return false;
+    }
+
+    if(!PLUTO_PY_ProcessReturnedEventId(pyevent, PLUTO_PY_logger, &output->event))
+    {
+        return false;
+    }
+
+    if(!PLUTO_PY_ProcessReturnedNQueues(pyoutputqueues, PLUTO_PY_logger, &output->output_to_queues))
+    {
+        return false;
+    }
+
+    if(!PLUTO_PY_ProcessReturnedPayload(pypayload, PLUTO_PY_logger, output_buffer, output_buffer_capacity, size))
+    {
+        return false;
+    }
+    return true;
+}
+
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args)
 {
     //
@@ -242,6 +414,7 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
     
     PLUTO_PY_current_output_buffer.return_value = true;
     PLUTO_PY_current_output_buffer.output_size = 0;
+    args->output_buffer_size = 0;
 
     // Prepare Arguments
     PyObject *n_output_queues = PyLong_FromUnsignedLongLong(args->number_of_output_queues);
@@ -262,97 +435,16 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
         payload, 
         NULL
     );
-    if(!result)
+    if(!PLUTO_PY_ProcessReturnedTuple(result, &PLUTO_PY_current_output_buffer, &args->output_buffer, 48, &PLUTO_PY_current_output_buffer.output_size, PLUTO_PY_logger))
     {
-        PLUTO_LoggerWarning(PLUTO_PY_logger, "NULL returned from Python-Callback.");
-        PyErr_Print();
         PLUTO_PY_current_output_buffer.id = 0U;
         PLUTO_PY_current_output_buffer.event = 0U;
         PLUTO_PY_current_output_buffer.output_to_queues = 0U;
         PLUTO_PY_current_output_buffer.return_value = false;
         PLUTO_PY_current_output_buffer.output_size = 0LU;
     }
-    else
-    {
-        const size_t strl_t = strlen("tuple");
-        const size_t strl_d = strlen(Py_TYPE(result)->tp_name); 
-        if(strl_t != strl_d)
-        {
-            PLUTO_LoggerWarning(PLUTO_PY_logger, "Python-Callback returned an unspecified Objtec: %s", Py_TYPE(result)->tp_name);
-        }
-        else
-        {
-            if(0 == memcmp("tuple", Py_TYPE(result)->tp_name, strl_t))
-            {
-                PLUTO_PY_current_output_buffer.return_value = true;
-                if(4LU != PyTuple_Size(result))
-                {
-                    PLUTO_LoggerWarning(PLUTO_PY_logger, "Error, unable to parse Callback Result! Tuple has %u Elements.", (unsigned int)PyTuple_Size(result));
-                    goto end;
-                }
-                //
-                // These Items are borrowed because they are given to the caller from a Tuple.
-                //
-                PyObject *pyid = PyTuple_GetItem(result, 0LU);
-                PyObject *pyevent = PyTuple_GetItem(result, 1LU);
-                PyObject *pyoutputqueues = PyTuple_GetItem(result, 2LU);
-                PyObject *pypayload = PyTuple_GetItem(result, 3LU);
-                if(pyid && PyLong_Check(pyid)) 
-                {
-                    PLUTO_PY_current_output_buffer.id = PyLong_AsLong(pyid);
-                }
-                else
-                {
-                    PLUTO_PY_current_output_buffer.return_value = false;
-                    goto error;
-                }
-                if(pyevent && PyLong_Check(pyevent))
-                {
-                    PLUTO_PY_current_output_buffer.event = PyLong_AsLong(pyevent);
-                }
-                else
-                {
-                    PLUTO_PY_current_output_buffer.return_value = false;
-                    goto error;
-                }
-                if(pyoutputqueues && PyLong_Check(pyoutputqueues))
-                {
-                    PLUTO_PY_current_output_buffer.output_to_queues = PyLong_AsUnsignedLongLong(pyoutputqueues);
-                }
-                else
-                {
-                    PLUTO_PY_current_output_buffer.return_value = false;
-                    goto error;
-                }
-                if(pypayload)
-                {
-                    memcpy(
-                        PLUTO_PY_current_buffer->output_buffer,
-                        PyBytes_AsString(pypayload), 
-                        PyBytes_Size(pypayload)
-                    );
-                    //PyObject *bytes = PyUnicode_AsEncodedString(payload, "utf-8", NULL);
-                    PLUTO_PY_current_output_buffer.output_size = PyBytes_Size(pypayload);// strlen(PyUnicode_AsUTF8(pypayload));
-                    
-                    printf("Pypayload Size: %lu\n", PyBytes_Size(pypayload)); 
-                    PLUTO_PrintBufferAsHex(PLUTO_PY_current_buffer->output_buffer, PLUTO_PY_current_buffer->output_buffer_size);
-                }
-                else
-                {
-                    PLUTO_PY_current_output_buffer.return_value = false;
-                    goto error;
-                }
-                error:
-                PyErr_Print();
-            }
-            else
-            {
-                PLUTO_LoggerWarning(PLUTO_PY_logger, "Python-Callback returned an unspecified Objtec: %s", Py_TYPE(result)->tp_name);
-            }
-        }
-        Py_DECREF(result);
-    }
-end:
+
+    Py_DECREF(result);
     Py_DECREF(method);
     Py_DECREF(payload);
     Py_DECREF(event);
@@ -396,7 +488,7 @@ static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_Py
 
 static PyObject* PLUTO_PY_GetClass(const char *module_name, PLUTO_Logger_t logger)
 {
-    PLUTO_LoggerInfo(logger, "Try to import Modules %s", module_name);
+    PLUTO_LoggerInfo(logger, "Try to import Module %s", module_name);
     PyObject *module = PyImport_ImportModule(module_name);
     if(!module)
     {

@@ -1,3 +1,5 @@
+from os import environ
+
 initialized: bool = False
 
 if not initialized:
@@ -27,8 +29,9 @@ if not initialized:
             ("milliseconds", c_uint32),
         ]
         pass
-
-    library_path: str = "/usr/local/lib/libpluto_edge_shared.dylib"
+    
+    shared_lib_extension: str = environ.get('PLUT_SHARED_LIBRARY_EXTENSION', default='dylib')
+    library_path: str = f"/usr/local/lib/libpluto_edge_shared.{shared_lib_extension}"
     _lib_pluto_edge: CDLL = cdll.LoadLibrary(
         library_path,
     )

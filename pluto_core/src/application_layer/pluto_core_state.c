@@ -255,6 +255,7 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
                 {
                     // restart Subprocess... 
                     PLUTO_CoreStartNode(state, index);
+                    return PLUTO_CORE_STATE_NAME_RUNNING;
                 }
             }
         }

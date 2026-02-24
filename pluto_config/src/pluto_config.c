@@ -125,6 +125,24 @@ const char* PLUTO_ConfigPythonPath(const PLUTO_Config_t config)
     return config->python_path;
 }
 
+const char* PLUTO_ConfigPythonHome(const PLUTO_Config_t config)
+{
+    return config->python_home;
+}
+
+void PLUTO_ConfigToString(const PLUTO_Config_t config, char *buffer, size_t size)
+{
+    snprintf(
+        buffer,
+        size,
+        "Name: %s\nInputqueue: %s\n, Python-Home: %s\nPython-Path: %s\n",
+        config->name,
+        config->name_of_input_queue,
+        config->python_home,
+        config->python_path  
+    );
+}
+
 const char* PLUTO_ConfigNameOfOutputQueue(const PLUTO_Config_t config, const int32_t index)
 {
     assert(index >= 0);
@@ -267,6 +285,24 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
                     );
                     i += 2;
                 }
+                else if(0 == strcmp("python_home", key))
+                {
+                    PLUTO_LoggerInfo(logger, "  python_home: %s", value);
+                    const size_t strl = strlen(value);
+                    memcpy(
+                        config->python_home, value, strl > PLUTO_ConfigMaxNumberOfCharactersForPythonPath() ? PLUTO_ConfigMaxNumberOfCharactersForPythonPath() : strl
+                    );
+                    i += 2;
+                }
+                else if(0 == strcmp("ipc_home", key))
+                {
+                    PLUTO_LoggerInfo(logger, "  ipc_home: %s", value);
+                    const size_t strl = strlen(value);
+                    memcpy(
+                        config->ipc_home, value, strl > PLUTO_ConfigMaxNumberOfCharactersForPythonPath() ? PLUTO_ConfigMaxNumberOfCharactersForPythonPath() : strl
+                    );
+                    i += 2;
+                }
                 else
                 {
                     return false;
@@ -295,6 +331,12 @@ static PLUTO_Config_t PLUTO_ConfigMallocConfigObject(void)
    
     config->python_path = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
     memset(config->python_path, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
+    
+    config->python_home = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
+    memset(config->python_home, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
+    
+    config->ipc_home = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
+    memset(config->ipc_home, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
 
     config->base_path = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_BASE_PATH + 1);
     memset(config->base_path, '\0', PLUTO_CONFIG_MAX_STRLEN_BASE_PATH + 1);

@@ -3,7 +3,7 @@ requires = ["setuptools >= 75"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Plyto"
+name = "ExampleNode"
 version = "0.0.0"
 authors = [
   { name="Philipp Kroll", email="pk@eample.com" },
@@ -24,9 +24,3 @@ license-files = ["LICENSE"]
 [project.urls]
 Homepage = "https://github.com/Philipp-Co/pluto"
 Issues = "https://github.com/Philipp-Co/pluto/issues"
-
-[project.scripts]
-plyto_add_node_pt = "plyto.setup.plyto_add_pt_node:cli"
-plyto_add_node_py = "plyto.setup.plyto_add_py_node:cli"
-plyto_connect_nodes = "plyto.setup.plyto_connect_nodes:cli"
-plyto_edge = "plyto.setup.plyto_edge:cli"

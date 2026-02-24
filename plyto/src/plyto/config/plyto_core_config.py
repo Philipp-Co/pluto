@@ -1,6 +1,7 @@
 """"""
 # ---------------------------------------------------------------------------------------------------------------------
-from typing import Self, Any, Set
+from typing import Any, Set
+from typing_extensions import Self
 from plyto.config.plyto_node_config import PlytoNodeConfig, PlytoNodeType
 from json import loads, dumps
 

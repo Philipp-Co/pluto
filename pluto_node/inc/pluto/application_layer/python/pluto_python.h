@@ -33,6 +33,7 @@ typedef struct
 /// \param[in] logger - A Logger.
 ///
 bool PLUTO_InitializePython(
+    const char *python_home,
     const char *python_path,
     const char *executable, 
     PLUTO_PythonCAPI_t *c_api, 

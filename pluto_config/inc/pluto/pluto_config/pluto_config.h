@@ -29,6 +29,8 @@ struct PLUTO_Config
     char **names_of_output_queues;
 
     char *python_path; // Optional, because not every Node is a Python Node.
+    char *python_home; // Optional, because not every Node is a Python Node.
+    char *ipc_home;
 };
 typedef struct PLUTO_Config* PLUTO_Config_t;
 typedef const struct PLUTO_Config* PLUTO_ConstConfig_t;
@@ -69,6 +71,8 @@ int32_t PLUTO_ConfigNumberOfOutputQueues(const PLUTO_Config_t config);
 const char* PLUTO_ConfigNameOfOutputQueue(const PLUTO_Config_t config, const int32_t index);
 const char* PLUTO_ConfigNameOfInputQueue(const PLUTO_Config_t config);
 const char* PLUTO_ConfigPythonPath(const PLUTO_Config_t config);
+const char* PLUTO_ConfigPythonHome(const PLUTO_Config_t config);
+void PLUTO_ConfigToString(const PLUTO_Config_t config, char *buffer, size_t size);
 
 PLUTO_CoreConfig_t PLUTO_CreateCoreConfig(const char *filename, PLUTO_Logger_t logger);
 void PLUTO_DestroyCoreConfig(PLUTO_CoreConfig_t * config);

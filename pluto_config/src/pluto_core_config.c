@@ -367,7 +367,7 @@ static bool PLUTO_CONFIG_ParseNodes(
     for(int i=0;i<token[0].size;++i)
     {
         jsmntok_t *object = &token[token_index];
-        if(JSMN_OBJECT != object->type || (4 != object->size))
+        if(JSMN_OBJECT != object->type) // || (4 != object->size))
         {
             PLUTO_LoggerError(
                 config->logger, 

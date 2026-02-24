@@ -12,6 +12,7 @@ extern PLUTO_Logger_t PLUTO_TEST_processor_logger;
 extern const char *PLUTO_TEST_name;
 extern PLUTO_Config_t PLUTO_TEST_config;
     
+const char *PLUTO_TEST_python_home;
 extern const char *PLUTO_TEST_python_path;
 extern const char *PLUTO_TEST_executable;
 

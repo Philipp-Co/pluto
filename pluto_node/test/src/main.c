@@ -76,5 +76,6 @@ PLUTO_Config_t PLUTO_TEST_config = NULL;
 #define PLUTO_TEST_PYTHON_EXECUTABLE "loopback"
 #endif
 
+const char *PLUTO_TEST_python_home = "";
 const char *PLUTO_TEST_python_path = PLUTO_TEST_PYTHON_PATH;
 const char *PLUTO_TEST_executable = PLUTO_TEST_PYTHON_EXECUTABLE;

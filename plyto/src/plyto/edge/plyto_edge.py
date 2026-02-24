@@ -6,7 +6,8 @@ Connect to a Node inside the Plyto Universe.
 # -------------------------------------------------------------------------------------------------
 #
 from abc import ABC, abstractmethod
-from typing import Self, Optional
+from typing import Optional
+from typing_extensions import Self
 from ctypes import create_string_buffer
 from ctypes import byref, POINTER
 from ctypes import CDLL, c_void_p, c_int, c_char_p, c_uint32
@@ -17,7 +18,7 @@ from plyto.config.plyto_node_config import PlytoNodeConfig
 from plyto.config.plyto_core_config import PlytoCoreConfig
 from typing import Set
 from json import loads
-from datetime import datetime, UTC
+from datetime import datetime
 from time import time
 
 #
@@ -95,6 +96,7 @@ class PlytoEvent:
             timestamp,
         )
         return self
+    """
 
     def set_payload(self, msg: str) -> Self:
         from ctypes import c_size_t
@@ -105,7 +107,6 @@ class PlytoEvent:
             c_size_t(len(msg)),
         )
         return self
-    """
 
     def __str__(self) -> str:
         """To String Method."""
@@ -149,7 +150,7 @@ class PlytoEdge(ABC):
                 return item
         return None
 
-    def __init__(self, node_name: str, queue_name: str, core_config: PlytoCoreConfig):
+    def __init__(self, node_name: str, ipc_home: str, queue_name: str, core_config: PlytoCoreConfig):
         """C'tor.
 
         Args:
@@ -164,7 +165,7 @@ class PlytoEdge(ABC):
         node_config: Optional[PlytoNodeConfig] = self.__find_node_by_name(node_name)
         if node_config is None:
             raise ValueError(f"Known Nodes are: {self.nodes()}")
-        path: str = f"{node_config.workdir()}"
+        path: str = f"{node_config.ipc_home()}"
 
         if (
             queue_name != node_config.name_of_input_queue()
@@ -221,7 +222,7 @@ class PlytoInputEdge(PlytoEdge):
     def send(self, msg: str, id: int, event: int) -> Self:
         event: PlytoEvent = (
             PlytoEvent.create().set_id(id).set_event_id(event)#.set_payload(msg)
-        )
+        ).set_payload(msg)
         if not self._dll.PLUTO_EDGE_EdgeSendEvent(
             self._edge,
             event.pointer(),
@@ -294,8 +295,9 @@ class PlytoEdgeFactory:
                     node_name=node_name,
                     queue_name=item.name_of_input_queue(),
                     core_config=config,
+                    ipc_home=item.ipc_home(),
                 )
-        raise ValueError
+        raise ValueError('Unable to find Node Config.')
 
     @staticmethod
     def as_output_from_node(node_name: str, queue_name: str) -> PlytoEdge:

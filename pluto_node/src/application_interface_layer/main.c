@@ -32,6 +32,7 @@ typedef struct
     char executable[4096];
 #if defined(PLUTO_CTS_RTM_PYTHON)
     char python_path[8192];
+    char python_home[8192];
 #endif
 } PLUTO_Arguments_t;
 
@@ -52,6 +53,9 @@ static int PLUTO_NodePythonCAPI_RegisterObserver(int filedescriptor);
 static int PLUTO_NodePythonCAPI_DeregisterObserver(int filedescriptor);
 static int PLUTO_NodePythonCAPI_EmitEvent(int id, int event, const char *payload, size_t nbytes);
 #endif
+
+static void PLUTO_PrintHelp(void);
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -66,6 +70,9 @@ static PLUTO_Processor_t PLUTO_processor = NULL;
 
 int main(int argc, char **argv)
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+
     int return_value = -1;
     atomic_store(&PLUTO_Terminate, 0);
     signal(SIGINT, PLUTO_SignalHandler);
@@ -74,14 +81,15 @@ int main(int argc, char **argv)
     if(!args)
     {
         printf("Uanble to allocate Memory for Arugments...\n");
-        goto end;
+        return -1;
     }
     memset(args, '\0', sizeof(*args));
     if(!PLUTO_ParseArguments(args, argc, argv))
     {
         printf("Unable to parse Arguments!\n");
+        PLUTO_PrintHelp();
         PLUTO_Free(args);
-        goto end;
+        return -1;
     }
     PLUTO_node_logger = PLUTO_CreateLogger(args->name);
 
@@ -113,6 +121,10 @@ int main(int argc, char **argv)
         PLUTO_Free(args);
         goto end;
     }
+    char *config_str_buffer = malloc(8192);
+    PLUTO_ConfigToString(config, config_str_buffer, 8192);
+    printf("%s\n", config_str_buffer);
+    free(config_str_buffer);
 
     PLUTO_LoggerInfo(PLUTO_node_logger, "Run main Program...");
     PLUTO_processor = PLUTO_CreateProcessor(
@@ -129,14 +141,13 @@ int main(int argc, char **argv)
 #endif
         PLUTO_node_logger
     );
-    PLUTO_DestroyConfig(&config);
     if(!PLUTO_processor)
     {
         PLUTO_LoggerError(PLUTO_node_logger, "Unable to create a Processor.");
         goto end;
     }
 
-
+    
 #if defined(PLUTO_CTS_RTM_PYTHON)
     // Initialize Python.
     PLUTO_PythonCAPI_t c_api = {
@@ -144,7 +155,7 @@ int main(int argc, char **argv)
         .deregister_file_observer=PLUTO_NodePythonCAPI_DeregisterObserver,
         .emit_event=PLUTO_NodePythonCAPI_EmitEvent
     };
-    if(!PLUTO_InitializePython(args->python_path, args->executable, &c_api, PLUTO_node_logger))
+    if(!PLUTO_InitializePython(config->python_home, config->python_path, args->executable, &c_api, PLUTO_node_logger))
     {
         PLUTO_LoggerError(PLUTO_node_logger, "Unable to initialize Python.");
         goto end;
@@ -154,6 +165,7 @@ int main(int argc, char **argv)
     // Initialize Shared Library.
     PLUTO_SHLIB_Initialize(args->executable);
 #endif
+    PLUTO_DestroyConfig(&config);
     while(!atomic_load(&PLUTO_Terminate))
     {
         while(PLUTO_ProcessorProcess(PLUTO_processor));
@@ -196,11 +208,12 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
     memset(args->executable, '\0', sizeof(args->executable));
 #if defined(PLUTO_CTS_RTM_PYTHON)
     memset(args->python_path, '\0', sizeof(args->python_path));
+    memset(args->python_home, '\0', sizeof(args->python_home));
 #endif
 
     int c;
 #if defined(PLUTO_CTS_RTM_PYTHON)
-    static const char *optstring = "n:c:e:p:";
+    static const char *optstring = "n:c:e:p:h:";
 #elif defined(PLUTO_CTS_RTM_SHARED_LIB)
     static const char *optstring = "n:c:e:";
 #else
@@ -216,7 +229,12 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
         {
 #if defined(PLUTO_CTS_RTM_PYTHON)
             case 'p':
+                printf("Python-Path Arg: %s\n", optarg);
                 memcpy(args->python_path, optarg, strlen(optarg));
+                break;
+            case 'h':
+                printf("Python-Home Arg: %s\n", optarg);
+                memcpy(args->python_home, optarg, strlen(optarg));
                 break;
 #endif
 #if defined(PLUTO_CTS_RTM_PYTHON) || defined(PLUTO_CTS_RTM_SHARED_LIB)
@@ -226,9 +244,11 @@ static bool PLUTO_ParseArguments(PLUTO_Arguments_t *args, int argc, char **argv)
                 break;
 #endif
             case 'n':
+                printf("Name Arg: %s\n", optarg);
                 memcpy(args->name, optarg, strlen(optarg));
                 break;
             case 'c':
+                printf("Config-Path Arg: %s\n", optarg);
                 memcpy(args->config_path, optarg, strlen(optarg));
                 break;
             default:
@@ -347,3 +367,16 @@ static int PLUTO_NodePythonCAPI_EmitEvent(int id, int event, const char *payload
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+static void PLUTO_PrintHelp(void)
+{
+    printf("pluto_node_[pt/py/sh]:\n");
+    printf("  Arguments:\n");
+    printf("    e - Executable.\n");
+    printf("    n - Name.\n");
+    printf("    c - Path to Configuration.\n");
+#if defined(PLUTO_CTS_RTM_PYTHON)
+    printf("    p - Python-Path.\n.");
+#endif
+}
+//
+// --------------------------------------------------------------------------------------------------------------------

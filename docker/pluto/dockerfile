@@ -51,7 +51,7 @@ RUN cd / && mkdir /external/ && cd /external/ && git clone https://github.com/zs
 #
 # Build the Executables...
 #
-RUN mkdir /build/ && cd /build/ && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DPLUTO_TARGET_OS=2 -DPLUTO_OS_INTERFACE=1 ../
+RUN mkdir /build/ && cd /build/ && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DPLUTO_TARGET_OS=2 -DPLUTO_OS_INTERFACE=1 ../
 RUN cd /build/ && make VERBOSE=1
 RUN cd /build/ && make install
 #
@@ -97,6 +97,7 @@ RUN apt install python3.8-venv -y
 #
 COPY --from=pluto_builder /usr/local/bin/pluto_core /usr/local/bin/
 COPY --from=pluto_builder /usr/local/bin/pluto_node_* /usr/local/bin/
+COPY --from=pluto_builder /usr/local/lib/libpluto_* /usr/local/lib/
 COPY --from=pluto_builder /pluto/ /pluto/
 #
 # Copy Venv fomr Builder...
@@ -132,10 +133,20 @@ COPY --from=pluto_builder ./pluto/ /pluto/
 # RUN plyto_connect_nodes name_0 name_1     # Connect Node name_0 with Node name_1: name_0 -> name_1
 # RUN plyto_connect_nodes name_0 name_2     # Connect Node name_0 with Node name_2: name_0 -> name_2
 
+COPY ./docker/demo/pluto_python_demo/dist/examplenode-0.0.0.tar.gz /examplenode.tar.gz
+RUN plyto_add_node_pt name_0              # Create a passthrough Node with Name "name_0"
+RUN plyto_add_node_py name_1 /examplenode.tar.gz examplenode              # Create a passthrough Node with Name "name_0"
+RUN plyto_connect_nodes name_0 name_1     # Connect Node name_0 with Node name_2: name_0 -> name_2
+
+# RUN plyto_add_node_py name_0 /examplenode.tar.gz examplenode             # Create a passthrough Node with Name "name_0"
+
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
 
+ENV PYTHONUNBUFFERED=1
+ENV PLUTO_WORKDIR='/pluto/'
+ENV PLUT_SHARED_LIBRARY_EXTENSION='so'
 #
 # Start the Container. Execute pluto_core.
 # pluto_core will start to manage pluto_nodes according to the given configuration.

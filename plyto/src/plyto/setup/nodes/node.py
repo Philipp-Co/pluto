@@ -3,6 +3,8 @@ from typing_extensions import Self
 from typing import Any
 from json import dumps, loads
 from os import makedirs
+from abc import ABC, abstractmethod
+
 
 class Node:
 
@@ -32,7 +34,15 @@ class Node:
 
     def name(self) -> str:
         return self.__name
-    
+
+    @abstractmethod
+    def executable(self) -> str:
+        pass
+
+    @abstractmethod
+    def type(self) -> str:
+        pass
+
     def workdir(self) -> str:
         return self.__workdir
     
@@ -42,7 +52,7 @@ class Node:
     def configuration_file(self) -> str:
         return f'{self.configuration_dir()}{self.name()}.cfg'
 
-    def write_configuration(self) -> Self:
+    def write_configuration(self, **kwargs) -> Self:
         #
         # Register this Node in Core...
         #
@@ -51,10 +61,13 @@ class Node:
             core_config = loads(file.read())
         core_config['nodes'].append(
             {
-                "type": "passthrough",
-                "name": self.name(),
-                "configuration-file": self.configuration_file(),
-                "executable": ""
+                **{
+                    "type": self.type(),
+                    "name": self.name(),
+                    "configuration-file": self.configuration_file(),
+                    "executable": self.executable(),
+                }, 
+                **kwargs
             }
         )
         with open(self.core_configuration_file(), 'w+') as file:

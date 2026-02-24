@@ -3,10 +3,10 @@
 #
 from os import path, makedirs
 from pathlib import Path
-from typing import Self, List, Dict
+from typing import List, Dict, Any
 from json import dumps, loads
 from logging import Logger, getLogger
-from typing import Self, Any
+from typing_extensions import Self
 from plyto.config.plyto_node_config import PlytoNodeConfig
 from plyto.config.plyto_core_config import PlytoCoreConfig
 from os import environ
@@ -22,11 +22,11 @@ class PlytoConfig:
 
     @staticmethod
     def core_config_file() -> str:
-        return "core.txt"
+        return "core.cfg"
 
     @staticmethod
     def core_config_absolut_path() -> str:
-        return f"{PlytoConfig.read_workdir()}{PlytoConfig.core_config_file()}"
+        return f"{PlytoConfig.read_workdir()}core/config/{PlytoConfig.core_config_file()}"
 
     @staticmethod
     def read_workdir() -> str:

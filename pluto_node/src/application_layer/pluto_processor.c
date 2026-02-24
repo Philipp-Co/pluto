@@ -62,7 +62,7 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
     {
         PLUTO_LoggerDebug(processor->logger, "Create Message Queue %s", config->names_of_output_queues[i]);
         processor->output_queues[i] = PLUTO_CreateMessageQueue(
-            config->base_path,
+            config->ipc_home,
             config->names_of_output_queues[i],
             PLUTO_PROC_OUTPUT_QUEUE_PERMISSIONS,
             logger
@@ -75,7 +75,7 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
         }
     }
     processor->input_queue = PLUTO_CreateMessageQueue(
-        config->base_path,
+        config->ipc_home,
         config->name_of_input_queue,
         PLUTO_PROC_INPUT_QUEUE_PERMISSIONS,
         logger

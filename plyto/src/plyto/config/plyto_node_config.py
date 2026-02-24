@@ -1,7 +1,8 @@
 """"""
 # ---------------------------------------------------------------------------------------------------------------------
 from enum import Enum
-from typing import Self, List, Any, Set
+from typing import List, Any, Set
+from typing_extensions import Self
 from plyto._internal.plyto_venv import PlytoPythonInterpreter
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -24,6 +25,7 @@ class PlytoNodeConfig:
         work_dir: str,
         name_of_input_queue: str,
         names_of_output_queues: List[str],
+        ipc_home: str,
     ):
         self.__workdir: str = work_dir
         if self.__workdir[len(self.__workdir) - 1] != "/":
@@ -31,6 +33,7 @@ class PlytoNodeConfig:
         self.__name_of_input_queue: str = name_of_input_queue
         self.__names_of_output_queues: List[str] = names_of_output_queues
         self.__name = name
+        self.__ipc_home: str = ipc_home
         self.__type: PlytoNodeType = PlytoNodeType.PASSTHROUGH
         self.__executable: str = None
         self.__python_path: str = ";".join(PlytoPythonInterpreter().python_path())
@@ -43,7 +46,11 @@ class PlytoNodeConfig:
             work_dir=content["work_dir"],
             name_of_input_queue=content["name_of_input_queue"],
             names_of_output_queues=content["names_of_output_queues"],
+            ipc_home=content["ipc_home"],
         )
+
+    def ipc_home(self) -> str:
+        return self.__ipc_home
 
     def name_of_input_queue(self) -> str:
         return self.__name_of_input_queue

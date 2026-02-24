@@ -82,6 +82,9 @@ static bool PLUTO_CORE_ParseArgs(PLUTO_CORE_Args_t *args, int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+
     PLUTO_CORE_Args_t args = {0};
     if(!PLUTO_CORE_ParseArgs(&args, argc, argv))
     {
@@ -109,9 +112,9 @@ int main(int argc, char **argv)
     sigemptyset(&sigset);
     while(!atomic_load(&PLUTO_terminate))
     {
-        //(void)sigsuspend(&sigset);
         if(!PLUTO_CoreProcess(PLUTO_core))
         {
+            PLUTO_LoggerInfo(PLUTO_core->logger, "CoreProcess has finished.");
             atomic_store(&PLUTO_terminate, 1);
         }
         sleep(1);

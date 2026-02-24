@@ -72,6 +72,7 @@ void PLUTO_TEST_PythonProcessEventWhenQueueIsNotEmpty(void)
 PLUTO_Processor_t PLUTO_TEST_PythonCreateProcessor(void)
 {
     PLUTO_InitializePython(
+        PLUTO_TEST_python_home,
         PLUTO_TEST_python_path,
         PLUTO_TEST_executable,
         NULL,
