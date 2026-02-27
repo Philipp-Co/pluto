@@ -150,6 +150,8 @@ static void PLUTO_CoreSetUp(void)
         SIGALRM,
         SIGINT,
         SIGCHLD,
+        SIGUSR1,
+        SIGUSR2
     };
     
     //

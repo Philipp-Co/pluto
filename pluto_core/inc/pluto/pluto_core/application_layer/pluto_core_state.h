@@ -40,15 +40,27 @@ typedef enum
 /// \brief  Structure of the CoreState.
 ///         initial:
 ///             The initial State.
+///             Reloading Configuration is allowed.
 ///
 ///         running:
 ///             This State indicates that everything is properly set up and running.
+///             Reloading Configuration is not allowed.
 ///
 ///         terminating:
 ///             A Termination is initiated. We are waiting for Termination of all managed Nodes.
+///             Reloading Configuration is not allowed.
 ///
 ///         terminated:
 ///             All managed Nodes have terminated. Now we are ready to be shut down.
+///             Reloading Configuration is not allowed.
+///
+///
+///
+///  -> initial <-> running ------+
+///         |                     |
+///         |                     V
+///         +-> terminated <- terminating
+///
 ///
 struct PLUTO_CoreState
 {

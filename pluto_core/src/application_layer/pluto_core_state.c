@@ -24,11 +24,13 @@
 
 int32_t PLUTO_CoreStateFindByPid(struct PLUTO_CoreState *state, pid_t pid);
 static bool PLUTO_CoreSetUpNodes(struct PLUTO_CoreState *core);
+static void PLUTO_CoreStopNodes(struct PLUTO_CoreState *core);
 static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index); 
 
 
 PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigInt(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event);
 PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event);
+PLUTO_CoreStateName_t PLUTO_CoreStateHandleStop(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event);
 PLUTO_CoreStateName_t PLUTO_CoreStateProcess(struct PLUTO_CoreState *state);
 
 
@@ -178,15 +180,18 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleInitial(struct PLUTO_CoreState
 {
     switch(event->name)
     {
+        case PLUTO_CORE_EVENT_NAME_SIGCHLD:
         case PLUTO_CORE_EVENT_NAME_TIMER_TICK:
         case PLUTO_CORE_EVENT_NAME_PROCESS:
-            PLUTO_LoggerInfo(state->logger, "[CoreState] - Starting nodes...");
+        case PLUTO_CORE_EVENT_NAME_STOP:
+            return PLUTO_CORE_STATE_NAME_INITIAL;
+        case PLUTO_CORE_EVENT_NAME_START:
+            PLUTO_LoggerInfo(state->logger, "[CoreState] - Starting Nodes...");
             if(!PLUTO_CoreSetUpNodes(state))
             {
                 PLUTO_LoggerInfo(state->logger, "[CoreState] - Transition to TERMINATED");
                 return PLUTO_CORE_STATE_NAME_TERMINATED;
             }
-
             PLUTO_LoggerInfo(state->logger, "[CoreState] - Transition to RUNNING");
             return PLUTO_CORE_STATE_NAME_RUNNING;
         default:
@@ -208,6 +213,11 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleRunning(struct PLUTO_CoreState
             return PLUTO_CoreStateHandleSigChld(state, event);
         case PLUTO_CORE_EVENT_NAME_SIG_UNKNOWN:
             return PLUTO_CORE_STATE_NAME_RUNNING;
+        case PLUTO_CORE_EVENT_NAME_STOP:
+            PLUTO_LoggerInfo(state->logger, "[CoreState] - Stopping Nodes...");
+            PLUTO_CoreStopNodes(state);
+            return PLUTO_CORE_STATE_NAME_INITIAL;
+        case PLUTO_CORE_EVENT_NAME_START:
         case PLUTO_CORE_EVENT_NAME_TIMER_TICK:
         case PLUTO_CORE_EVENT_NAME_PROCESS:
         default:
@@ -219,7 +229,7 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
 {
     int32_t index = PLUTO_CoreStateFindByPid(state, event->event.signal.pid);
     if(index >= 0)
-    {
+    { 
         int return_value = 0;
         const pid_t result = waitpid(event->event.signal.pid, &return_value, WNOHANG);
         if(result < 0)
@@ -260,7 +270,8 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
             }
         }
     }
-
+    
+    /*
     for(size_t i=0;i<state->n_nodes;++i)
     {
         PLUTO_LoggerInfo(state->logger, "[CoreState] - Node %lu accepting => %i", i, (int)PLUTO_NodeStateAccepting(&state->nodes[i]));
@@ -271,6 +282,8 @@ PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigChld(struct PLUTO_CoreState *state
     }
     PLUTO_LoggerInfo(state->logger, "[CoreState] - Terminating, because no Subprocesses to manage are left...");
     return PLUTO_CORE_STATE_NAME_TERMINATED;
+    */
+    return PLUTO_CORE_STATE_NAME_RUNNING;
 }
 
 PLUTO_CoreStateName_t PLUTO_CoreStateHandleSigInt(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event)
@@ -488,6 +501,16 @@ static void PLUTO_CoreStartNode(struct PLUTO_CoreState *core, int32_t index)
     }
 }
 
+static void PLUTO_CoreStopNodes(struct PLUTO_CoreState *core)
+{
+    for(size_t i=0;i<core->n_nodes;++i)
+    {
+        kill(core->nodes[i].pid, SIGINT);
+        waitpid(core->nodes[i].pid, NULL, 0);
+        PLUTO_NodeStateTerminated(&core->nodes[i], 0);
+    }
+}
+
 static bool PLUTO_CoreSetUpNodes(struct PLUTO_CoreState *core)
 {
     //
@@ -515,3 +538,4 @@ bool PLUTO_CoreStateAccepting(const struct PLUTO_CoreState *state)
 {
     return PLUTO_CORE_STATE_NAME_TERMINATED == state->current_state;
 }
+
