@@ -67,6 +67,13 @@ RUN cd /build/ && make install
 #
 RUN mkdir /pluto/ && mkdir /pluto/core/ && mkdir /pluto/core/config/ && mkdir /pluto/nodes/
 RUN touch /pluto/core/config/core.cfg && echo "{\"nodes\":[]}" > /pluto/core/config/core.cfg
+
+#
+# Copy HTTP Interface Code
+#
+COPY pluto_http_interface/ /pluto_http_interface/
+RUN cd pluto_http_interface/ && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements/base.txt && cd /
+
 #
 # Copy Setup Scripts...
 #
@@ -77,6 +84,9 @@ COPY ./plyto/ /plyto/
 RUN python3 -m venv .venv
 RUN . .venv/bin/activate && pip install build typing_extensions
 RUN . .venv/bin/activate && cd /plyto/ && python3 -m build --sdist && pip install dist/plyto-0.0.0.tar.gz
+
+COPY docker/pluto/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #
@@ -117,8 +127,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Copy Pluto Directories from Builder...
 #
 COPY --from=pluto_builder ./pluto/ /pluto/
-
-COPY pluto_http_interface/ /pluto_http_interface/
+COPY --from=pluto_builder ./pluto_http_interface/ /pluto_http_interface/
+COPY --from=pluto_builder ./entrypoint.sh /entrypoint.sh
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
@@ -131,7 +141,8 @@ ENV PLUT_SHARED_LIBRARY_EXTENSION='so'
 # Start the Container. Execute pluto_core.
 # pluto_core will start to manage pluto_nodes according to the given configuration.
 #
-CMD ["pluto_core", "-c", "/pluto/core/config/core.cfg"]
+# CMD ["pluto_core", "-c", "/pluto/core/config/core.cfg"]
+CMD ["./entrypoint.sh" ]
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
