@@ -1,6 +1,7 @@
 from json import loads, dumps
 from typing_extensions import Self
-from typing import Any
+from typing import Any, Optional
+from sys import stderr
 from sys import argv
 from logging import getLogger, Logger, StreamHandler, INFO, Formatter
 from argparse import ArgumentParser
@@ -83,8 +84,9 @@ class Edge:
         edge.send(payload, 0, 0)
         return self
 
-    def recv(self, src: str) -> str:
-        return ''
+    def recv(self, src: str) -> Optional[str]:
+        edge: PlytoEdge = PlytoEdgeFactory.as_output_from_node()
+        return 'Test...'
 
     pass
 
@@ -112,7 +114,7 @@ def cli():
     
     logger: Logger = getLogger(__name__)
     logger.setLevel(INFO)
-    stream_handler: StreamHandler = StreamHandler()
+    stream_handler: StreamHandler = StreamHandler(stream=stderr)
     stream_handler.setFormatter(
         Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     )
@@ -129,8 +131,8 @@ def cli():
         logger.info(
             f'Read ... from Queue "{args.name[0]}".'
         )
-        logger.info(
-            Edge(logger).recv(args.name[0])
-        )
-        return 0
+        result: Optional[str] = Edge(logger).recv(args.name[0])
+        if result:
+            print(result)
+            return 0
     return -1

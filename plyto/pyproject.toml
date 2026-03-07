@@ -28,5 +28,6 @@ Issues = "https://github.com/Philipp-Co/pluto/issues"
 [project.scripts]
 plyto_add_node_pt = "plyto.setup.plyto_add_pt_node:cli"
 plyto_add_node_py = "plyto.setup.plyto_add_py_node:cli"
+plyto_add_edge = "plyto.setup.plyto_add_edge:cli"
 plyto_connect_nodes = "plyto.setup.plyto_connect_nodes:cli"
 plyto_edge = "plyto.setup.plyto_edge:cli"
