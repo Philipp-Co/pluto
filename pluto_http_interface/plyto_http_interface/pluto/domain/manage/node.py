@@ -113,7 +113,7 @@ class Node:
             True if the connection was established successfully, False otherwise.
         """
         try:
-            run(["plyto_connect_nodes", self.__name, name], check=True)
+            run(["plyto_connect_nodes", "-s", self.__name, "-t", name, "-a"], check=True)
             return True
         except CalledProcessError as e:
             self.__logger.exception(e)
@@ -129,7 +129,7 @@ class Node:
             True if the connection was removed successfully, False otherwise.
         """
         try:
-            run(["plyto_disconnect_nodes", self.__name, name], check=True)
+            run(["plyto_connect_nodes", "-s", self.__name, "-t", name, "-r"], check=True)
             return True
         except CalledProcessError as e:
             self.__logger.exception(e)
