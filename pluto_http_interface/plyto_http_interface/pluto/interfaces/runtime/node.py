@@ -5,7 +5,7 @@ as well as the RuntimeNodeView which exposes a GET endpoint for SSE-based
 event streaming and a POST endpoint for receiving and processing node events.
 """
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
 import base64
 import json
@@ -13,24 +13,24 @@ from http import HTTPStatus
 from logging import Logger, getLogger
 from typing import Union
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.serializers import Serializer, BooleanField, IntegerField, DateTimeField, CharField
-from drf_spectacular.utils import extend_schema
 from django.http import StreamingHttpResponse
+from drf_spectacular.utils import extend_schema
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BooleanField, CharField, DateTimeField, IntegerField, Serializer
+from rest_framework.views import APIView
+
 from pluto.domain.runtime.event import NodeEvent
-from pluto.domain.runtime.events import NodeEvents, NodeEventResult, LockError
+from pluto.domain.runtime.events import LockError, NodeEventResult, NodeEvents
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+LOCK_PATH: str = "/tmp/pluto_eventstream.lock"
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------
-
-LOCK_PATH: str = '/tmp/pluto_eventstream.lock'
-
-# ----------------------------------------------------------------------------------------------------------------------------------------------
-
-
-class RuntimeNodeEventSerializer(Serializer):
+class RuntimeNodeEventSerializer(Serializer):  # pylint: disable=abstract-method
     """Deserializes an incoming node event from JSON.
 
     Fields:
@@ -40,18 +40,18 @@ class RuntimeNodeEventSerializer(Serializer):
         payload: Base64-encoded event payload. May be empty.
     """
 
-    id        = IntegerField(min_value=0, max_value=4294967295)
-    event_id  = IntegerField(min_value=0, max_value=4294967295)
-    timestamp = DateTimeField(input_formats=['iso-8601'])
-    payload   = CharField(allow_blank=True)
+    id = IntegerField(min_value=0, max_value=4294967295)
+    event_id = IntegerField(min_value=0, max_value=4294967295)
+    timestamp = DateTimeField(input_formats=["iso-8601"])
+    payload = CharField(allow_blank=True)
 
     pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
 
-class RuntimeNodeEventResultSerializer(Serializer):
+class RuntimeNodeEventResultSerializer(Serializer):  # pylint: disable=abstract-method
     """Serializes the result of a node event processing operation.
 
     Fields:
@@ -59,13 +59,13 @@ class RuntimeNodeEventResultSerializer(Serializer):
         description: Human-readable description of the outcome.
     """
 
-    result      = BooleanField()
+    result = BooleanField()
     description = CharField()
 
     pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 class RuntimeNodeView(APIView):
@@ -81,15 +81,15 @@ class RuntimeNodeView(APIView):
         pass
 
     @extend_schema(
-        description='Streams node events to the client as a server-sent event (SSE) stream.',
+        description="Streams node events to the client as a server-sent event (SSE) stream.",
         request=None,
         responses={
-            (HTTPStatus.OK.value, 'text/event-stream'): {'type': 'string'},
+            (HTTPStatus.OK.value, "text/event-stream"): {"type": "string"},
             HTTPStatus.SERVICE_UNAVAILABLE.value: RuntimeNodeEventResultSerializer,
-            HTTPStatus.INTERNAL_SERVER_ERROR.value: RuntimeNodeEventResultSerializer
-        }
+            HTTPStatus.INTERNAL_SERVER_ERROR.value: RuntimeNodeEventResultSerializer,
+        },
     )
-    def get(self, request: Request) -> Union[StreamingHttpResponse, Response]:
+    def get(self, _request: Request) -> Union[StreamingHttpResponse, Response]:
         """Streams node events to the client as a server-sent event (SSE) stream.
 
         Args:
@@ -105,24 +105,37 @@ class RuntimeNodeView(APIView):
             node_events.lock_eventstream()
             response: StreamingHttpResponse = StreamingHttpResponse(
                 node_events.stream(),
-                content_type='text/event-stream',
+                content_type="text/event-stream",
             )
-            response['Cache-Control'] = 'no-cache'
-            response['X-Accel-Buffering'] = 'no'
+            response["Cache-Control"] = "no-cache"
+            response["X-Accel-Buffering"] = "no"
             return response
-        except LockError:
-            return Response(
-                RuntimeNodeEventResultSerializer(NodeEventResult(result=False, description='Eventstream is currently locked.')).data,
-                status=HTTPStatus.SERVICE_UNAVAILABLE,
-            )
-        except Exception as e:
+        except LockError as e:
             self.__logger.exception(e)
             return Response(
-                RuntimeNodeEventResultSerializer(NodeEventResult(result=False, description='Unable to start stream.')).data,
+                RuntimeNodeEventResultSerializer(
+                    NodeEventResult(result=False, description="Eventstream is currently locked.")
+                ).data,
+                status=HTTPStatus.SERVICE_UNAVAILABLE,
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self.__logger.exception(e)
+            return Response(
+                RuntimeNodeEventResultSerializer(
+                    NodeEventResult(result=False, description="Unable to start stream.")
+                ).data,
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
 
-    @extend_schema(description='Processes an incoming node event and returns the result.', request=RuntimeNodeEventSerializer, responses={HTTPStatus.OK.value: RuntimeNodeEventResultSerializer, HTTPStatus.BAD_REQUEST.value: RuntimeNodeEventResultSerializer, HTTPStatus.INTERNAL_SERVER_ERROR.value: RuntimeNodeEventResultSerializer})
+    @extend_schema(
+        description="Processes an incoming node event and returns the result.",
+        request=RuntimeNodeEventSerializer,
+        responses={
+            HTTPStatus.OK.value: RuntimeNodeEventResultSerializer,
+            HTTPStatus.BAD_REQUEST.value: RuntimeNodeEventResultSerializer,
+            HTTPStatus.INTERNAL_SERVER_ERROR.value: RuntimeNodeEventResultSerializer,
+        },
+    )
     def post(self, request: Request) -> Response:
         """Processes an incoming node event and returns the result.
 
@@ -137,31 +150,37 @@ class RuntimeNodeView(APIView):
         try:
             if not request.body:
                 return Response(
-                    RuntimeNodeEventResultSerializer(NodeEventResult(result=False, description='Unable to parse Inputdata.')).data,
+                    RuntimeNodeEventResultSerializer(
+                        NodeEventResult(result=False, description="Unable to parse Inputdata.")
+                    ).data,
                     status=HTTPStatus.BAD_REQUEST,
                 )
             serializer: RuntimeNodeEventSerializer = RuntimeNodeEventSerializer(data=json.loads(request.body))
             if not serializer.is_valid():
                 return Response(
-                    RuntimeNodeEventResultSerializer(NodeEventResult(result=False, description='Unable to parse Inputdata.')).data,
+                    RuntimeNodeEventResultSerializer(
+                        NodeEventResult(result=False, description="Unable to parse Inputdata.")
+                    ).data,
                     status=HTTPStatus.BAD_REQUEST,
                 )
             event: NodeEvent = NodeEvent(
-                id=serializer.validated_data['id'],
-                event_id=serializer.validated_data['event_id'],
-                timestamp=serializer.validated_data['timestamp'],
-                payload=base64.b64decode(serializer.validated_data['payload']),
+                id=serializer.validated_data["id"],
+                event_id=serializer.validated_data["event_id"],
+                timestamp=serializer.validated_data["timestamp"],
+                payload=base64.b64decode(serializer.validated_data["payload"]),
             )
-            result: NodeEventResult = NodeEvents(self.__logger, LOCK_PATH).process_event(event)
+            result: NodeEventResult = NodeEvents(self.__logger, LOCK_PATH).process_event(event, "pluto_http_edge")
             return Response(RuntimeNodeEventResultSerializer(result).data)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.__logger.exception(e)
             return Response(
-                RuntimeNodeEventResultSerializer(NodeEventResult(result=False, description='Unable to parse Inputdata.')).data,
+                RuntimeNodeEventResultSerializer(
+                    NodeEventResult(result=False, description="Unable to parse Inputdata.")
+                ).data,
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
 
     pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------

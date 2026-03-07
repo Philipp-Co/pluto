@@ -50,9 +50,39 @@ paths:
           description: No response body
         '500':
           description: No response body
-  /manage/node/{name}/:
+  /manage/node/:
+    get:
+      operationId: manage_node_retrieve
+      description: Returns the current node structure including all defined nodes
+        and their connections.
+      tags:
+      - manage
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeStructure'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeStructure'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeStructure'
+          description: ''
+  /manage/node/add/{name}/:
     put:
-      operationId: manage_node_update
+      operationId: manage_node_add_update
       description: Creates a node with the given name. Requires the core process to
         be in the STOPPED state and a package archive to be present for the given
         node name. The core process can be stopped via the runtime control HTTP endpoint.
@@ -110,7 +140,7 @@ paths:
         '500':
           description: No response body
     delete:
-      operationId: manage_node_destroy
+      operationId: manage_node_add_destroy
       description: Deletes the node with the given name. Requires the core process
         to be in the STOPPED state. The core process can be stopped via the runtime
         control HTTP endpoint.
@@ -141,9 +171,9 @@ paths:
           description: ''
         '500':
           description: No response body
-  /manage/node/{name}/package/:
+  /manage/node/add/{name}/package/:
     put:
-      operationId: manage_node_package_update
+      operationId: manage_node_add_package_update
       description: Uploads a package archive for the node with the given name. The
         archive must have the file extension .tar.gz. Requires the core process to
         be in the STOPPED state. The core process can be stopped via the runtime control
@@ -196,6 +226,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ManageResponse'
+          description: ''
+        '500':
+          description: No response body
+  /manage/node/connect/:
+    put:
+      operationId: manage_node_connect_update
+      description: Connects two nodes. Requires the core process to be in the INITIAL
+        state. The core process can be stopped via the runtime control HTTP endpoint.
+      tags:
+      - manage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectNodeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConnectNodeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConnectNodeRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectNodeResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectNodeResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectNodeResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectNodeResponse'
           description: ''
         '500':
           description: No response body
@@ -418,6 +498,41 @@ paths:
           description: ''
 components:
   schemas:
+    ConnectNodeRequest:
+      type: object
+      description: |-
+        Deserializes a connect-node request.
+
+        Fields:
+            source_name: The name of the source node.
+            target_name: The name of the target node.
+      properties:
+        source_name:
+          type: string
+          maxLength: 64
+        target_name:
+          type: string
+          maxLength: 64
+      required:
+      - source_name
+      - target_name
+    ConnectNodeResponse:
+      type: object
+      description: |-
+        Serializes the result of a connect-node operation.
+
+        Fields:
+            result: Indicates whether the operation was successful.
+            description: Human-readable description of the outcome.
+      properties:
+        result:
+          type: boolean
+        description:
+          type: string
+          maxLength: 64
+      required:
+      - description
+      - result
     CoreState:
       type: object
       description: |-
@@ -459,6 +574,50 @@ components:
           maxLength: 64
       required:
       - description
+      - result
+    NodeConnection:
+      type: object
+      description: |-
+        Serializes a connection between two nodes.
+
+        Fields:
+            source: The name of the source node.
+            target: The name of the target node.
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+      required:
+      - source
+      - target
+    NodeStructure:
+      type: object
+      description: |-
+        Serializes the current node structure.
+
+        Fields:
+            result: Indicates whether the operation was successful.
+            description: Human-readable description of the outcome.
+            nodes: Names of all defined nodes.
+            connections: List of connections between nodes.
+      properties:
+        result:
+          type: boolean
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            type: string
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeConnection'
+      required:
+      - connections
+      - description
+      - nodes
       - result
     RuntimeNodeEvent:
       type: object
