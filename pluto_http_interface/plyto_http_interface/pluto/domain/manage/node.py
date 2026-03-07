@@ -67,12 +67,12 @@ class Node:
             return None
 
     def node_exists(self) -> bool:
-        """Checks whether any content already exists for this node.
+        """Checks whether a node directory already exists for this node.
 
         Returns:
-            True if the node exists, False otherwise.
+            True if the node directory exists, False otherwise.
         """
-        return False
+        return (self._nodes_directory() / self.__name).exists()
 
     def create_node(self, top_level_package_name: str) -> bool:
         """Creates the node with the given package configuration.
@@ -114,6 +114,22 @@ class Node:
         """
         try:
             run(["plyto_connect_nodes", self.__name, name], check=True)
+            return True
+        except CalledProcessError as e:
+            self.__logger.exception(e)
+            return False
+
+    def disconnect_from_node(self, name: str) -> bool:
+        """Removes the connection from this node to another node.
+
+        Args:
+            name: The name of the node to disconnect from.
+
+        Returns:
+            True if the connection was removed successfully, False otherwise.
+        """
+        try:
+            run(["plyto_disconnect_nodes", self.__name, name], check=True)
             return True
         except CalledProcessError as e:
             self.__logger.exception(e)

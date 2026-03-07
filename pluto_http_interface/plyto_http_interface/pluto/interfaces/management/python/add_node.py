@@ -149,7 +149,7 @@ class AddNodeView(PlutoManageAPIView):
             if DomainNode(name, self._logger).node_exists():
                 return Response(
                     status=HTTPStatus.OK,
-                    data={"result": True, "description": "Node created."},
+                    data={"result": False, "description": "Node already exists."},
                 )
             if not DomainNode(name, self._logger).archive_exists():
                 return Response(

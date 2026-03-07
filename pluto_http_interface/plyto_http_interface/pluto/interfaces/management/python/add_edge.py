@@ -64,6 +64,11 @@ class AddEdgeView(PlutoManageAPIView):  # pylint: disable=abstract-method
         """
         name: str = kwargs["name"]
         try:
+            if not DomainNode(name, self._logger).node_exists():
+                return Response(
+                    status=HTTPStatus.OK,
+                    data={"result": False, "description": "Node not found."},
+                )
             edge: str = settings.PLUTO_EDGE_NAME
             if not DomainNode(name, self._logger).add_edge(edge):
                 return Response(
