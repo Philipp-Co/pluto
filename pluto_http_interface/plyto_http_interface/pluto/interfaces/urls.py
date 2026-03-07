@@ -12,6 +12,8 @@ from pluto.interfaces.management.python.structure import NodeStructureView
 from pluto.interfaces.management.runtime import RuntimeControlView
 from pluto.interfaces.runtime.node import RuntimeNodeView
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 urlpatterns = [
     path("manage/node/add/<str:name>/", AddNodeView.as_view()),
     path("manage/node/add/<str:name>/package/", UploadArchive.as_view()),

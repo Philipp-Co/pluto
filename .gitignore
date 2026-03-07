@@ -193,6 +193,9 @@ pip-selfcheck.json
 plyto/main.py
 plyto/emain.py
 
+# Claude Code
+.claude/
+
 .cache/
 build/
 external/

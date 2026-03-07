@@ -1,9 +1,9 @@
 """Domain logic for node event streaming and processing.
 
 Provides the NodeEvents class for managing a continuous SSE event stream,
-including lock-based access control via flock, periodic status events,
-and processing of incoming node events. Also defines NodeEventResult,
-NodeStatusPayload, LockError, and related constants and enumerations.
+including lock-based access control via flock and processing of incoming
+node events. Also defines NodeEventResult, LockError, and related constants
+and enumerations.
 """
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -11,14 +11,12 @@ NodeStatusPayload, LockError, and related constants and enumerations.
 import base64
 import fcntl
 import json
-import time
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass
 from enum import IntEnum
 from logging import Logger
 from pathlib import Path
 from subprocess import CalledProcessError, run
-from typing import Generator, List, Optional
+from typing import Generator, List
 
 from pluto.domain.runtime.event import NodeEvent
 
@@ -48,29 +46,11 @@ STATUS_INTERVAL_SECONDS: float = 5.0
 
 
 @dataclass
-class NodeStatusPayload:
-    """Payload of a periodic node status event.
-
-    Attributes:
-        active: Indicates whether the node is currently active.
-        suspicious: Indicates whether the node has been flagged as suspicious.
-    """
-
-    active: bool
-    suspicious: bool
-
-    pass
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-@dataclass
 class NodeEventResult:
     """Result of a node event processing operation.
 
     Attributes:
-        result: Indicates whether the processing was successful.
+        result:      Indicates whether the processing was successful.
         description: Human-readable description of the outcome.
     """
 
@@ -95,25 +75,31 @@ class LockError(Exception):
 class NodeEvents:
     """Manages the node event stream and processes incoming node events.
 
-    Provides a synchronous SSE generator that emits node events and periodic
-    status events. Access to the stream is controlled via an exclusive flock
+    Provides a synchronous SSE generator that emits node events from the
+    queue file. Access to the stream is controlled via an exclusive flock
     on a lock file. Incoming events are processed via process_event.
     """
 
     def __init__(self, logger: Logger, lock_path: str) -> None:
+        """Initializes NodeEvents with the given logger and lock file path.
+
+        Args:
+            logger:    The logger instance used for logging.
+            lock_path: Path to the file used for exclusive stream locking.
+        """
         self.__running: bool = True
-        self.__last_status_at: Optional[float] = None
         self.__logger: Logger = logger.getChild(self.__class__.__name__)
         self.__lock_file = open(lock_path, "w", encoding="utf-8")  # pylint: disable=consider-using-with
         pass
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """Closes the lock file when the object is garbage collected."""
         self.__logger.info("Destroy NodeEvents Object!")
         self.__lock_file.close()
         pass
 
     def lock_eventstream(self) -> None:
-        """Acquires an exclusive non-blocking flock on the lock file.
+        """Acquires an exclusive non-blocking lock on the event stream.
 
         Raises:
             LockError: If the lock cannot be acquired.
@@ -124,11 +110,17 @@ class NodeEvents:
             raise LockError("Failed to acquire eventstream lock.") from e
 
     def unlock_eventstream(self) -> None:
-        """Releases the flock on the lock file."""
+        """Releases the exclusive lock on the event stream."""
         self.__logger.info("Unlock Eventstream...")
         fcntl.flock(self.__lock_file, fcntl.LOCK_UN)
 
     def __get_event(self) -> List[str]:
+        """Reads and clears all pending events from the queue file.
+
+        Returns:
+            A list of raw event strings read from the queue file,
+            or an empty list if the file is unavailable or locked.
+        """
         path: Path = Path("/pluto/nodes/http_edge/queue")
         try:
             if not path.exists():
@@ -142,29 +134,16 @@ class NodeEvents:
                 file.flush()
                 fcntl.flock(file, fcntl.LOCK_UN)
             return lines
-        except OSError as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.__logger.exception(e)
             return []
-
-    def __get_status(self) -> NodeEvent:
-        status: NodeStatusPayload = NodeStatusPayload(
-            active=True,
-            suspicious=False,
-        )
-        payload: bytes = json.dumps(asdict(status), separators=(",", ":")).encode("utf-8")
-        return NodeEvent(
-            id=GENERIC_ID,
-            event_id=RuntimeNodeEventId.STATUS.value,
-            timestamp=datetime.now(timezone.utc),
-            payload=payload,
-        )
 
     def process_event(self, event: NodeEvent, name: str) -> NodeEventResult:
         """Processes a node event and returns the result.
 
         Args:
             event: The node event to process.
-            name: The edge name passed to plyto_edge via -n.
+            name:  The edge name passed to plyto_edge via -n.
 
         Returns:
             A NodeEventResult containing the processing outcome and a description.
@@ -186,7 +165,7 @@ class NodeEvents:
                             "payload": event.payload.decode(),
                         }
                     )
-                    + "'",  # base64.b64encode(event.payload).decode('utf-8')
+                    + "'",
                 ],
                 check=True,
             )
@@ -198,33 +177,22 @@ class NodeEvents:
     def stream(self) -> Generator[str, None, None]:
         """Yields a continuous stream of JSON-serialized node events.
 
-        Emits available node events on each iteration and sends a periodic
-        status event at the interval defined by STATUS_INTERVAL_SECONDS.
-        Terminates with a final close event when the loop ends or an error
-        occurs. Releases the eventstream lock upon completion.
+        Emits available node events on each iteration. Sends a keepalive
+        comment when no events are available. Releases the eventstream
+        lock upon completion.
 
         Yields:
-            JSON-serialized node event strings, each terminated with a
-            double newline as required by the SSE protocol.
+            JSON-serialized node event strings or SSE keepalive comments,
+            each terminated with a double newline as required by the SSE protocol.
         """
         try:
             while self.__running:
-                yielded: bool = False
-
-                now: float = time.monotonic()
-                if self.__last_status_at is None or now - self.__last_status_at >= STATUS_INTERVAL_SECONDS:
-                    status: NodeEvent = self.__get_status()
-                    yield NodeEvents.to_json(status, status.payload) + "\n\n"
-                    self.__last_status_at = now
-                    yielded = True
-
                 events: List[str] = self.__get_event()
-                for element in events:
-                    yield element + "\n\n"
-                    yielded = True
-
-                if not yielded:
+                if len(events) == 0:
                     yield ": keepalive\n\n"
+                else:
+                    for element in events:
+                        yield element + "\n\n"
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.__logger.exception(e)
         finally:
@@ -232,14 +200,14 @@ class NodeEvents:
 
     @staticmethod
     def to_json(event: NodeEvent, payload: bytes) -> str:
-        """Serializes a node event and its payload to a JSON string.
+        """Serializes a node event and its payload to a compact JSON string.
 
         Args:
             event:   The node event to serialize.
-            payload: The raw binary payload to include base64-encoded.
+            payload: The raw binary payload to base64-encode.
 
         Returns:
-            A compact JSON string representing the event.
+            A compact JSON string representation of the event.
         """
         return json.dumps(
             {

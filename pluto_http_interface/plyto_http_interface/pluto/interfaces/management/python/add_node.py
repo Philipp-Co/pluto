@@ -85,7 +85,7 @@ class UploadArchiveRequestSerializer(Serializer):  # pylint: disable=abstract-me
 @extend_schema_view(
     put=extend_schema(
         description=(
-            "Creates a node with the given name. Requires the core process to be in the STOPPED state "
+            "Creates a node with the given name. Requires the core process to be in the INITIAL state "
             "and a package archive to be present for the given node name. The core process can be stopped "
             "via the runtime control HTTP endpoint."
         ),
@@ -101,7 +101,7 @@ class UploadArchiveRequestSerializer(Serializer):  # pylint: disable=abstract-me
     ),
     delete=extend_schema(
         description=(
-            "Deletes the node with the given name. Requires the core process to be in the STOPPED state. "
+            "Deletes the node with the given name. Requires the core process to be in the INITIAL state. "
             "The core process can be stopped via the runtime control HTTP endpoint."
         ),
         request=None,
@@ -118,7 +118,7 @@ class AddNodeView(PlutoManageAPIView):
     def handle_put(self, request: Request, **kwargs) -> Response:  # pylint: disable=too-many-return-statements
         """Creates a node with the given name.
 
-        Requires the core process to be in the STOPPED state and a package
+        Requires the core process to be in the INITIAL state and a package
         archive to be present for the given node name. The core process can be
         stopped via the RuntimeControlView.
 
@@ -174,7 +174,7 @@ class AddNodeView(PlutoManageAPIView):
     def handle_delete(self, request: Request, **kwargs) -> Response:  # pylint: disable=unused-argument
         """Deletes the node with the given name.
 
-        Requires the core process to be in the STOPPED state. The core process
+        Requires the core process to be in the INITIAL state. The core process
         can be stopped via the RuntimeControlView.
 
         Args:
@@ -208,7 +208,7 @@ class AddNodeView(PlutoManageAPIView):
     put=extend_schema(
         description=(
             "Uploads a package archive for the node with the given name. The archive must have the file "
-            "extension .tar.gz. Requires the core process to be in the STOPPED state. The core process "
+            "extension .tar.gz. Requires the core process to be in the INITIAL state. The core process "
             "can be stopped via the runtime control HTTP endpoint."
         ),
         request=UploadArchiveRequestSerializer,

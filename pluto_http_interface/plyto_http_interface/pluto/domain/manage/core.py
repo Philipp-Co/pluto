@@ -25,8 +25,7 @@ class CoreState(Enum):
 
     Attributes:
         UNKNOWN:     The state could not be determined.
-        INITIAL:     The initial state before any operation has been performed.
-        STOPPED:     The process has been stopped.
+        INITIAL:     The initial state; also reached again after the process has been stopped.
         RUNNING:     The process is currently running.
         TERMINATING: The process is in the process of terminating.
         TERMINATED:  The process has fully terminated.
