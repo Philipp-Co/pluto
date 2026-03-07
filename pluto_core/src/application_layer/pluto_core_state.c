@@ -8,15 +8,17 @@
 #include <pluto/os_abstraction/pluto_malloc.h>
 #include <pluto/pluto_core/data_layer/application_return_codes.h>
 
+#include <stdio.h>
 #include <sys/wait.h>
 #include <assert.h>
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -38,6 +40,8 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleInitial(struct PLUTO_CoreState
 static PLUTO_CoreStateName_t PLUTO_CoreStateHandleRunning(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event);
 static PLUTO_CoreStateName_t PLUTO_CoreStateHandleTerminating(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event);
 static PLUTO_CoreStateName_t PLUTO_CoreStateHandleTerminated(struct PLUTO_CoreState *state, const PLUTO_CoreStateEvent_t *event);
+
+static void PLUTO_CoreStateWriteState(struct PLUTO_CoreState *state);
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -167,9 +171,11 @@ bool PLUTO_CoreStateDispatchEvent(struct PLUTO_CoreState *state, PLUTO_CoreState
         default:
             PLUTO_LoggerInfo(state->logger, "[CoreState] - Accepting...");
             state->current_state = PLUTO_CoreStateHandleTerminated(state, event);
+            PLUTO_CoreStateWriteState(state);
             return true; 
     }
     //PLUTO_LoggerInfo(state->logger, "[CoreState] - Continue...");
+    PLUTO_CoreStateWriteState(state);
     return false;
 }
 //
@@ -539,3 +545,56 @@ bool PLUTO_CoreStateAccepting(const struct PLUTO_CoreState *state)
     return PLUTO_CORE_STATE_NAME_TERMINATED == state->current_state;
 }
 
+#include <sys/file.h>
+static void PLUTO_CoreStateWriteState(struct PLUTO_CoreState *state)
+{
+    FILE *state_file_descriptor = fopen("/pluto/core/state.pluto_state", "w+");
+    int result = flock(fileno(state_file_descriptor), LOCK_EX | LOCK_NB);
+    if(0 == result)
+    {
+        //
+        // File locked! Proceed.
+        //
+        static const char* state_names[] = {
+            "UNKNOWN\0",
+            "INITIAL\0",
+            "RUNNING\0",
+            "TERMINATING\0",
+            "TERMINATED\0"
+        };
+        int index = 0;
+        switch(state->current_state)
+        {
+            case PLUTO_CORE_STATE_NAME_INITIAL:
+                index = 1;
+                break;
+            case PLUTO_CORE_STATE_NAME_RUNNING:
+                index = 2;
+                break;
+            case PLUTO_CORE_STATE_NAME_TERMINATING:
+                index = 3;
+                break;
+            case PLUTO_CORE_STATE_NAME_TERMINATED:
+                index = 4;
+                break;
+            default:
+                break;
+        }
+        const size_t fwrite_result = fwrite(state_names[index], strlen(state_names[index]) + 1, 1, state_file_descriptor);
+        if(fwrite_result != 1)
+        {
+            char *str = strerror(errno);
+            PLUTO_LoggerWarning(
+                state->logger,
+                "Unable to write State to the Statefile with FILE* = %p, result was %lu expected %lu... %s",
+                state_file_descriptor,
+                fwrite_result,
+                1,
+                str
+            );
+        }
+        fflush(state_file_descriptor);
+        (void)flock(fileno(state_file_descriptor), LOCK_UN);
+        fclose(state_file_descriptor);
+    }
+}

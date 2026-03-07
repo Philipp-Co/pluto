@@ -74,6 +74,9 @@ RUN touch /pluto/core/config/core.cfg && echo "{\"nodes\":[]}" > /pluto/core/con
 COPY pluto_http_interface/ /pluto_http_interface/
 RUN cd pluto_http_interface/ && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements/base.txt && cd /
 
+COPY pluto_internal_nodes/pluto_http_edge/ /pluto_internal_nodes/pluto_http_edge/
+RUN cd /pluto_internal_nodes/pluto_http_edge/ && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && python -m build --sdist
+
 #
 # Copy Setup Scripts...
 #
@@ -110,6 +113,8 @@ RUN apt-get install python3.8-dev -y
 RUN apt-get install python3-pip -y
 RUN apt install python3.8-venv -y
 
+RUN apt-get install curl -y
+
 #
 # Copy Executables from Builder...
 #
@@ -128,6 +133,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 #
 COPY --from=pluto_builder ./pluto/ /pluto/
 COPY --from=pluto_builder ./pluto_http_interface/ /pluto_http_interface/
+COPY --from=pluto_builder ./pluto_internal_nodes/pluto_http_edge/dist/plutohttpinternalnode-0.0.0.tar.gz /pluto/plutohttpinternalnode.tar.gz
+RUN plyto_add_node_py pluto_http_edge /pluto/plutohttpinternalnode.tar.gz pluto_http_edge    # Create a passthrough Node with Name "name_0"
 COPY --from=pluto_builder ./entrypoint.sh /entrypoint.sh
 
 #
@@ -137,6 +144,7 @@ COPY --from=pluto_builder ./entrypoint.sh /entrypoint.sh
 ENV PYTHONUNBUFFERED=1
 ENV PLUTO_WORKDIR='/pluto/'
 ENV PLUT_SHARED_LIBRARY_EXTENSION='so'
+ENV PLUTO_EDGE_NAME='external_oq'
 #
 # Start the Container. Execute pluto_core.
 # pluto_core will start to manage pluto_nodes according to the given configuration.
@@ -155,11 +163,11 @@ CMD ["./entrypoint.sh" ]
 # from pluto_runtime:latest
 # 
 # # Copy Stuff over...
-COPY ./docker/demo/pluto_python_demo/dist/examplenode-0.0.0.tar.gz /examplenode.tar.gz
+# COPY ./docker/demo/pluto_python_demo/dist/examplenode-0.0.0.tar.gz /examplenode.tar.gz
 # # Add and connect Nodes.
-RUN plyto_add_node_pt name_0                                    # Create a passthrough Node with Name "name_0"
-RUN plyto_add_node_py name_1 /examplenode.tar.gz examplenode    # Create a passthrough Node with Name "name_0"
-RUN plyto_connect_nodes name_0 name_1                           # Connect Node name_0 with Node name_1: name_0 -> name_1
+# RUN plyto_add_node_pt name_0                                    # Create a passthrough Node with Name "name_0"
+# RUN plyto_add_node_py name_1 /examplenode.tar.gz examplenode    # Create a passthrough Node with Name "name_0"
+# RUN plyto_connect_nodes name_0 name_1                           # Connect Node name_0 with Node name_1: name_0 -> name_1
 
 #
 # ---------------------------------------------------------------------------------------------------------------------
