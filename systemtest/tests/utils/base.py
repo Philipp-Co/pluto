@@ -23,7 +23,7 @@ class PlutoSystemtestBase(TestCase):
 
     def setUp(self) -> None:
         """Starts the Docker container and waits until it is healthy."""
-        subprocess_run(['docker-compose', 'down'], check=True)
+        subprocess_run(['docker-compose', 'down', '-t', '0'], check=True)
         subprocess_run(['docker-compose', 'up', '-d'], check=True)
         self._wait_for_healthy()
         self._management: PlutoManagementClient = PlutoManagementClient(BASE_URL)

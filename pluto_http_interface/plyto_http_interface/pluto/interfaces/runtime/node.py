@@ -34,16 +34,18 @@ class RuntimeNodeEventSerializer(Serializer):  # pylint: disable=abstract-method
     """Deserializes an incoming node event from JSON.
 
     Fields:
-        id: Unique identifier of the node (0–4294967295).
-        event_id: Identifier of the event type (0–4294967295).
-        timestamp: ISO 8601 formatted timestamp of the event.
-        payload: Base64-encoded event payload. May be empty.
+        id:               Unique identifier of the node (0–4294967295).
+        event_id:         Identifier of the event type (0–4294967295).
+        timestamp:        ISO 8601 formatted timestamp of the event.
+        payload:          Base64-encoded event payload. May be empty.
+        target_node_name: The name of the target node.
     """
 
     id = IntegerField(min_value=0, max_value=4294967295)
     event_id = IntegerField(min_value=0, max_value=4294967295)
     timestamp = DateTimeField(input_formats=["iso-8601"])
     payload = CharField(allow_blank=True)
+    target_node_name = CharField(max_length=64)
 
     pass
 
@@ -169,7 +171,10 @@ class RuntimeNodeView(APIView):
                 timestamp=serializer.validated_data["timestamp"],
                 payload=base64.b64decode(serializer.validated_data["payload"]),
             )
-            result: NodeEventResult = NodeEvents(self.__logger, LOCK_PATH).process_event(event, "pluto_http_edge")
+            result: NodeEventResult = NodeEvents(self.__logger, LOCK_PATH).process_event(
+                event,
+                serializer.validated_data["target_node_name"],
+            )
             return Response(RuntimeNodeEventResultSerializer(result).data)
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.__logger.exception(e)

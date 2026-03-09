@@ -46,11 +46,9 @@ class PlutoNode:
 
     def setup(self, *args, **kwargs):
         self.setupDirectory()
-        self.write(b'Hello World!')
         pass
 
     def teardown(self, *args, **kwargs):
-        self.write(b'Bye Bye.')
         pass
 
     def run(self, id: int, event: int, number_of_output_queues: int, payload: str) -> str:

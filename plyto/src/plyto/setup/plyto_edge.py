@@ -42,6 +42,18 @@ class Parser:
             action='store_true',
             help='List all available Queues.'
         )
+        self.__parser.add_argument(
+            '-i',
+            '--id',
+            nargs=1,
+            default=0,
+        )
+        self.__parser.add_argument(
+            '-e',
+            '--event-id',
+            nargs=1,
+            default=0,
+        )
         pass
 
     def parse(self, argv) -> Any:
@@ -79,9 +91,9 @@ class Edge:
             )
         return self
     
-    def send(self, dest: str, payload: str) -> Self:
+    def send(self, dest: str, id: int, event_id: int, payload: str) -> Self:
         edge: PlytoEdge = PlytoEdgeFactory.as_input_to_node(dest)
-        edge.send(payload, 0, 0)
+        edge.send(payload, id, event_id)
         return self
 
     def recv(self, src: str) -> Optional[str]:
@@ -124,7 +136,12 @@ def cli():
         logger.info(
             f'Write "{args.payload[0]}" to Queue "{args.name[0]}".'
         )
-        Edge(logger).send(args.name[0], args.payload[0])
+        Edge(logger).send(
+            args.name[0], 
+            int(args.id[0]),
+            int(args.event_id[0]),
+            args.payload[0],
+        )
         return 0
     
     if args.read:

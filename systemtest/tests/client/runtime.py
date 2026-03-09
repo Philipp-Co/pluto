@@ -24,14 +24,15 @@ class PlutoRuntimeClient:
         self._base_url: str = base_url
         pass
 
-    def process_event(self, node_id: int, event_id: int, timestamp: str, payload: str) -> Response:
+    def process_event(self, node_id: int, event_id: int, timestamp: str, payload: str, target_node_name: str) -> Response:
         """Processes an incoming node event.
 
         Args:
-            node_id:   Unique identifier of the node (0–4294967295).
-            event_id:  Identifier of the event type (0–4294967295).
-            timestamp: ISO 8601 formatted timestamp of the event.
-            payload:   Base64-encoded event payload (may be empty).
+            node_id:          Unique identifier of the node (0–4294967295).
+            event_id:         Identifier of the event type (0–4294967295).
+            timestamp:        ISO 8601 formatted timestamp of the event.
+            payload:          Base64-encoded event payload (may be empty).
+            target_node_name: The name of the target node.
 
         Returns:
             The HTTP response. On success (200), the body contains a RuntimeNodeEventResult JSON object.
@@ -43,6 +44,7 @@ class PlutoRuntimeClient:
                 'event_id': event_id,
                 'timestamp': timestamp,
                 'payload': payload,
+                'target_node_name': target_node_name,
             },
         )
 

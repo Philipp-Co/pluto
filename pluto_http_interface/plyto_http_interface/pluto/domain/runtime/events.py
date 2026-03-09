@@ -155,6 +155,10 @@ class NodeEvents:
                     "-n",
                     name,
                     "-w",
+                    "-i",
+                    str(event.id),
+                    "-e",
+                    str(event.event_id),
                     "-p",
                     "'"
                     + json.dumps(
