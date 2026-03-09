@@ -95,6 +95,17 @@ class Node:
         with open(self.core_configuration_file(), 'w+') as file:
             file.write(f'{dumps(core_config)}\n')
         
+        for node_config_path in core_config['nodes']:
+
+            content = {}
+            with open(node_config_path['configuration-file'], 'r') as node_config_file:
+                content = loads(node_config_file.read())
+                if f'{self.name()}_iq' in content['names_of_output_queues']:
+                    content['names_of_output_queues'].remove(f'{self.name()}_iq')
+
+            with open(node_config_path['configuration-file'], 'w') as node_config_file:
+                node_config_file.write(dumps(content))
+
         from shutil import rmtree
         rmtree(self.workdir())
         return self

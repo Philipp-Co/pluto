@@ -108,6 +108,7 @@ class UploadArchiveRequestSerializer(Serializer):  # pylint: disable=abstract-me
         responses={
             HTTPStatus.OK.value: ManageResponseSerializer,
             HTTPStatus.CONFLICT.value: ManageResponseSerializer,
+            HTTPStatus.SERVICE_UNAVAILABLE.value: ManageResponseSerializer,
             HTTPStatus.INTERNAL_SERVER_ERROR.value: None,
         },
     ),
@@ -183,16 +184,20 @@ class AddNodeView(PlutoManageAPIView):
 
         Returns:
             A Response containing the serialized ManageResponse.
+            Returns HTTP 503 if the node could not be removed.
             Returns HTTP 500 if an unexpected error occurs.
         """
         name: str = kwargs["name"]
         try:
+            if not DomainNode(name, self._logger).remove_node():
+                return Response(
+                    status=HTTPStatus.SERVICE_UNAVAILABLE,
+                    data={"result": False, "description": "Failed to remove node."},
+                )
             DomainNode(name, self._logger).archive_delete()
             return Response(
-                {
-                    "result": True,
-                    "description": "Node deleted.",
-                }
+                status=HTTPStatus.OK,
+                data={"result": True, "description": "Node removed."},
             )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self._logger.exception(e)

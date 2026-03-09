@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^pluto_http_interface/
+      - id: end-of-file-fixer
+        files: ^pluto_http_interface/
+      - id: check-yaml
+        files: ^pluto_http_interface/
+      - id: check-added-large-files
+        files: ^pluto_http_interface/
+
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        args: ["--line-length", "120"]
+        files: ^pluto_http_interface/
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--line-length", "120"]
+        files: ^pluto_http_interface/
+
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.3.0
+    hooks:
+      - id: pylint
+        args: ["--max-line-length=120", "--disable=unnecessary-pass,duplicate-code"]
+        files: ^pluto_http_interface/
+        additional_dependencies:
+          - django
+          - djangorestframework
+          - drf-spectacular
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.0
+    hooks:
+      - id: mypy
+        files: ^pluto_http_interface/
+        additional_dependencies:
+          - django-stubs
+          - djangorestframework-stubs

@@ -107,6 +107,27 @@ class Node:
             self.__logger.exception(e)
             return False
 
+    def remove_node(self) -> bool:
+        """Removes the node from the system.
+
+        Returns:
+            True if the node was removed successfully, False otherwise.
+        """
+        try:
+            run(
+                [
+                    "plyto_add_node_py",
+                    "-r",
+                    "-n",
+                    self.__name,
+                ],
+                check=True,
+            )
+            return True
+        except CalledProcessError as e:
+            self.__logger.exception(e)
+            return False
+
     def connect_to_node(self, name: str) -> bool:
         """Connects this node to another node.
 
