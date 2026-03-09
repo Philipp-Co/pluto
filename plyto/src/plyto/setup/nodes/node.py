@@ -2,7 +2,7 @@ from logging import Logger
 from typing_extensions import Self
 from typing import Any
 from json import dumps, loads
-from os import makedirs
+from os import makedirs, removedirs
 from abc import ABC, abstractmethod
 
 
@@ -85,6 +85,18 @@ class Node:
 
     def set_configuration(self, serializable) -> Self:
         self.__configuration = serializable
+        return self
+
+    def remove_node(self) -> Self:
+        core_config = {}
+        with open(self.core_configuration_file(), 'r') as file:
+            core_config = loads(file.read())
+        core_config['nodes'] = [node for node in core_config['nodes'] if node['name'] != self.name()]
+        with open(self.core_configuration_file(), 'w+') as file:
+            file.write(f'{dumps(core_config)}\n')
+        
+        from shutil import rmtree
+        rmtree(self.workdir())
         return self
 
     pass

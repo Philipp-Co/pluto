@@ -67,6 +67,9 @@ class PlytoNode(IManaged):
         self.__workdir = workdir
         return self
 
+    def workdir(self) -> str:
+        return self.__workdir
+
     def name_of_input_queue(self) -> str:
         """Get the Name of this Nodes Inputqueue."""
         return self.__name_of_input_queue

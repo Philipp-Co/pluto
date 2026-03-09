@@ -134,7 +134,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY --from=pluto_builder ./pluto/ /pluto/
 COPY --from=pluto_builder ./pluto_http_interface/ /pluto_http_interface/
 COPY --from=pluto_builder ./pluto_internal_nodes/pluto_http_edge/dist/plutohttpinternalnode-0.0.0.tar.gz /pluto/plutohttpinternalnode.tar.gz
-RUN plyto_add_node_py pluto_http_edge /pluto/plutohttpinternalnode.tar.gz pluto_http_edge    # Create a passthrough Node with Name "name_0"
+RUN plyto_add_node_py -a -n pluto_http_edge -i /pluto/plutohttpinternalnode.tar.gz -p pluto_http_edge    # Create a passthrough Node with Name "name_0"
 COPY --from=pluto_builder ./entrypoint.sh /entrypoint.sh
 
 #

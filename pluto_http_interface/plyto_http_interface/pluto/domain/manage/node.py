@@ -92,8 +92,12 @@ class Node:
             run(
                 [
                     "plyto_add_node_py",
+                    "-a",
+                    "-n",
                     self.__name,
+                    "-i",
                     str(self._temp_archive_file()),
+                    "-p",
                     top_level_package_name,
                 ],
                 check=True,

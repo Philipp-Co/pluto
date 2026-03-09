@@ -20,6 +20,10 @@ class IManaged(ABC):
     @abstractmethod
     def set_workdir(self, dirname: str) -> Self:
         pass
+    
+    @abstractmethod
+    def workdir(self) -> str:
+        pass
 
     @abstractmethod
     def name(self) -> str:
@@ -44,7 +48,13 @@ class PlytoCore:
         self.__workdir: str = workdir
         self.__nodes: Dict[str, IManaged] = {}
         pass
-    
+
+    def remove(self, node: IManaged) -> Self:
+        nodes: Dict[str, IManaged] = self.nodes()
+        if node.name() in nodes:
+            del nodes[node.name()]
+        return self
+
     def add(self, node: IManaged) -> Self:
         """Add a Node to this Core Object.
 

@@ -99,7 +99,7 @@ class PythonNode(Node):
     
     def type(self) -> str:
         return 'python'
-    
+
     def create_empty_config(self) -> Self:
         super().set_configuration(
             {
