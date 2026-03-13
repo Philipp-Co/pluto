@@ -26,12 +26,12 @@ docker-compose build
 
 2. Tests ausführen (startet und stoppt den Container automatisch):
 ```bash
-python run_tests.py
+python -m unittest discover -s tests/
 ```
 
 Der Port der Anwendung ist standardmäßig `10000` und entspricht der Portweiterleitung
 in `docker-compose.yml`. Er kann über die Umgebungsvariable `PLUTO_HTTP_PORT` überschrieben
 werden:
 ```bash
-PLUTO_HTTP_PORT=10000 python run_tests.py
+PLUTO_HTTP_PORT=10000 python -m unittest discover -s tests/
 ```

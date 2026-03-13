@@ -19,7 +19,7 @@ Standardport: `10000` (konfigurierbar über die Umgebungsvariable `PLUTO_HTTP_PO
 
 Tests starten mit:
 ```bash
-python run_tests.py
+python -m unittest discover -s tests/
 ```
 
 ## Architektur
