@@ -193,6 +193,10 @@ pip-selfcheck.json
 plyto/main.py
 plyto/emain.py
 
+# Benchmark
+benchmark/results/
+benchmark/reports/
+
 # Claude Code
 .claude/
 

@@ -2,7 +2,7 @@ services:
   pluto:
     image: pluto
     build:
-      context: ..
+      context: .
       dockerfile: docker/pluto/dockerfile
     ports:
       - "10000:8000"
