@@ -43,14 +43,57 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleTerminated(struct PLUTO_CoreSt
 
 static void PLUTO_CoreStateWriteState(struct PLUTO_CoreState *state);
 
+static void PLUTO_CoreStateUpdateConfig(struct PLUTO_CoreState *state);
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t config, const char *binary_directory, PLUTO_CoreRegister_t core_register, PLUTO_Logger_t logger)
+static void PLUTO_CoreStateUpdateConfig(struct PLUTO_CoreState *state)
+{
+    PLUTO_LoggerInfo(state->logger, "Update Config! Read %s", state->config_path);
+    if(NULL != state->config)
+    {
+        PLUTO_DestroyCoreConfig(&state->config);
+    }
+    state->config = (PLUTO_CoreConfig_t)malloc(sizeof(PLUTO_CoreConfig_t));
+    state->config = PLUTO_CreateCoreConfig(state->config_path, state->logger);
+    
+    //
+    // Delete old Nodes.
+    //
+    for(size_t i=0;i<state->n_nodes;++i)
+    {
+        PLUTO_DestroyNodeState(&state->nodes[i]);
+    }
+    PLUTO_Free(state->nodes);
+
+    //
+    // Create new Nodes.
+    //
+    PLUTO_LoggerInfo(
+        state->logger, "Create %lu new Nodes!", PLUTO_CoreConfigNumberOfNodes(state->config)
+    );
+    state->n_nodes = PLUTO_CoreConfigNumberOfNodes(state->config);
+    state->nodes = PLUTO_Malloc(state->n_nodes * sizeof(struct PLUTO_NodeState));
+    for(size_t i=0;i<state->n_nodes;++i)
+    {
+        struct PLUTO_NodeStateData data = {
+            .core_register = state->core_register,
+            .index = i
+        };
+        state->nodes[i] = PLUTO_NodeState(
+            state->config->configurations[i],
+            state->logger,
+            data 
+        );
+    }
+}
+
+struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, const char* config_path, const char *binary_directory, PLUTO_CoreRegister_t core_register, PLUTO_Logger_t logger)
 {
     struct PLUTO_CoreState state = {
-        .config = config,
+        .config = NULL,
+        .config_path = malloc(1024),
         .current_state = PLUTO_CORE_STATE_NAME_INITIAL,
         .n_nodes = n_nodes,
         .nodes = PLUTO_Malloc(sizeof(struct PLUTO_NodeState) * n_nodes),
@@ -59,6 +102,11 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
         .core_register = core_register
     };
     memcpy(state.binary_directory, binary_directory, strlen(binary_directory) + 1);
+    memset(state.config_path, '\0', 1024);
+    memcpy(state.config_path, config_path, strlen(config_path) + 1);
+
+    state.config = (PLUTO_CoreConfig_t)malloc(sizeof(PLUTO_CoreConfig_t));
+    state.config = PLUTO_CreateCoreConfig(config_path, logger);
    
     for(size_t i=0;i<n_nodes;++i)
     {
@@ -67,7 +115,7 @@ struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t 
             .index = i
         };
         state.nodes[i] = PLUTO_NodeState(
-            config->configurations[i],
+            state.config->configurations[i],
             logger,
             data 
         );
@@ -193,6 +241,7 @@ static PLUTO_CoreStateName_t PLUTO_CoreStateHandleInitial(struct PLUTO_CoreState
             return PLUTO_CORE_STATE_NAME_INITIAL;
         case PLUTO_CORE_EVENT_NAME_START:
             PLUTO_LoggerInfo(state->logger, "[CoreState] - Starting Nodes...");
+            PLUTO_CoreStateUpdateConfig(state);
             if(!PLUTO_CoreSetUpNodes(state))
             {
                 PLUTO_LoggerInfo(state->logger, "[CoreState] - Transition to TERMINATED");

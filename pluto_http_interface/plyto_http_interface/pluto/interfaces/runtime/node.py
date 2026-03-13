@@ -7,21 +7,19 @@ event streaming and a POST endpoint for receiving and processing node events.
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-import base64
 import json
 from http import HTTPStatus
-from logging import Logger, getLogger
+from logging import Formatter, Logger, StreamHandler, getLogger
 from typing import Union
 
 from django.http import StreamingHttpResponse
 from drf_spectacular.utils import extend_schema
+from pluto.domain.runtime.event import NodeEvent
+from pluto.domain.runtime.events import LockError, NodeEventResult, NodeEvents
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BooleanField, CharField, DateTimeField, IntegerField, Serializer
 from rest_framework.views import APIView
-
-from pluto.domain.runtime.event import NodeEvent
-from pluto.domain.runtime.events import LockError, NodeEventResult, NodeEvents
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -80,6 +78,10 @@ class RuntimeNodeView(APIView):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.__logger: Logger = getLogger(self.__class__.__name__)
+        handler: StreamHandler = StreamHandler()
+        handler.setFormatter(Formatter("%(asctime)s | %(levelname)-8s | %(name)-18s | %(message)s"))
+        self.__logger.addHandler(handler)
+        self.__logger.setLevel("INFO")
         pass
 
     @extend_schema(
@@ -169,7 +171,7 @@ class RuntimeNodeView(APIView):
                 id=serializer.validated_data["id"],
                 event_id=serializer.validated_data["event_id"],
                 timestamp=serializer.validated_data["timestamp"],
-                payload=base64.b64decode(serializer.validated_data["payload"]),
+                payload=serializer.validated_data["payload"],
             )
             result: NodeEventResult = NodeEvents(self.__logger, LOCK_PATH).process_event(
                 event,

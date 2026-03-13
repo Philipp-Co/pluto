@@ -66,6 +66,7 @@ typedef enum
 struct PLUTO_CoreState
 {
     PLUTO_CoreConfig_t config;
+    char *config_path;
     char *binary_directory;
     PLUTO_CoreStateName_t current_state; 
     struct PLUTO_NodeState *nodes;
@@ -114,7 +115,7 @@ typedef struct
 ///         When not needed anymore destroy this Instance with a Call to PLUTO_DestroyCoreState().
 /// \return Returns a new Instance by Value. 
 ///
-struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, PLUTO_CoreConfig_t config, const char *binary_directory, PLUTO_CoreRegister_t core_register, PLUTO_Logger_t logger);
+struct PLUTO_CoreState PLUTO_CreateCoreState(size_t n_nodes, const char *config_path, const char *binary_directory, PLUTO_CoreRegister_t core_register, PLUTO_Logger_t logger);
 ///
 /// \brief  Destroys a given Instance created with a Call to PLUTO_CreateCoreState().
 ///

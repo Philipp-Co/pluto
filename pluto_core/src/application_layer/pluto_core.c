@@ -45,6 +45,7 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
         return NULL;
     }
 
+    PLUTO_LoggerInfo(logger, "Read Config %s", filename);
     PLUTO_CoreConfig_t config = PLUTO_CreateCoreConfig(filename, logger);
     if(!config)
     {
@@ -59,7 +60,7 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
     );
 
     PLUTO_Core_t core = PLUTO_Malloc(sizeof(struct PLUTO_Core));
-    core->config = config;
+    //core->config = config;
     core->logger = logger; 
     core->signal_queue = PLUTO_CORE_CreateSigQueue(n_nodes * 4);
     
@@ -73,7 +74,7 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
 
     core->state = PLUTO_CreateCoreState(
         n_nodes,
-        config,
+        filename,
         binary_dir,
         core->core_register,
         logger
@@ -86,7 +87,8 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
         PLUTO_DestroyCoreState(&core->state);
         PLUTO_DestroyCore(&core);
     } 
-
+    
+    PLUTO_DestroyCoreConfig(&config);
     return core;
 }
 //
@@ -95,7 +97,7 @@ PLUTO_Core_t PLUTO_CreateCore(const char *filename, PLUTO_Logger_t logger)
 void PLUTO_DestroyCore(PLUTO_Core_t *core)
 {
     assert(NULL != *core);
-    PLUTO_DestroyCoreConfig(&(*core)->config);
+    //PLUTO_DestroyCoreConfig(&(*core)->config);
     PLUTO_CORE_DestroySigQueue(&(*core)->signal_queue);
     PLUTO_Free(*core);
     *core = NULL;

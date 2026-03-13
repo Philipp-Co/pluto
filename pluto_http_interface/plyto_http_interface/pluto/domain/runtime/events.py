@@ -16,6 +16,7 @@ from enum import IntEnum
 from logging import Logger
 from pathlib import Path
 from subprocess import CalledProcessError, run
+from time import sleep
 from typing import Generator, List
 
 from pluto.domain.runtime.event import NodeEvent
@@ -94,7 +95,6 @@ class NodeEvents:
 
     def __del__(self) -> None:
         """Closes the lock file when the object is garbage collected."""
-        self.__logger.info("Destroy NodeEvents Object!")
         self.__lock_file.close()
         pass
 
@@ -111,7 +111,6 @@ class NodeEvents:
 
     def unlock_eventstream(self) -> None:
         """Releases the exclusive lock on the event stream."""
-        self.__logger.info("Unlock Eventstream...")
         fcntl.flock(self.__lock_file, fcntl.LOCK_UN)
 
     def __get_event(self) -> List[str]:
@@ -131,7 +130,7 @@ class NodeEvents:
                 fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 lines = file.readlines()
                 file.truncate(0)
-                file.flush()
+                # file.flush()
                 fcntl.flock(file, fcntl.LOCK_UN)
             return lines
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -160,16 +159,7 @@ class NodeEvents:
                     "-e",
                     str(event.event_id),
                     "-p",
-                    "'"
-                    + json.dumps(
-                        {
-                            "id": event.id,
-                            "event_id": event.event_id,
-                            "timestamp": event.timestamp.isoformat(),
-                            "payload": event.payload.decode(),
-                        }
-                    )
-                    + "'",
+                    "'" + event.payload + "'",
                 ],
                 check=True,
             )
@@ -193,6 +183,7 @@ class NodeEvents:
             while self.__running:
                 events: List[str] = self.__get_event()
                 if len(events) == 0:
+                    sleep(1)
                     yield ": keepalive\n\n"
                 else:
                     for element in events:

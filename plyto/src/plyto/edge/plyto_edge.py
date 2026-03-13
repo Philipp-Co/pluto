@@ -101,11 +101,12 @@ class PlytoEvent:
     def set_payload(self, msg: str) -> Self:
         from ctypes import c_size_t
 
-        self.__cdll.PLUTO_EventCopyBufferToPayload(
+        if not self.__cdll.PLUTO_EventCopyBufferToPayload(
             self.__event_pointer,
             msg.encode(),
             c_size_t(len(msg)),
-        )
+        ):
+            raise ValueError(f'Payload "{msg}" is to large!')
         return self
 
     def __str__(self) -> str:

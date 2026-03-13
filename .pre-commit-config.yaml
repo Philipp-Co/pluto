@@ -29,7 +29,7 @@ repos:
     rev: v3.3.0
     hooks:
       - id: pylint
-        args: ["--max-line-length=120", "--disable=unnecessary-pass,duplicate-code"]
+        args: ["--max-line-length=120", "--disable=unnecessary-pass,duplicate-code,wrong-import-order"]
         files: ^pluto_http_interface/
         additional_dependencies:
           - django

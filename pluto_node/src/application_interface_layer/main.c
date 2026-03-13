@@ -15,6 +15,8 @@
 #include <pluto/application_layer/shared_library/pluto_shared_library.h>
 #endif
 
+#include <errno.h>
+#include <time.h>
 #include <string.h>
 #include <signal.h>
 #include <stdatomic.h>
@@ -169,8 +171,15 @@ int main(int argc, char **argv)
     while(!atomic_load(&PLUTO_Terminate))
     {
         while(PLUTO_ProcessorProcess(PLUTO_processor));
-#if !defined(PLUTO_NODE_TIME_TO_SLEEP_IN_US) && ((PLUTO_NODE_TIME_TO_SLEEP_IN_US) > 0)
-        usleep(PLUTO_NODE_TIME_TO_SLEEP_IN_US);
+#if defined(PLUTO_NODE_TIME_TO_SLEEP_IN_US) && ((PLUTO_NODE_TIME_TO_SLEEP_IN_US) > 0)
+        struct timespec ts = {
+            .tv_sec=0,
+            .tv_nsec=(1000 * 1000 * 250) //PLUTO_NODE_TIME_TO_SLEEP_IN_US * 1000,
+        };
+        int ret;
+        do {
+            ret = nanosleep(&ts, &ts);
+        } while (ret == EINTR);
 #endif
     }
     PLUTO_DestroyProcessor(&PLUTO_processor);

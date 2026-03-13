@@ -22,7 +22,7 @@ class NodeEvent:
     id: int
     event_id: int
     timestamp: datetime
-    payload: bytes
+    payload: str
 
     pass
 

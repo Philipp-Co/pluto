@@ -28,7 +28,7 @@ void PLUTO_TEST_CoreStateInitial(void)
 
     struct PLUTO_CoreState state = PLUTO_CreateCoreState(
         PLUTO_CoreConfigNumberOfNodes(config),
-        config,
+        PLUTO_TEST_config_path,
         PLUTO_CORE_TEST_BINARY_DIR,
         core_register,
         logger
