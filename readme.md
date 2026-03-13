@@ -1,69 +1,47 @@
 # Pluto
 
-Pluto ist ein Eventzentriertes Framework.
-Pluto setzt die Infrastruktur fuer die Entwicklung einer Eventgetriebenen Anwendung auf einer Geraeteinstanz um. 
+Pluto is an event-based framework for developing event-driven applications on a single device instance.
 
-## Was stellt Pluto zur Verfuegung?
+## Directory Overview
 
-Pluto ist in verschiedene Komponenten zerlegt, die entsprechend in die Entwicklung einer Anwendung eingebunden werden koennen.
+### benchmark/
+Load tests for the HTTP interface based on Locust.
 
-### pluto_node
+### bin/
+Shell scripts for managing the Pluto system (start/stop nodes, connect, disconnect, send events).
 
-pluto_node ist die zentrale Komponente des Frameworks. pluto_node ist eine Anwendung die die von ihre verwendete Infrastruktur fuer die notwendige inter Prozess Kommunikation erstellt, verwaltet und verwendet.
-pluto_node definiert mehrere Schnittstellen ueber die es moeglich ist Fachlogik zu integrieren.
-Die Fachlogik kann in den pluto_node Kontext durch das bereitstellen einer der beiden Moeglichkeiten
+### demo/
+Example application demonstrating the framework.
 
-    - Pythonskript
-    - Shared Library
+### docker/
+Docker configuration files for running Pluto in containers.
 
-injeziert werden.
+### external/
+External dependencies: `jsmn` (JSON parser) and `unity` (unit testing framework).
 
-### pluto_edge
+### pluto_config/
+Configuration component of the framework.
 
-Sollen bestehende Anwendungen in die Plutoinfrastruktur eingebunden werden, stellt Pluto pluto_edge bereit.
-pluto_edge definiert eine C API zum Zugriff auf die von Pluto erstellte inter Prozess Kommunikations Infrastruktur.
+### pluto_core/
+Core component of the framework.
 
-## Projektaufbau
+### pluto_edge/
+C API for integrating existing applications into the Pluto infrastructure.
 
-    +--------+--------+---------+
-    |  Info  |  Node  |  Core   |
-    +--------+--------+---------+
-    |           Edge            |
-    +-------------+-------------+
-    |     Event   |    Config   |
-    +-------------+-------------+
-    |    OS Abstraction         |
-    +---------------------------+
+### pluto_http_interface/
+HTTP interface for Pluto based on Django REST Framework and ASGI.
 
-## Externe Abhaengigkeiten
+### pluto_internal_nodes/
+Internal Pluto nodes, e.g. the HTTP edge node.
 
-Externe Abhaengigkeiten werden um Verzeichnis unter external/ gesammelt.
+### pluto_node/
+Central node application. Manages the IPC infrastructure and provides interfaces for business logic.
 
-### jsmn
+### pluto_os_abstraction/
+OS abstraction layer of the framework.
 
-jsmn ist ein JSON Parser der von Pluto genutzt wird. Siehe dazu auch https://github.com/zserge/jsmn .
+### plyto/
+Python package for interacting with Pluto.
 
-### unity
-
-Dieses Projekt wird mit Hilfe von unity getestet. Siehe dazu https://github.com/ThrowTheSwitch/Unity.git .
-
-## Das Projekt bauen
-
-    mkdir build/ && cd build/
-    cmake -G "Unix Makefiles" ../
-    make
-
-### Testflags
-
-Fuer erweiterte Tests kann das Flag 
-
-    PLUTO_TEST
-
-definiert werden.
-Folgendes Flag wird beim generieren hinzugefuegt:
-
-    -DPLUTO_TEST=1
-
-Zusaetzliche Testfunktionen beinhalten:
-    - Pruefungen fuer das Speichermanagement
-
+### systemtest/
+System tests for the HTTP interface (Python/unittest, black-box tests over HTTP).
