@@ -262,7 +262,7 @@ bool PLUTO_MessageQueueRead(PLUTO_MessageQueue_t queue, PLUTO_Event_t event)
     assert(NULL != queue);
 
     static const long msgtype = 0L;
-    static const int msgflags = IPC_NOWAIT | MSG_NOERROR;
+    static const int msgflags = MSG_NOERROR; //IPC_NOWAIT | MSG_NOERROR;
     struct PLUTO_MsgBuf buffer;
     buffer.msgtype = 1;
     memset(buffer.buffer.buffer, '\0', sizeof(buffer.buffer.buffer));

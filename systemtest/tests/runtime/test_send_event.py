@@ -4,12 +4,9 @@
 
 import base64
 import json
-import tempfile
 import threading
 from datetime import datetime, timezone
 from http import HTTPStatus
-from pathlib import Path
-from subprocess import run as subprocess_run
 from time import sleep
 from typing import List
 
@@ -19,7 +16,6 @@ from tests.utils.base import PlutoSystemtestBase
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-EXAMPLENODE_DIR: Path = Path(__file__).parent.parent.parent / 'examplenode'
 NODE_NAME: str = 'pluto_http_edge'
 TOP_LEVEL_PACKAGE_NAME: str = 'examplenode'
 EVENT_ID: int = 1
@@ -29,22 +25,6 @@ EVENT_ID: int = 1
 
 class TestSendEvent(PlutoSystemtestBase):
     """Tests that verify a node event can be sent and received via SSE."""
-
-    @staticmethod
-    def _build_examplenode_archive() -> bytes:
-        """Builds the examplenode source distribution and returns its raw content.
-
-        Returns:
-            The raw bytes of the built .tar.gz source distribution archive.
-        """
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subprocess_run(
-                ['python', '-m', 'build', '--sdist', '--outdir', tmpdir],
-                cwd=str(EXAMPLENODE_DIR),
-                check=True,
-            )
-            archives: list = list(Path(tmpdir).glob('*.tar.gz'))
-            return Path(archives[0]).read_bytes()
 
     def test_event_can_be_sent_and_received_via_sse(self) -> None:
         """Verifies that a sent event is processed and received via the SSE stream."""

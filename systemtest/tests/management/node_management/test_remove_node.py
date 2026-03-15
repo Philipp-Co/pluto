@@ -3,10 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import base64
-import tempfile
 from http import HTTPStatus
-from pathlib import Path
-from subprocess import run as subprocess_run
 
 from requests import Response
 
@@ -14,7 +11,6 @@ from tests.utils.base import PlutoSystemtestBase
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-EXAMPLENODE_DIR: Path = Path(__file__).parent.parent.parent.parent / 'examplenode'
 SOURCE_NODE_NAME: str = 'source_node'
 TARGET_NODE_NAME: str = 'target_node'
 TOP_LEVEL_PACKAGE_NAME: str = 'examplenode'
@@ -24,22 +20,6 @@ TOP_LEVEL_PACKAGE_NAME: str = 'examplenode'
 
 class TestRemoveNode(PlutoSystemtestBase):
     """Tests that verify a node can be removed."""
-
-    @staticmethod
-    def _build_examplenode_archive() -> bytes:
-        """Builds the examplenode source distribution and returns its raw content.
-
-        Returns:
-            The raw bytes of the built .tar.gz source distribution archive.
-        """
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subprocess_run(
-                ['python', '-m', 'build', '--sdist', '--outdir', tmpdir],
-                cwd=str(EXAMPLENODE_DIR),
-                check=True,
-            )
-            archives: list = list(Path(tmpdir).glob('*.tar.gz'))
-            return Path(archives[0]).read_bytes()
 
     def _add_node(self, name: str, content: str) -> None:
         """Uploads the archive and adds a node as a test precondition.

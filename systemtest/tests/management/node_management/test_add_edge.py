@@ -3,10 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import base64
-import tempfile
 from http import HTTPStatus
-from pathlib import Path
-from subprocess import run as subprocess_run
 
 from requests import Response
 
@@ -14,7 +11,6 @@ from tests.utils.base import PlutoSystemtestBase
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-EXAMPLENODE_DIR: Path = Path(__file__).parent.parent.parent.parent / 'examplenode'
 SOURCE_NODE_NAME: str = 'source_node'
 TARGET_NODE_NAME: str = 'target_node'
 TOP_LEVEL_PACKAGE_NAME: str = 'examplenode'
@@ -24,25 +20,6 @@ TOP_LEVEL_PACKAGE_NAME: str = 'examplenode'
 
 class TestAddEdge(PlutoSystemtestBase):
     """Tests that verify two nodes can be connected via an edge."""
-
-    @staticmethod
-    def _build_examplenode_archive() -> bytes:
-        """Builds the examplenode source distribution and returns its raw content.
-
-        Runs `python -m build --sdist` in the examplenode directory and reads
-        the resulting .tar.gz archive from a temporary output directory.
-
-        Returns:
-            The raw bytes of the built .tar.gz source distribution archive.
-        """
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subprocess_run(
-                ['python', '-m', 'build', '--sdist', '--outdir', tmpdir],
-                cwd=str(EXAMPLENODE_DIR),
-                check=True,
-            )
-            archives: list = list(Path(tmpdir).glob('*.tar.gz'))
-            return Path(archives[0]).read_bytes()
 
     def test_two_nodes_can_be_connected_via_edge(self) -> None:
         """Verifies that two nodes can be connected and the connection appears in the node structure."""

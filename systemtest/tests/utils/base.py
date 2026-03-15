@@ -2,6 +2,8 @@
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+import tempfile
+from pathlib import Path
 from subprocess import CompletedProcess
 from subprocess import run as subprocess_run
 from time import sleep, time
@@ -63,6 +65,28 @@ class PlutoSystemtestBase(TestCase):
                     return
             sleep(5)
         raise TimeoutError(f'Container did not become healthy within {timeout} seconds')
+
+    @staticmethod
+    def _build_examplenode_archive() -> bytes:
+        """Builds the examplenode source distribution and returns its raw content.
+
+        Runs `python -m build --sdist` in the examplenode directory and reads
+        the resulting .tar.gz archive from a temporary output directory.
+
+        Returns:
+            The raw bytes of the built .tar.gz source distribution archive.
+        """
+        examplenode_dir: Path = (
+            Path(__file__).parent.parent.parent.parent / 'pluto_internal_nodes' / 'examplenode'
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subprocess_run(
+                ['python', '-m', 'build', '--sdist', '--outdir', tmpdir],
+                cwd=str(examplenode_dir),
+                check=True,
+            )
+            archives: list = list(Path(tmpdir).glob('*.tar.gz'))
+            return Path(archives[0]).read_bytes()
 
     def _wait_for_state(self, expected_state: str, timeout: int = 30) -> None:
         """Waits until the core process reaches the expected state.

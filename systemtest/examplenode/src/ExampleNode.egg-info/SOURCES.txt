@@ -1,8 +1,0 @@
-pyproject.toml
-src/ExampleNode.egg-info/PKG-INFO
-src/ExampleNode.egg-info/SOURCES.txt
-src/ExampleNode.egg-info/dependency_links.txt
-src/ExampleNode.egg-info/top_level.txt
-src/examplenode/__init__.py
-src/examplenode/pluto/__init__.py
-src/examplenode/pluto/main.py
