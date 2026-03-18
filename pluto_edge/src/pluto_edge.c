@@ -4,6 +4,8 @@
 #include <pluto/os_abstraction/pluto_malloc.h>
 
 #include <assert.h>
+#include <string.h>
+
 
 struct PLUTO_EDGE_Edge
 {
@@ -16,6 +18,25 @@ PLUTO_EDGE_Edge_t PLUTO_EDGE_CreateEdge(
 )
 {
     (void)permission;
+    assert(NULL != path);
+    assert(NULL != name);
+
+    if(0 == strlen(path))
+    {
+        PLUTO_LoggerError(
+            logger,
+            "Given Path is empty... Set Path and try again."
+        );
+        return NULL;
+    } else if(0 == strlen(name))
+    {
+        PLUTO_LoggerError(
+            logger,
+            "Given Name is empty... Set Name and try again."
+        );
+        return NULL;
+    }
+
     PLUTO_LoggerInfo(
         logger,
         "Create Edge Object for Path %s, Name %s",

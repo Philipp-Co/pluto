@@ -100,7 +100,7 @@ class PythonNode(Node):
     def type(self) -> str:
         return 'python'
 
-    def create_empty_config(self) -> Self:
+    def create_empty_config(self, user_arguments: str='') -> Self:
         super().set_configuration(
             {
                 "work_dir": self.workdir(),
@@ -109,6 +109,7 @@ class PythonNode(Node):
                 "python_home": '/usr/bin', #f'/pluto/nodes/{self.name()}/.venv',
                 "python_path": f'/usr/lib/python3.8:/pluto/nodes/{self.name()}/.venv/lib/python3.8/site-packages',
                 "ipc_home": '/pluto/ipc/',
+                "user_arguments": user_arguments,
             }
         )
         super().write_configuration()

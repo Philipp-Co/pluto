@@ -41,6 +41,12 @@ def cli():
         '--package_name',
         nargs=1,
     )
+    parser.add_argument(
+        '-u',
+        '--user-arguments',
+        default='',
+        type=str,
+    )
 
     args = parser.parse_args(argv[1: len(argv)])
     if args.add and args.remove:
@@ -60,7 +66,7 @@ def cli():
             path_isntallable_package=args.installable_package[0],
             package_name=args.package_name[0],
         )
-        node.create_empty_config()
+        node.create_empty_config(user_arguments=args.user_arguments)
         node.create_venv()
         node.install()
         return 0

@@ -151,6 +151,7 @@ static bool PLUTO_TEST_CreateMultipleNodesCoreConfig(void)
     );
     if(!PLUTO_TEST_WriteToConfigFile(core_config_file, content))
     {
+        printf("Error, unable to write Core Config to a File...\n");
         return false;
     }
     char node_config_file[2048];
@@ -178,6 +179,7 @@ static bool PLUTO_TEST_CreateMultipleNodesCoreConfig(void)
         );
         if(!PLUTO_TEST_WriteToConfigFile(node_config_file, node_config))
         {
+            printf("Error, unable to write Node Config %i to a File...\n", i);
             return false;
         }
     }

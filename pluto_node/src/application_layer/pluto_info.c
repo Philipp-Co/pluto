@@ -23,11 +23,11 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name)
+PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name, PLUTO_Logger_t logger)
 {
     PLUTO_Info_t info = PLUTO_Malloc(sizeof(struct PLUTO_Info));
     
-    if(!PLUTO_CreateKey(path, name, &info->key))
+    if(!PLUTO_CreateKey(path, name, &info->key, logger))
     {
         PLUTO_Free(info);
         return NULL;

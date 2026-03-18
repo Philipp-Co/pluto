@@ -34,14 +34,6 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/../../external/Unity/src/unity.c
 )
 
-target_compile_definitions(
-    pluto_os_abstraction_test
-    PUBLIC
-    #PLUTO_TEST=1
-    PLUTO_TEST_RESSOURCE_DIR="${CMAKE_CURRENT_LIST_DIR}/ressources/"
-)
-
-
 target_include_directories(
     pluto_os_abstraction_test
     PUBLIC
@@ -57,7 +49,9 @@ target_compile_definitions(
     PLUTO_OS_INTERFACE=${PLUTO_OS_INTERFACE}
     _XOPEN_SOURCE=700
     PLUTO_MESSAGE_QUEUE_SYSTEM_V=1
-    #PLUTO_MESSAGE_QUEUE_CUSTOM_0=1
+    
+    PLUTO_TEST_RESSOURCE_DIR="${CMAKE_CURRENT_LIST_DIR}/ressources/"
+    TEST_PLUTO_WORKDIR="${CMAKE_BINARY_DIR}/test_workdir/"
 )
 
 target_compile_options(

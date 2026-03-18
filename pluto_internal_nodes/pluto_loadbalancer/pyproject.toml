@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ExampleNode"
+version = "0.0.0"
+authors = [
+  { name="Philipp Kroll", email="pk@eample.com" },
+]
+description = "A Loadbalancing Node. Each Inputevent is given to another Output Queue."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.license]
+file = "LICENSE"
+license = "MIT"
+license-files = ["LICENSE"]
+
+[project.urls]
+Homepage = "https://github.com/Philipp-Co/pluto"
+Issues = "https://github.com/Philipp-Co/pluto/issues"

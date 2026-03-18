@@ -5,6 +5,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include "pluto/pluto_config/pluto_config.h"
 #include <pluto/application_layer/pluto_processor.h>
 #include <pluto/os_abstraction/pluto_logger.h>
 
@@ -22,6 +23,18 @@ typedef struct
     PLUTO_PythonCAPI_DeregisterFileObserver deregister_file_observer;
     PLUTO_PythonCAPI_EmitEvent emit_event;
 } PLUTO_PythonCAPI_t __attribute__((aligned(64)));
+
+
+struct PLUTO_PythonSetup;
+typedef struct PLUTO_PythonSetup* PLUTO_PythonSetup_t;
+/*
+typedef struct
+{
+    uint8_t number_of_output_queues;
+    char *configuration;
+} PLUTO_PythonSetup_t;
+*/
+
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -37,11 +50,14 @@ bool PLUTO_InitializePython(
     const char *python_path,
     const char *executable, 
     PLUTO_PythonCAPI_t *c_api, 
+    PLUTO_PythonSetup_t setup,
     PLUTO_Logger_t logger
 );
 void PLUTO_DeinitializePython(void);
 PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallbackInput_t *args);
 
+PLUTO_PythonSetup_t PLUTO_PY_CreateSetupArguments(const PLUTO_Config_t config);
+void PLUTO_PY_DestroySetupArguments(PLUTO_PythonSetup_t *obj);
 //
 // --------------------------------------------------------------------------------------------------------------------
 //

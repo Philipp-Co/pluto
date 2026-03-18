@@ -157,11 +157,14 @@ int main(int argc, char **argv)
         .deregister_file_observer=PLUTO_NodePythonCAPI_DeregisterObserver,
         .emit_event=PLUTO_NodePythonCAPI_EmitEvent
     };
-    if(!PLUTO_InitializePython(config->python_home, config->python_path, args->executable, &c_api, PLUTO_node_logger))
+    PLUTO_PythonSetup_t setup = PLUTO_PY_CreateSetupArguments(config);
+    if(!PLUTO_InitializePython(config->python_home, config->python_path, args->executable, &c_api, setup, PLUTO_node_logger))
     {
+        PLUTO_PY_DestroySetupArguments(&setup);
         PLUTO_LoggerError(PLUTO_node_logger, "Unable to initialize Python.");
         goto end;
     }
+    PLUTO_PY_DestroySetupArguments(&setup);
     PLUTO_LoggerInfo(PLUTO_node_logger, "Python successfully initialized.");
 #elif defined(PLUTO_CTS_RTM_SHARED_LIB)
     // Initialize Shared Library.

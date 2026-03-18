@@ -97,7 +97,10 @@ void PLUTO_DestroyCoreConfig(PLUTO_CoreConfig_t * config)
 {
     for(size_t i=0;i<(*config)->n_configurations;++i)
     {
-        if((*config)->configurations && (*config)->configurations[i]) PLUTO_DestroyConfig(&(*config)->configurations[i]);
+        if((*config)->configurations && (*config)->configurations[i]) 
+        {
+            PLUTO_DestroyConfig(&(*config)->configurations[i]);
+        }
         if((*config)->nodes)
         {
             PLUTO_Free((*config)->nodes[i].name);
@@ -262,11 +265,12 @@ static bool PLUTO_CONFIG_ParseNode(
         }
 
         const char *start = ((char*)buffer->buffer) + key_token->start;
-
         const char *value_start = ((char*)buffer->buffer) + value_token->start;
-        const int value_length = value_token->end - value_token->start;
+
+        const size_t key_length = (size_t)(key_token->end - key_token->start);
+        const size_t value_length = (size_t)(value_token->end - value_token->start);
         
-        if(0 == memcmp("name", start, strlen("name")))
+        if((key_length == strlen("name")) && (0 == memcmp("name", start, strlen("name"))))
         {
             config->nodes[index].name = PLUTO_Malloc(value_length + 1);
             memcpy(config->nodes[index].name, value_start, value_length);
@@ -274,16 +278,23 @@ static bool PLUTO_CONFIG_ParseNode(
 
             required_attributes ^= 0x1U;
         }
-        else if(0 == memcmp("type", start, strlen("type")))
+        else if((key_length == strlen("type")) && 0 == memcmp("type", start, strlen("type")))
         {
-            const int ptlen = strlen("passthrough");
-            const int pylen = strlen("python");
-            const int shlen = strlen("shared");
-            if(value_length > ptlen)
+            const size_t ptlen = strlen("passthrough");
+            const size_t pylen = strlen("python");
+            const size_t shlen = strlen("shared");
+            if((value_length <= 0) || (value_length > ptlen))
             {
-                PLUTO_LoggerError(config->logger, "Unknown Object Node Type!");
+                //
+                // if value is larger then the largest allowed value, fail early.
+                //
+                PLUTO_LoggerError(
+                    config->logger, 
+                    "Unknown Object Node Type!"
+                );
                 return false;
             }
+
             if(0 == memcmp("python", value_start, pylen))
             {
                 config->nodes[index].type = PLUTO_CORE_CONFIG_NODE_TYPE_PYTHON;
@@ -303,7 +314,7 @@ static bool PLUTO_CONFIG_ParseNode(
 
             required_attributes ^= 0x2U;
         }
-        else if(0 == memcmp("configuration-file", start, strlen("configuration-file")))
+        else if((key_length == strlen("configuration-file")) && (0 == memcmp("configuration-file", start, strlen("configuration-file"))))
         {
             config->nodes[index].filename = PLUTO_Malloc(value_length + 1);
             memcpy(config->nodes[index].filename, value_start, value_length);
@@ -311,7 +322,7 @@ static bool PLUTO_CONFIG_ParseNode(
             
             required_attributes ^= 0x4U;
         }
-        else if(0 == memcmp("executable", start, strlen("executable")))
+        else if((key_length == strlen("executable")) && (0 == memcmp("executable", start, strlen("executable"))))
         {
             config->nodes[index].executable = PLUTO_Malloc(value_length + 1);
             memcpy(config->nodes[index].executable, value_start, value_length);

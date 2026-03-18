@@ -13,8 +13,8 @@ HOST: str = "http://localhost:10000"
 TARGET_NODE_NAME: str = "test"
 """Name des Ziel-Knotens für die Event-Roundtrip-Tests."""
 
-REQUEST_TIMEOUT: float = 60.0
+REQUEST_TIMEOUT: float = 120.0
 """Maximale Wartezeit in Sekunden auf ein SSE-Event."""
 
-REQUESTS_PER_TASK: int = 10
+REQUESTS_PER_TASK: int = 50
 """Anzahl der POST-Requests pro Task-Ausführung."""

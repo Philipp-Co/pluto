@@ -76,6 +76,7 @@ PLUTO_Processor_t PLUTO_TEST_PythonCreateProcessor(void)
         PLUTO_TEST_python_path,
         PLUTO_TEST_executable,
         NULL,
+        NULL,
         PLUTO_TEST_processor_logger 
     );
     PLUTO_ProcessCallback_t callback = PLUTO_PY_ProcessCallback;

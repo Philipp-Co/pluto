@@ -59,13 +59,18 @@ typedef struct
     size_t n_paths;
 } PLUTO_PY_PythonPath_t __attribute__((aligned(64)));
 
+struct PLUTO_PythonSetup
+{
+    char *configuration;
+    char *node_name;
+    uint8_t number_of_output_queues;
+};
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_PythonPath_t *paths);
 //static PyObject* PyInit_emb_input(void);
-static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_Logger_t logger);
+static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_PythonSetup_t setup, PLUTO_Logger_t logger);
 
 //
 // --------------------------------------------------------------------------------------------------------------------
@@ -97,14 +102,60 @@ static PLUTO_PythonCAPI_t PLUTO_c_api = {
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
+PLUTO_PythonSetup_t PLUTO_PY_CreateSetupArguments(const PLUTO_Config_t config)
+{
+    assert(NULL != config->name);
+
+    PLUTO_PythonSetup_t object = PLUTO_Malloc(sizeof(struct PLUTO_PythonSetup));
+    object->number_of_output_queues = PLUTO_ConfigNumberOfOutputQueues(config);
+
+    const size_t name_strl = strlen(config->name);
+    object->node_name = PLUTO_Malloc(name_strl + 1);
+    memset(object->node_name, '\0', name_strl + 1);
+    memcpy(object->node_name, config->name, name_strl);
+
+    if(NULL == config->user_arguments)
+    {
+        object->configuration = PLUTO_Malloc(2);
+        memset(object->configuration, '\0', 2);
+    }
+    else
+    {
+        const size_t len = strlen(config->user_arguments);
+        object->configuration = PLUTO_Malloc(len + 1);
+        memset(object->configuration, '\0', len + 1);
+        memcpy(object->configuration, config->user_arguments, len);
+    }
+    return object;
+}
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+void PLUTO_PY_DestroySetupArguments(PLUTO_PythonSetup_t *obj)
+{
+    assert(NULL != obj);
+    assert(NULL != (*obj)->configuration);
+    assert(NULL != (*obj)->node_name);
+
+    PLUTO_Free((*obj)->configuration);
+    PLUTO_Free((*obj)->node_name);
+    PLUTO_Free(*obj);
+    *obj = NULL;
+}
+//
+// --------------------------------------------------------------------------------------------------------------------
+//
+
 bool PLUTO_InitializePython(
     const char *python_home,
     const char *python_path,
     const char *executable,
     PLUTO_PythonCAPI_t *c_api, 
+    PLUTO_PythonSetup_t setup,
     PLUTO_Logger_t logger
 )
 {
+    (void)setup;
     //
     // https://docs.python.org/3/c-api/init_config.html
     //
@@ -130,8 +181,6 @@ bool PLUTO_InitializePython(
     //char *env = getenv("VIRTUAL_ENV");
     //
     PLUTO_LoggerInfo(logger, "Compile Python Path Variable...");
-    char *buffer = PLUTO_Malloc(4096);
-    if(!buffer) return false;
     // TODO: Memory Management...
     const size_t N_PYTHON_PATHS = 128;
     PLUTO_PY_PythonPath_t python_path_buffer = {
@@ -197,13 +246,12 @@ bool PLUTO_InitializePython(
     }
     
     PLUTO_LoggerInfo(logger, "Read Interface from Script: %s", executable);
-    PLUTO_PY_interface_object = PLUTO_PY_CreateInterface(executable, logger);
+    PLUTO_PY_interface_object = PLUTO_PY_CreateInterface(executable, setup, logger);
     if(!PLUTO_PY_interface_object)
     {
         PLUTO_LoggerError(logger, "Error, unable to lead Interface Class from Script %s", executable);
         goto error;
     }
-    PLUTO_Free(buffer);
     for(size_t i=0;i<N_PYTHON_PATHS;++i)
     {
         PLUTO_Free(python_path_buffer.paths[i]);
@@ -216,10 +264,6 @@ exception:
     Py_ExitStatusException(status);
     PyConfig_Clear(&config);
 error:
-    if(buffer)
-    {
-        PLUTO_Free(buffer);
-    }
     if(python_path_buffer.paths)
     {
         for(size_t i=0;i<N_PYTHON_PATHS;++i)
@@ -251,15 +295,6 @@ void PLUTO_DeinitializePython(void)
     if (Py_FinalizeEx() < 0) 
     {
     }
-}
-
-static void PLUTO_PrintBufferAsHex(const char *buffer, size_t size)
-{
-    for(size_t i=0;i<size;++i)
-    {
-        printf("0x%x ", (unsigned int)(buffer[i]));
-    }
-    printf("\n");
 }
 
 //
@@ -459,30 +494,6 @@ PLUTO_ProcessorCallbackOutput_t PLUTO_PY_ProcessCallback(PLUTO_ProcessorCallback
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-static bool PLUTO_PY_ReadPythonPathsFromEnv(const char *python_path, PLUTO_PY_PythonPath_t *paths)
-{
-    char buffer[8192];
-    const size_t strl = strlen(python_path);
-    if(strl > sizeof(buffer))
-    {
-        return false;
-    }
-    memcpy(buffer, python_path, strlen(python_path) + 1);
-    paths->n_paths = 0;
-    char *str = strtok(buffer, ";");
-    while(NULL != str)
-    {
-        memcpy(paths->paths[paths->n_paths], str, strlen(str) + 1);
-        paths->n_paths++;
-        str = strtok(NULL, ";");
-    }
-    return true;
-} 
-
-//
-// --------------------------------------------------------------------------------------------------------------------
-//
-
 //
 // Don't call this Functions outside of PLUTO_PY_CraeteInterface()! 
 //
@@ -544,66 +555,153 @@ error:
     return NULL;
 }
 
-static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_Logger_t logger)
+///
+/// \brief  Call the setup Method from "object".
+/// \param[in] object - Object on which setup is called (self).
+/// \param[in] args   - Positional Arguments for setup.
+/// \param[in] kwargs - Keywordarguments for setup.
+/// \param[in] logger - A Logger.
+/// \returns bool - true on success, false otherwise.
+///
+static bool PLUTO_PY_CallSetup(PyObject *object, PyObject *args, PyObject *kwargs, PLUTO_Logger_t logger)
+{
+    PyObject *name = PyUnicode_FromString(PLUTO_PYTHON_SETUP_METHOD);
+    if(NULL == name)
+    {   
+        PLUTO_LoggerError(logger, "Error, unable to Find setup Method...");
+        PyErr_Print();
+        goto error;
+    }
+    PLUTO_LoggerInfo(logger, "Created Name as Python-Object.");
+    PyObject *method = PyObject_GetAttr(object, name);
+    if(NULL == method)
+    {
+        PLUTO_LoggerError(logger, "Error, Object has no Method %s...", PLUTO_PYTHON_SETUP_METHOD);
+        PyErr_Print();
+
+        Py_DECREF(name);
+        goto error;
+    }
+    PLUTO_LoggerInfo(logger, "Found setup Method.");
+    
+    PyObject *result = PyObject_Call(method, args, kwargs);
+    if(NULL == result)
+    {
+        PyErr_Print();
+
+        Py_DECREF(name);
+        Py_DECREF(method);
+        goto error;
+    }
+    Py_DECREF(name);
+    Py_DECREF(method);
+    Py_DECREF(result); 
+    return true;
+error:
+    return false;
+}
+
+///
+/// \brief  Create the Interface-Object and set it up.
+/// \param[in] path     - Python Path to the Python Class.
+/// \param[in] setup    - A Setup-Object, contains setup Information.
+/// \param[in] logger   - A Logger.
+/// \returns PyObject* - A Instance of the Interface-Class which is setup and ready for use.
+///
+static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_PythonSetup_t setup, PLUTO_Logger_t logger)
 {
     gstate = PyGILState_Ensure();
+    
+    //
+    // Craete Object from Class.
+    //
 
     PyObject *class = PLUTO_PY_GetClass(path, logger); 
     if(!class)
     {
         PLUTO_LoggerError(logger, "Unable to find Interface Class.");
+        PyErr_Print();
         goto error;
     }
     //
     // Initialize/Setup Object.
     //
     PyObject *object = PyObject_CallObject(class, NULL);
+    if(NULL == object)
+    {
+        PLUTO_LoggerError(logger, "Error, unable to call Construtor of Interface Object...");
+        PyErr_Print();
+        goto error;
+    }
     Py_DECREF(class);
     
+    //
+    // Call Setup Method.
+    //
+
     int argc = 1;
     char *argv[2] =
     {
         "pluto_node",
         NULL
     };
-    // Create Value for positional Argument 1 => "argc".
-    PyObject *pArgc = PyLong_FromLong((long)argc);
-    if(!pArgc)
-    {
-        Py_DECREF(object);
-        goto error;
-    }
     // Create Value for positional Argument 2 => "argv".
     PyObject *pArgv = PLUTO_PY_CreateSetupArgs(argc, argv);
     if(!pArgv)
     {
-        Py_DECREF(object);
-        Py_DECREF(pArgc);
-        goto error;
-    }
-    // Create Pythonobject for calling the Method on our interface Object.
-    PyObject *name = PyUnicode_FromString(PLUTO_PYTHON_SETUP_METHOD);
-    if(!name)
-    {   
-        Py_DECREF(object);
-        Py_DECREF(pArgc);
-        Py_DECREF(pArgv);
-        goto error;
-    }
-    // Call the Objects Method with "argc" and "argv".
-    PyObject *result = PyObject_CallMethodObjArgs(object, name, pArgc, pArgv, NULL);
-    Py_DECREF(name);
-    Py_DECREF(pArgc);
-    Py_DECREF(pArgv);
-    if(!result)
-    {
+        PLUTO_LoggerError(logger, "Error, unable to create Setup Args...");
         PyErr_Print();
         Py_DECREF(object);
-        object = NULL;
+        goto error;
+    }
+    PLUTO_LoggerInfo(logger, "Created setup Args.");
+
+    PyObject *kwargs = PyDict_New();
+    if(!kwargs)
+    {
+        PLUTO_LoggerError(logger, "Error, unable to create kwargs...");
+        PyErr_Print();
+        goto error;
+    }
+    PLUTO_LoggerInfo(logger, "Created kwargs.");
+    
+    PyObject *number_of_output_queues = PyLong_FromLong((long)setup->number_of_output_queues);
+    PyDict_SetItemString(
+        kwargs, 
+        "number_of_output_queues", 
+        number_of_output_queues
+    );
+    Py_DECREF(number_of_output_queues);
+
+    PyObject *py_config = PyUnicode_FromString(setup->configuration);
+    PyDict_SetItemString(
+        kwargs, 
+        "configuration", 
+        py_config
+    );
+    Py_DECREF(py_config);
+
+    PyObject *py_node_name = PyUnicode_FromString(setup->node_name);
+    PyDict_SetItemString(
+        kwargs, 
+        "name", 
+        py_node_name
+    );
+    Py_DECREF(py_node_name);
+
+    PLUTO_LoggerInfo(logger, "Call setup().");
+    if(PLUTO_PY_CallSetup(object, pArgv, kwargs, logger))
+    {
+        Py_DECREF(kwargs);
+        Py_DECREF(pArgv);
+        PLUTO_LoggerInfo(logger, "Setup success...");
     }
     else
     {
-        Py_DECREF(result);
+        Py_DECREF(kwargs);
+        Py_DECREF(pArgv);
+        PLUTO_LoggerInfo(logger, "Setup failed...");
+        goto error;
     }
     
     PyGILState_Release(gstate);
@@ -611,7 +709,6 @@ static PyObject* PLUTO_PY_CreateInterface(const char *path, PLUTO_Logger_t logge
     return object;
 
 error:
-    PyErr_Print();
     PyGILState_Release(gstate);
     return NULL;
 }

@@ -5,6 +5,8 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include <pluto/os_abstraction/pluto_logger.h>
+
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/ipc.h>
@@ -20,7 +22,7 @@
 typedef struct
 {
     key_t key;
-    FILE *file;
+    //FILE *file;
     char *path_to_file;
 } PLUTO_Key_t;
 
@@ -62,12 +64,14 @@ typedef struct PLUTO_Response* PLUTO_Response_t;
 /// \param[out] key - Output Object. This Function assigned values to this Object. 
 /// \return bool - true on success and false otherwise.
 ///
-bool PLUTO_CreateKey(const char *path, const char *name, PLUTO_Key_t *key);
-bool PLUTO_KeyGet(const char *path, const char *name, PLUTO_Key_t *key);
+bool PLUTO_CreateKey(const char *path, const char *name, PLUTO_Key_t *key, PLUTO_Logger_t logger);
+bool PLUTO_KeyGet(const char *path, const char *name, PLUTO_Key_t *key, PLUTO_Logger_t logger);
 ///
 /// \brief  Destroy a given Key.
 ///
 void PLUTO_DestroyKey(PLUTO_Key_t *key);
+
+bool PLUTO_MkDir(const char *path, unsigned int permission, PLUTO_Logger_t logger);
 
 //
 // --------------------------------------------------------------------------------------------------------------------

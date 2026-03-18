@@ -16,10 +16,13 @@
 
 PLUTO_SharedMemory_t PLUTO_CreateSharedMemory(size_t nbytes, const char *path, const char *name, PLUTO_Logger_t logger)
 {
-    PLUTO_Key_t key = {.file=NULL, .path_to_file=NULL}; 
+    PLUTO_Key_t key = {
+        //.file=NULL, 
+        .path_to_file=NULL
+    }; 
     //if(!PLUTO_KeyGet(path, name, &key))
     //{
-    if(!PLUTO_CreateKey(path, name, &key))
+    if(!PLUTO_CreateKey(path, name, &key, logger))
     {
         PLUTO_LoggerWarning(logger, "Unable to create create Shared Memory for %s%s", path, name);
         return NULL;

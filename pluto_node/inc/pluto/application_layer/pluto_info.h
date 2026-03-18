@@ -5,6 +5,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 //
 
+#include <pluto/os_abstraction/pluto_logger.h>
 #include <pluto/os_abstraction/pluto_types.h>
 
 #include <stdint.h>
@@ -38,7 +39,7 @@ typedef struct
 // --------------------------------------------------------------------------------------------------------------------
 //
 
-PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name);
+PLUTO_Info_t PLUTO_CreateInfo(const char *path, const char *name, PLUTO_Logger_t logger);
 void PLUTO_DestroyInfo(PLUTO_Info_t *info);
 void PLUTO_InfoDisplay(const PLUTO_Info_t info, const PLUTO_InfoValues_t *values);
 

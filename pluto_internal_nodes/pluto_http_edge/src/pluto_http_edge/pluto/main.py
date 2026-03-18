@@ -60,7 +60,7 @@ class PlutoNode:
 
     def setup(self, *args, **kwargs):
         self.__logger.info(
-            'Hello World!'
+            f'Hello World! Args: {args}, kwargs: {kwargs}'
         )
         self.setupDirectory()
         pass

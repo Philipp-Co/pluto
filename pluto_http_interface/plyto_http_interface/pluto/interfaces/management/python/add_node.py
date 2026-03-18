@@ -10,14 +10,14 @@ serializers used for request deserialization and response serialization.
 from base64 import b64decode
 from http import HTTPStatus
 from json import JSONDecodeError, loads
+from typing import Optional
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from pluto.domain.manage.node import Node as DomainNode
+from pluto.interfaces.management.python.view import PlutoManageAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BooleanField, CharField, Serializer
-
-from pluto.domain.manage.node import Node as DomainNode
-from pluto.interfaces.management.python.view import PlutoManageAPIView
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -27,9 +27,12 @@ class ManageAddNodeRequestSerializer(Serializer):  # pylint: disable=abstract-me
 
     Fields:
         top_level_package_name: The top-level Python package name of the node (max 64 characters).
+        user_arguments:         Optional user-defined arguments passed to the node (max 256 characters).
     """
 
     top_level_package_name = CharField(max_length=64)
+    user_arguments = CharField(required=False, allow_blank=True, default="", max_length=256)
+    custom_archive_name = CharField(required=False, default="", max_length=256)
 
     pass
 
@@ -147,18 +150,22 @@ class AddNodeView(PlutoManageAPIView):
             except JSONDecodeError:
                 self._logger.warning(payload)
                 return Response(status=HTTPStatus.BAD_REQUEST)
-            if DomainNode(name, self._logger).node_exists():
+            custom_archive_name: Optional[str] = serializer.validated_data["custom_archive_name"] or None
+            self._logger.info("Custom Archive Name: %s", custom_archive_name)  # pylint: disable=C0209
+            node: DomainNode = DomainNode(name, self._logger, custom_archive_name)
+            if node.node_exists():
                 return Response(
                     status=HTTPStatus.OK,
                     data={"result": False, "description": "Node already exists."},
                 )
-            if not DomainNode(name, self._logger).archive_exists():
+            if not node.archive_exists():
                 return Response(
                     status=HTTPStatus.NOT_FOUND,
                     data={"result": False, "description": "Archive not found."},
                 )
-            if not DomainNode(name, self._logger).create_node(
-                top_level_package_name=serializer.validated_data["top_level_package_name"]
+            if not node.create_node(
+                top_level_package_name=serializer.validated_data["top_level_package_name"],
+                user_arguments=serializer.validated_data["user_arguments"],
             ):
                 return Response(
                     status=HTTPStatus.SERVICE_UNAVAILABLE,

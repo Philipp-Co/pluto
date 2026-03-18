@@ -78,6 +78,18 @@ COPY pluto_internal_nodes/pluto_http_edge/ /pluto_internal_nodes/pluto_http_edge
 RUN cd /pluto_internal_nodes/pluto_http_edge/ && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && python -m build --sdist
 
 #
+# Copy Filter Code
+#
+COPY pluto_internal_nodes/pluto_filter/ /pluto_internal_nodes/pluto_filter/
+RUN cd /pluto_internal_nodes/pluto_filter/ && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && python -m build --sdist
+
+#
+# Copy Router Code
+#
+COPY pluto_internal_nodes/pluto_router/ /pluto_internal_nodes/pluto_router/
+RUN cd /pluto_internal_nodes/pluto_router/ && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && python -m build --sdist
+
+#
 # Copy Setup Scripts...
 #
 COPY ./plyto/ /plyto/
@@ -137,6 +149,8 @@ COPY --from=pluto_builder ./pluto_internal_nodes/pluto_http_edge/dist/plutohttpi
 RUN plyto_add_node_py -a -n pluto_http_edge -i /pluto/plutohttpinternalnode.tar.gz -p pluto_http_edge    # Create a passthrough Node with Name "name_0"
 COPY --from=pluto_builder ./entrypoint.sh /entrypoint.sh
 
+COPY --from=pluto_builder ./pluto_internal_nodes/pluto_filter/dist/plutofilter-0.0.0.tar.gz /pluto/archive/plutofilter.tar.gz
+COPY --from=pluto_builder ./pluto_internal_nodes/pluto_router/dist/plutorouter-0.0.0.tar.gz /pluto/archive/plutorouter.tar.gz
 #
 # ---------------------------------------------------------------------------------------------------------------------
 #

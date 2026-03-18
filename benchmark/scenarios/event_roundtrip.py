@@ -52,6 +52,8 @@ class EventRoundtripUser(PlutoBaseUser):
         received_count: int = 0
         start_time: float = time.monotonic()
 
+        responses = []
+
         with requests.get(
             f"{self.host}{SSE_PATH}",
             stream=True,
@@ -90,6 +92,7 @@ class EventRoundtripUser(PlutoBaseUser):
                 for line in sse_response.iter_lines():
                     if line and not line.startswith(b":"):
                         received_count += 1
+                        responses.append(line)
                         if received_count >= sent_count:
                             break
 

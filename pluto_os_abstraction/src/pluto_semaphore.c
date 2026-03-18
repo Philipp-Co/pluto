@@ -1,7 +1,10 @@
 ///
 /// \brief System V Implementation of Semaphore Interface.
 ///
+#include "pluto/os_abstraction/pluto_types.h"
 #include <pluto/os_abstraction/config/pluto_compile_config.h>
+
+#include <assert.h>
 
 #if PLUTO_OS_INTERFACE == (PLUTO_OS_INTERFACE_SYSTEM_V)
 //
@@ -24,10 +27,14 @@
 
 PLUTO_Semaphore_t PLUTO_CreateSemaphore(const char *path, const char *name, PLUTO_Logger_t logger)
 {
+    assert(NULL != path);
+    assert(NULL != name);
+    assert(NULL != logger);
+
     PLUTO_Semaphore_t semaphore = PLUTO_Malloc(sizeof(struct PLUTO_Semaphore));
     semaphore->logger = logger; 
 
-    if(!PLUTO_CreateKey(path, name, &semaphore->key))
+    if(!PLUTO_CreateKey(path, name, &semaphore->key, logger))
     {
         PLUTO_LoggerWarning(logger, "Unable to create key for %s%s: %s", path, name, strerror(errno));
         goto error;
@@ -55,9 +62,13 @@ error:
 
 PLUTO_Semaphore_t PLUTO_SemaphoreGet(const char *path, const char *name, PLUTO_Logger_t logger)
 {
+    assert(NULL != path);
+    assert(NULL != name);
+    assert(NULL != logger);
+    
     PLUTO_Semaphore_t semaphore = PLUTO_Malloc(sizeof(struct PLUTO_Semaphore));
     semaphore->logger = logger; 
-    if(!PLUTO_KeyGet(path, name, &semaphore->key))
+    if(!PLUTO_KeyGet(path, name, &(semaphore->key), logger))
     {
         PLUTO_LoggerWarning(logger, "Unable to Create Key for %s%s", path, name);
         goto error;

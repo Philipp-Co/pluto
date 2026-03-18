@@ -39,6 +39,7 @@
 #define PLUTO_CONFIG_MAX_STRLEN_NAME (1024 - 1)
 #define PLUTO_CONFIG_MAX_STRLEN_BASE_PATH (4096 - 1)
 #define PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE (1024 - 1)
+#define PLUTO_CONFIG_MAX_STRLEN_USER_ARGUMENTS (4096 - 1)
 //
 // --------------------------------------------------------------------------------------------------------------------
 //
@@ -68,6 +69,8 @@ PLUTO_Config_t PLUTO_CreateConfig(const char *filename, const char *name, PLUTO_
 
 void PLUTO_DestroyConfig(PLUTO_Config_t *config)
 {
+    assert(NULL != config);
+
     if(!(*config))
     {
         return;
@@ -85,6 +88,9 @@ void PLUTO_DestroyConfig(PLUTO_Config_t *config)
     PLUTO_Free(
         (*config)->python_path
     );
+    PLUTO_Free(
+        (*config)->python_home
+    );
     for(int32_t i=0;i<PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES;++i)
     {
         PLUTO_Free((*config)->names_of_output_queues[i]);
@@ -92,6 +98,13 @@ void PLUTO_DestroyConfig(PLUTO_Config_t *config)
     PLUTO_Free(
         (*config)->names_of_output_queues
     );
+    PLUTO_Free(
+        (*config)->ipc_home
+    );
+    PLUTO_Free(
+        (*config)->user_arguments
+    );
+
     PLUTO_Free(*config);
     *config = NULL;
 }
@@ -128,6 +141,11 @@ const char* PLUTO_ConfigPythonPath(const PLUTO_Config_t config)
 const char* PLUTO_ConfigPythonHome(const PLUTO_Config_t config)
 {
     return config->python_home;
+}
+
+const char* PLUTO_ConfigIpcHome(const PLUTO_Config_t config)
+{
+    return config->ipc_home;
 }
 
 void PLUTO_ConfigToString(const PLUTO_Config_t config, char *buffer, size_t size)
@@ -220,6 +238,9 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
     jsmntok_t token[128];
     jsmn_parser parser;
     jsmn_init(&parser);
+
+    const int number_of_bytes = strlen(bytes);
+    const char * const end_of_bytes = bytes + number_of_bytes + 1;
     
     const int result = jsmn_parse(
         &parser, 
@@ -232,26 +253,91 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
     PLUTO_LoggerInfo(logger, "Parse Config...");
     if(result > 0)
     {
-        char *key = PLUTO_Malloc(1024);
-        char *value = PLUTO_Malloc(4096);
+#define PLUTO_JSON_MAX_KEY_LENGTH 1024
+#define PLUTO_JSON_MAX_VALUE_LENGTH 4096
+        char *key = PLUTO_Malloc(PLUTO_JSON_MAX_KEY_LENGTH);
+        char *value = PLUTO_Malloc(PLUTO_JSON_MAX_VALUE_LENGTH);
         for(int i=1;i<result;)
         {
-            memcpy(key, bytes + token[i].start, token[i].end - token[i].start);
-            key[token[i].end - token[i].start] = '\0';
+            //
+            // ---------------------------------------------------------
+            //
+            // Check if Key an Value can fit into temp-Buffer.
+            //
+            const int key_length = token[i].end - token[i].start;
+            const int value_length = token[i+1].end - token[i+1].start;
+            if(key_length >= (PLUTO_JSON_MAX_KEY_LENGTH - 1))
+            {
+                PLUTO_LoggerError(
+                    logger,
+                    "Key Token is to large!"
+                );
+                break;
+            } else if (value_length >= (PLUTO_JSON_MAX_VALUE_LENGTH - 1)) {
+                PLUTO_LoggerError(
+                    logger,
+                    "Value Token is to large!"
+                );
+                break;
+            }
+            //
+            // ---------------------------------------------------------
+            //
+            const char * const current_key_token = bytes + token[i].start;
+            if(current_key_token >= end_of_bytes)
+            {
+                PLUTO_LoggerError(
+                    logger,
+                    "Buffer Overflow!"
+                );
+                break;
+            }
+            memcpy(key, current_key_token, key_length); // flawfinder: ignore ; Checked: key_length < PLUTO_JSON_MAX_KEY_LENGTH 
+            key[key_length] = '\0';
+            
             if(JSMN_STRING == token[i].type)
             {
-                memcpy(value, bytes + token[i + 1].start, token[i + 1].end - token[i + 1].start);
-                value[token[i + 1].end - token[i + 1].start] = '\0';
+                const char * const current_value_token = bytes + token[i+1].start;
+                if(current_value_token >= end_of_bytes)
+                {
+                    PLUTO_LoggerError(
+                        logger,
+                        "Buffer Overflow!"
+                    );
+                    break;
+                }
+                memcpy(value, current_value_token, value_length); // flawfinder: ignore ; Checked: value_length < PLUTO_SJON_MAX_VALUE_LENGTH
+                value[value_length] = '\0';
                 if(0 == strcmp("work_dir", key))
                 {
                     PLUTO_LoggerInfo(logger, "  work_dir: %s", value);
-                    memcpy(config->base_path, value, strlen(value) + 1);
+                    if(value_length >= (PLUTO_CONFIG_MAX_STRLEN_BASE_PATH-1))
+                    {
+                        PLUTO_LoggerError(
+                            logger,
+                            "Value is to large... Is %i Bytes, %i allowed.",
+                            value_length,
+                            PLUTO_CONFIG_MAX_STRLEN_BASE_PATH
+                        );
+                        break;
+                    }
+                    memcpy(config->base_path, value, value_length + 1); // flawfinder: ignore ; Checked: value_length+1 < PLUTO_CONFIG_MAX_STRLEN_BASE_PATH-1
                     flags |= 0x1U;
                     i += 2;
                 }
                 else if(0 == strcmp("name_of_input_queue", key))
                 {
                     PLUTO_LoggerInfo(logger, "  input_queue_name: %s", value);
+                    if(value_length >= (PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE-1))
+                    {
+                        PLUTO_LoggerError(
+                            logger,
+                            "Value is to large... Is %i Bytes, %i allowed.",
+                            value_length,
+                            (PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE-1)
+                        );
+                        break;
+                    }
                     memcpy(config->name_of_input_queue, value, strlen(value) + 1);
                     flags |= 0x2U;
                     i += 2;
@@ -303,6 +389,15 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
                     );
                     i += 2;
                 }
+                else if(0 == strcmp("user_arguments", key))
+                {
+                    PLUTO_LoggerInfo(logger, "user_arguments: %s", value);
+                    const size_t strl = strlen(value);
+                    memcpy(
+                        config->user_arguments, value, strl
+                    );
+                    i += 2;
+                }
                 else
                 {
                     return false;
@@ -325,34 +420,48 @@ static bool PLUTO_ParseConfig(PLUTO_Config_t config, const char *bytes, PLUTO_Lo
 static PLUTO_Config_t PLUTO_ConfigMallocConfigObject(void)
 {
     PLUTO_Config_t config = (PLUTO_Config_t)PLUTO_Malloc(sizeof(struct PLUTO_Config));
-    
+    assert(NULL != config);
+
     config->name = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_NAME + 1);
+    assert(NULL != config->name);
     memset(config->name, '\0', PLUTO_CONFIG_MAX_STRLEN_NAME + 1);
    
     config->python_path = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
+    assert(NULL != config->python_path);
     memset(config->python_path, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
     
     config->python_home = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
+    assert(NULL != config->python_home);
     memset(config->python_home, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
     
     config->ipc_home = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1); 
+    assert(NULL != config->ipc_home);
     memset(config->ipc_home, '\0', PLUTO_CONFIG_MAX_STRLEN_PYTHON_PATH + 1);
 
     config->base_path = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_BASE_PATH + 1);
+    assert(NULL != config->base_path);
     memset(config->base_path, '\0', PLUTO_CONFIG_MAX_STRLEN_BASE_PATH + 1);
 
     config->name_of_input_queue = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1);
+    assert(NULL != config->name_of_input_queue);
     memset(config->name_of_input_queue, '\0', PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1);
     
     config->names_of_output_queues = (char**)PLUTO_Malloc(
         sizeof(char*) * PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES
     ); 
+    assert(NULL != config->names_of_output_queues);
     for(size_t i=0;i<PLUTO_CONFIG_NUMBER_OF_OUTPUT_QUEUES;++i)
     {
         config->names_of_output_queues[i] = (char*)PLUTO_Malloc(
             PLUTO_CONFIG_MAX_STRLEN_NAME_OF_QUEUE + 1
         );
+        assert(NULL != config->names_of_output_queues[i]);
     }
+
+    config->user_arguments = PLUTO_Malloc(PLUTO_CONFIG_MAX_STRLEN_USER_ARGUMENTS + 1);
+    assert(NULL != config->user_arguments);
+    memset(config->user_arguments, '\0', PLUTO_CONFIG_MAX_STRLEN_USER_ARGUMENTS + 1);
+
     return config;
 }
 //

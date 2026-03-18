@@ -8,6 +8,7 @@
 #include "pluto/os_abstraction/pluto_time.h"
 #include "pluto/os_abstraction/signals/pluto_signal.h"
 #include "pluto/os_abstraction/system_events/pluto_system_events.h"
+#include "pluto/pluto_config/pluto_config.h"
 #include <pluto/application_layer/pluto_compile_time_switches.h>
 #include <pluto/application_layer/pluto_info.h>
 #include <pluto/os_abstraction/pluto_types.h>
@@ -49,6 +50,16 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
 {
     if(!config) return NULL;
     if(!callback) return NULL;
+
+    if((NULL == PLUTO_ConfigIpcHome(config)) || (0 == strlen(PLUTO_ConfigIpcHome(config))))
+    {
+        PLUTO_LoggerError(
+            logger,
+            "Value for ipc_home is empty... Configure a Path to a Workingdirectory for IPC related Files."
+        );
+        return NULL;
+    }
+
     PLUTO_Processor_t processor = (PLUTO_Processor_t)PLUTO_Malloc(sizeof(struct PLUTO_Processor));
     processor->logger = logger;
     processor->signal_handler = signal_handler;

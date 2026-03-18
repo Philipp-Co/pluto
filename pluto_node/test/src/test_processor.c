@@ -24,12 +24,14 @@ void PLUTO_TEST_ProcessorInitial(void)
         callback,
         PLUTO_TEST_processor_logger
     );
+    TEST_ASSERT_NOT_NULL(processor);
     PLUTO_DestroyProcessor(&processor);
     PLUTO_DestroySignal(&signal_handler);
 }
 
 void PLUTO_TEST_ProcessorProcessWithEmptyPayload(void)
 {
+    printf("=========================================\n");
     PLUTO_ProcessCallback_t callback = PLUTO_TEST_SimpleCallback;
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         PLUTO_TEST_config,
@@ -57,6 +59,7 @@ void PLUTO_TEST_ProcessorProcessWithEmptyPayload(void)
     TEST_ASSERT_TRUE(
         result
     );
+    printf("=========================================\n");
 }
 
 void PLUTO_TEST_ProcessorProcessWithStandardPayload(void)

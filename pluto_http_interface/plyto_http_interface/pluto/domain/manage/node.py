@@ -35,14 +35,17 @@ class NodeConfigData:
 class Node:
     """Manages package archive files for nodes."""
 
-    def __init__(self, name: str, logger: Logger) -> None:
+    def __init__(self, name: str, logger: Logger, custom_archive_name: Optional[str] = None) -> None:
         """Initializes the Node with the given name.
 
         Args:
-            name: The name of the node.
-            logger: The logger instance used for logging.
+            name:                The name of the node.
+            logger:              The logger instance used for logging.
+            custom_archive_name: Optional custom archive filename (without extension).
+                                 If None, the node name is used as the archive filename.
         """
         self.__name: str = name
+        self.__custom_archive_name: Optional[str] = custom_archive_name
         self.__logger: Logger = logger.getChild(self.__class__.__name__)
         pass
 
@@ -74,7 +77,7 @@ class Node:
         """
         return (self._nodes_directory() / self.__name).exists()
 
-    def create_node(self, top_level_package_name: str) -> bool:
+    def create_node(self, top_level_package_name: str, user_arguments: str = "") -> bool:
         """Creates the node with the given package configuration.
 
         Requires the archive file to be present. Returns False immediately
@@ -82,6 +85,7 @@ class Node:
 
         Args:
             top_level_package_name: The top-level Python package name of the node.
+            user_arguments:         Optional user-defined arguments passed to the node via -u.
 
         Returns:
             True if the node was created successfully, False otherwise.
@@ -89,19 +93,19 @@ class Node:
         try:
             if not self._temp_archive_file().exists():
                 return False
-            run(
-                [
-                    "plyto_add_node_py",
-                    "-a",
-                    "-n",
-                    self.__name,
-                    "-i",
-                    str(self._temp_archive_file()),
-                    "-p",
-                    top_level_package_name,
-                ],
-                check=True,
-            )
+            cmd = [
+                "plyto_add_node_py",
+                "-a",
+                "-n",
+                self.__name,
+                "-i",
+                str(self._temp_archive_file()),
+                "-p",
+                top_level_package_name,
+            ]
+            if user_arguments:
+                cmd += ["-u", user_arguments]
+            run(cmd, check=True)
             return True
         except CalledProcessError as e:
             self.__logger.exception(e)
@@ -240,7 +244,9 @@ class Node:
         Returns:
             The path to the temporary archive file.
         """
-        return self._temp_archive_directory() / f"{self.__name}.tar.gz"
+        if self.__custom_archive_name is None:
+            return self._temp_archive_directory() / f"{self.__name}.tar.gz"
+        return self._temp_archive_directory() / f"{self.__custom_archive_name}.tar.gz"
 
     pass
 
