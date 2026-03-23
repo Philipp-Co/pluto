@@ -28,4 +28,6 @@ Issues = "https://github.com/Philipp-Co/pluto/issues"
 
 [project.scripts]
 plyto_admin = "plyto.cli.plyto_admin_cli:cli"
+plyto_admin_connect = "plyto.cli.plyto_admin_connect_cli:cli"
+plyto_admin_node = "plyto.cli.plyto_admin_node_cli:cli"
 plyto_event = "plyto.cli.plyto_event_cli:cli"

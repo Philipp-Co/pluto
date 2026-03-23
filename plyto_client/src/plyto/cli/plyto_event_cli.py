@@ -1,3 +1,7 @@
+"""
+CLI tool for sending and receiving events on a Pluto instance.
+"""
+# ----------------------------------------------------------------------------------------------------------------------
 
 from argparse import ArgumentParser
 from logging import getLogger, Logger, StreamHandler, Formatter
@@ -9,11 +13,12 @@ from time import sleep
 from datetime import datetime, timezone
 from json import loads, dumps
 
+# ----------------------------------------------------------------------------------------------------------------------
 
 def cli():
     #
     # -----------------------------------------------------
-    # 
+    #
     logger: Logger = getLogger()
     log_level: str = environ.get(
         'PLYTO_LOG_LEVEL',
@@ -29,7 +34,7 @@ def cli():
     )
     #
     # -----------------------------------------------------
-    # 
+    #
     parser: ArgumentParser = ArgumentParser()
     parser.add_argument(
         '-s',
@@ -67,7 +72,7 @@ def cli():
     print(args)
     #
     # -----------------------------------------------------
-    # 
+    #
     if args.send and args.receive:
         logger.error(
             'It is not allowed to send and receive at the same time...'
@@ -134,3 +139,5 @@ def cli():
 if __name__ == '__main__':
 
     cli()
+
+# ----------------------------------------------------------------------------------------------------------------------

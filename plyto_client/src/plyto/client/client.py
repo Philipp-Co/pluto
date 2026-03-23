@@ -1,9 +1,10 @@
-from base64 import b64encode
-from json import loads, dumps
+"""
+Main client class for connecting to and interacting with a Pluto instance.
+"""
+# ----------------------------------------------------------------------------------------------------------------------
+
 from typing_extensions import Self
-from typing import List, Optional
-from dataclasses import dataclass
-from datetime import datetime, timezone
+from typing import Optional
 from os import environ
 from logging import Logger
 
@@ -12,15 +13,7 @@ from ._handler.transmitter import PlytoTransmitter
 from ._handler.receiver import PlytoReceiver
 from ._handler.manager import PlytoManager
 
-
-@dataclass
-class PlytoEvent:
-    id: int
-    event_id: int
-    timestamp: datatime 
-    payload: str
-    pass
-
+# ----------------------------------------------------------------------------------------------------------------------
 
 class PlytoClient:
 
@@ -59,7 +52,7 @@ class PlytoClient:
             return PlytoManager().connect(self.__address)
         raise PlytoException('Not Connected!')
 
-    def transmitter(self) -> PlytoTransmitter: 
+    def transmitter(self) -> PlytoTransmitter:
         if len(self.__address) > 0:
             return PlytoTransmitter().connect(self.__address)
         raise PlytoException('Not Connected!')
@@ -71,3 +64,4 @@ class PlytoClient:
 
     pass
 
+# ----------------------------------------------------------------------------------------------------------------------

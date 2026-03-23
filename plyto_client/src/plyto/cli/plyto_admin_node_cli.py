@@ -1,6 +1,6 @@
 """
-CLI tool for administrating a Pluto instance.
-Supports starting, stopping, and querying the state of the application.
+CLI tool for managing nodes of a Pluto instance.
+Supports adding and removing nodes.
 """
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -32,76 +32,92 @@ def cli():
     #
     # -----------------------------------------------------
     #
-    parser: ArgumentParser = ArgumentParser(description='Administration of a Pluto instance.')
+    parser: ArgumentParser = ArgumentParser()
     parser.add_argument(
-        '-s',
-        '--start',
+        '-a',
+        '--add-node',
         action='store_true',
-        help='Start the application.',
     )
     parser.add_argument(
-        '-x',
-        '--stop',
+        '-r',
+        '--remove-node',
         action='store_true',
-        help='Stop the application.',
     )
     parser.add_argument(
-        '-q',
-        '--state',
-        action='store_true',
-        help='Query the current state of the application.',
+        '-n',
+        '--name',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '-A',
+        '--path-to-archive',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '-t',
+        '--top-level-package-name',
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        '-u',
+        '--user-arguments',
+        type=str,
+        default=None,
     )
     parser.add_argument(
         '-i',
         '--ip-address',
         type=str,
         default=None,
-        help='IP address of the Pluto server. Default: environment variable PLYTO_ADDRESS.',
     )
     parser.add_argument(
         '-p',
         '--port',
         type=int,
         default=None,
-        help='Port of the Pluto server. Default: environment variable PLYTO_PORT.',
     )
     args = parser.parse_args(argv[1:len(argv)])
     #
     # -----------------------------------------------------
     #
-    if len([f for f in [args.start, args.stop, args.state] if f]) > 1:
+    if args.add_node and args.remove_node:
         logger.error(
             'Only one operation at a time is allowed.'
         )
         exit(-1)
-    elif args.start:
+    elif args.add_node:
+        if args.path_to_archive is None:
+            logger.error(
+                'To add a new Node you have to specifiy a Path to the Python-Archive.'
+            )
+            exit(-1)
         client: PlytoClient = PlytoClient(logger.getChild(
             PlytoClient.__name__)
         ).connect(
             address=args.ip_address,
             port=args.port,
         )
-        client.manager().start()
+        client.manager().add_node(
+            name=args.name,
+            python_archive=args.path_to_archive,
+            top_level_package_name=args.top_level_package_name,
+            user_arguments=args.user_arguments,
+        )
         client.close()
-    elif args.stop:
+    elif args.remove_node:
         client: PlytoClient = PlytoClient(logger.getChild(
             PlytoClient.__name__)
         ).connect(
             address=args.ip_address,
             port=args.port,
         )
-        client.manager().stop()
-        client.close()
-    elif args.state:
-        client: PlytoClient = PlytoClient(logger.getChild(
-            PlytoClient.__name__)
-        ).connect(
-            address=args.ip_address,
-            port=args.port,
+        client.manager().remove_node(
+            args.name,
         )
-        state: str = client.manager().state()
         client.close()
-        logger.info(state)
     else:
         logger.error(
             'Nothing to do...'

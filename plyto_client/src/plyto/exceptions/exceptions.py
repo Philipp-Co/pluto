@@ -1,3 +1,7 @@
+"""
+Exception classes for the Plyto client library.
+"""
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 class PlytoException(Exception):
@@ -15,4 +19,7 @@ class PlytoTimestampException(PlytoException):
 class PlytoAddressNotSetException(PlytoException):
     pass
 
+class PlytoRequestFailedException(PlytoException):
+    pass
 
+# ----------------------------------------------------------------------------------------------------------------------

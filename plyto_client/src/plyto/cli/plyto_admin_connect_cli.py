@@ -1,6 +1,6 @@
 """
-CLI tool for administrating a Pluto instance.
-Supports starting, stopping, and querying the state of the application.
+CLI tool for managing connections between nodes of a Pluto instance.
+Supports connecting and disconnecting nodes.
 """
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -32,76 +32,74 @@ def cli():
     #
     # -----------------------------------------------------
     #
-    parser: ArgumentParser = ArgumentParser(description='Administration of a Pluto instance.')
+    parser: ArgumentParser = ArgumentParser()
+    parser.add_argument(
+        '-c',
+        '--connect',
+        action='store_true',
+    )
+    parser.add_argument(
+        '-d',
+        '--disconnect',
+        action='store_true',
+    )
     parser.add_argument(
         '-s',
-        '--start',
-        action='store_true',
-        help='Start the application.',
+        '--source',
+        type=str,
+        default=None,
     )
     parser.add_argument(
-        '-x',
-        '--stop',
-        action='store_true',
-        help='Stop the application.',
-    )
-    parser.add_argument(
-        '-q',
-        '--state',
-        action='store_true',
-        help='Query the current state of the application.',
+        '-t',
+        '--target',
+        type=str,
+        default=None,
     )
     parser.add_argument(
         '-i',
         '--ip-address',
         type=str,
         default=None,
-        help='IP address of the Pluto server. Default: environment variable PLYTO_ADDRESS.',
     )
     parser.add_argument(
         '-p',
         '--port',
         type=int,
         default=None,
-        help='Port of the Pluto server. Default: environment variable PLYTO_PORT.',
     )
     args = parser.parse_args(argv[1:len(argv)])
     #
     # -----------------------------------------------------
     #
-    if len([f for f in [args.start, args.stop, args.state] if f]) > 1:
+    if args.connect and args.disconnect:
         logger.error(
             'Only one operation at a time is allowed.'
         )
         exit(-1)
-    elif args.start:
+    elif args.connect:
         client: PlytoClient = PlytoClient(logger.getChild(
             PlytoClient.__name__)
         ).connect(
             address=args.ip_address,
             port=args.port,
         )
-        client.manager().start()
+        client.manager().connect_nodes(
+            src=args.source,
+            dest=args.target,
+        )
         client.close()
-    elif args.stop:
+    elif args.disconnect:
         client: PlytoClient = PlytoClient(logger.getChild(
             PlytoClient.__name__)
         ).connect(
             address=args.ip_address,
             port=args.port,
         )
-        client.manager().stop()
-        client.close()
-    elif args.state:
-        client: PlytoClient = PlytoClient(logger.getChild(
-            PlytoClient.__name__)
-        ).connect(
-            address=args.ip_address,
-            port=args.port,
+        client.manager().disconnect_nodes(
+            src=args.source,
+            dest=args.target,
         )
-        state: str = client.manager().state()
         client.close()
-        logger.info(state)
     else:
         logger.error(
             'Nothing to do...'

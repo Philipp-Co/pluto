@@ -1,3 +1,8 @@
+"""
+Handler for transmitting events to a Pluto instance via HTTP.
+"""
+# ----------------------------------------------------------------------------------------------------------------------
+
 from http import HTTPStatus
 from typing_extensions import Self
 from plyto.client.event import PlytoEvent
@@ -6,6 +11,7 @@ from datetime import timezone
 from json import dumps
 from requests import post, Response
 
+# ----------------------------------------------------------------------------------------------------------------------
 
 class PlytoTransmitter:
 
@@ -16,11 +22,11 @@ class PlytoTransmitter:
     def __delf__(self):
         self.close()
         pass
-    
+
     def connect(self, address: str) -> Self:
         self.__address = address
         return self
-    
+
     def close(self) -> Self:
         return self
 
@@ -45,7 +51,7 @@ class PlytoTransmitter:
                     }
                 ),
                 allow_redirects=False,
-            ) 
+            )
 
             if HTTPStatus.OK != response.status_code:
                 raise PlytoException('Service Unavailable')
@@ -53,3 +59,5 @@ class PlytoTransmitter:
             raise PlytoException from e
 
     pass
+
+# ----------------------------------------------------------------------------------------------------------------------

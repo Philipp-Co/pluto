@@ -1,3 +1,7 @@
+"""
+Handler for receiving events from a Pluto instance via HTTP streaming.
+"""
+# ----------------------------------------------------------------------------------------------------------------------
 
 from base64 import b64decode
 from typing_extensions import Self
@@ -7,6 +11,7 @@ from plyto.exceptions import PlytoNoEventAvailableExcpetion
 from json import loads
 from datetime import datetime
 
+# ----------------------------------------------------------------------------------------------------------------------
 
 class PlytoReceiver:
 
@@ -15,7 +20,7 @@ class PlytoReceiver:
         self.__response_iter: Generator[bytes, None, None] = None
         self.__chunk = ''
         pass
-    
+
     def __delf__(self):
         self.close()
         pass
@@ -25,7 +30,7 @@ class PlytoReceiver:
         self.__response = response
         self.__response_iter = response.iter_content(chunk_size=4096)
         return self
-    
+
     def close(self) -> Self:
         self.__response.close()
         return self
@@ -49,7 +54,7 @@ class PlytoReceiver:
                         b64decode(
                             line[line.index('data:') + len('data:'): len(line)]
                         )
-                    ) 
+                    )
                     return PlytoEvent(
                         id=result['id'],
                         event_id=result['event_id'],
@@ -66,3 +71,4 @@ class PlytoReceiver:
 
     pass
 
+# ----------------------------------------------------------------------------------------------------------------------
