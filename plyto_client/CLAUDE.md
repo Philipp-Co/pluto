@@ -10,7 +10,7 @@ Claude Code verwendet dafür immer den Plan Mode.
 
 - **Sprache:** Python 3.8+
 - **Build:** `setuptools` via `pyproject.toml`
-- **Paketname:** `Plyto`
+- **Paketname:** `new_horizon`
 - **Beschreibung:** Client-Bibliothek für die Interaktion mit Pluto (Event-driven Framework)
 
 ## Setup
@@ -41,5 +41,5 @@ python -m build --sdist
 
 ## CLI Entry Points
 
-- `plyto_admin` → `plyto.cli.plyto_admin_cli:cli`
-- `plyto_event` → `plyto.cli.plyto_event_cli:cli`
+- `plyto_admin` → `new_horizon.cli.plyto_admin_cli:cli`
+- `plyto_event` → `new_horizon.cli.plyto_event_cli:cli`

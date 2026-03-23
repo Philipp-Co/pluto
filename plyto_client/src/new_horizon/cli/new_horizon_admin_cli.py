@@ -11,7 +11,7 @@ from os import environ
 from sys import argv
 from sys import exit as sys_exit
 
-from ..client.client import PlytoClient  # pylint: disable=relative-beyond-top-level
+from ..client.client import NewHorizonClient  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -67,26 +67,26 @@ def cli():
     #
     # -----------------------------------------------------
     #
-    client: PlytoClient
+    client: NewHorizonClient
     if len([f for f in [args.start, args.stop, args.state] if f]) > 1:
         logger.error("Only one operation at a time is allowed.")
         sys_exit(-1)
     elif args.start:
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
         client.manager().start()
         client.close()
     elif args.stop:
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
         client.manager().stop()
         client.close()
     elif args.state:
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )

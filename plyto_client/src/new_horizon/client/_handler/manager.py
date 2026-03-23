@@ -13,14 +13,14 @@ from requests import Response, delete, get, post, put  # pylint: disable=import-
 from typing_extensions import Self
 
 from ...exceptions.exceptions import (  # pylint: disable=relative-beyond-top-level
-    PlytoException,
-    PlytoRequestFailedException,
+    NewHorizonException,
+    NewHorizonRequestFailedException,
 )
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlytoManager:
+class NewHorizonManager:
     """Handler for administrative operations on a Pluto instance."""
 
     def __init__(self):
@@ -51,10 +51,10 @@ class PlytoManager:
             },
         )
         if HTTPStatus.OK != response.status_code:
-            raise PlytoException
+            raise NewHorizonException
         result = loads(response.content.decode())
         if not result["result"]:
-            raise PlytoRequestFailedException(result["description"])
+            raise NewHorizonRequestFailedException(result["description"])
         return self
 
     def disconnect_nodes(self, src: str, dest: str) -> Self:
@@ -67,10 +67,10 @@ class PlytoManager:
             },
         )
         if HTTPStatus.OK != response.status_code:
-            raise PlytoException
+            raise NewHorizonException
         result = loads(response.content.decode())
         if not result["result"]:
-            raise PlytoRequestFailedException(result["description"])
+            raise NewHorizonRequestFailedException(result["description"])
         return self
 
     def __upload_archive(self, url: str, content: str) -> Self:
@@ -86,10 +86,10 @@ class PlytoManager:
             ),
         )
         if HTTPStatus.OK != response.status_code:
-            raise PlytoException
+            raise NewHorizonException
         result = loads(response.content.decode())
         if not result["result"]:
-            raise PlytoRequestFailedException(result["description"])
+            raise NewHorizonRequestFailedException(result["description"])
         return self
 
     def __add_node(
@@ -113,10 +113,10 @@ class PlytoManager:
             ),
         )
         if HTTPStatus.OK != response.status_code:
-            raise PlytoException(f"Response Code was {response.status_code}")
+            raise NewHorizonException(f"Response Code was {response.status_code}")
         result = loads(response.content.decode())
         if not result["result"]:
-            raise PlytoRequestFailedException(result["description"])
+            raise NewHorizonRequestFailedException(result["description"])
         return self
 
     def add_node(self, name: str, python_archive: str, top_level_package_name: str, user_arguments: str) -> Self:
@@ -136,10 +136,10 @@ class PlytoManager:
                     top_level_package_name=top_level_package_name,
                     user_arguments=user_arguments,
                 )
-        except PlytoException as e:
+        except NewHorizonException as e:
             raise e
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
         return self
 
     def remove_node(self, name: str) -> Self:
@@ -150,14 +150,14 @@ class PlytoManager:
                 url=url,
             )
             if HTTPStatus.OK != response.status_code:
-                raise PlytoException
+                raise NewHorizonException
             result = loads(response.content.decode())
             if not result["result"]:
-                raise PlytoRequestFailedException(result["description"])
-        except PlytoException as e:
+                raise NewHorizonRequestFailedException(result["description"])
+        except NewHorizonException as e:
             raise e
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
         return self
 
     def start(self) -> Self:
@@ -168,9 +168,9 @@ class PlytoManager:
                 url=url,
             )
             if HTTPStatus.OK != response.status_code:
-                raise PlytoRequestFailedException
+                raise NewHorizonRequestFailedException
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
         return self
 
     def stop(self) -> Self:
@@ -181,9 +181,9 @@ class PlytoManager:
                 url=url,
             )
             if HTTPStatus.OK != response.status_code:
-                raise PlytoRequestFailedException
+                raise NewHorizonRequestFailedException
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
         return self
 
     def state(self) -> str:
@@ -194,11 +194,11 @@ class PlytoManager:
                 url=url,
             )
             if HTTPStatus.OK != response.status_code:
-                raise PlytoRequestFailedException
+                raise NewHorizonRequestFailedException
             result = loads(response.content.decode())
             return result["state"]
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
 
     def nodes(self) -> Dict[str, List[str]]:
         """Query all nodes and their connections."""
@@ -226,8 +226,8 @@ class PlytoManager:
                     mat[connection["source"]].append(connection["target"])
                 return mat
         except Exception as e:
-            raise PlytoException from e
-        raise PlytoRequestFailedException
+            raise NewHorizonException from e
+        raise NewHorizonRequestFailedException
 
     pass
 

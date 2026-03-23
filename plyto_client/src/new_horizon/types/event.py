@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 @dataclass
-class PlytoEvent:
+class NewHorizonEvent:
     """Represents a single event exchanged with a Pluto instance."""
 
     id: int

@@ -14,8 +14,12 @@ from sys import argv
 from sys import exit as sys_exit
 from time import sleep
 
-from ..client.client import PlytoClient, PlytoEvent, PlytoTransmitter  # pylint: disable=relative-beyond-top-level
-from ..exceptions.exceptions import PlytoNoEventAvailableExcpetion  # pylint: disable=relative-beyond-top-level
+from ..client.client import (  # pylint: disable=relative-beyond-top-level
+    NewHorizonClient,
+    NewHorizonEvent,
+    NewHorizonTransmitter,
+)
+from ..exceptions.exceptions import NewHorizonNoEventAvailableException  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -72,21 +76,21 @@ def cli():
     #
     # -----------------------------------------------------
     #
-    client: PlytoClient
+    client: NewHorizonClient
     if args.send and args.receive:
         logger.error("It is not allowed to send and receive at the same time...")
         sys_exit(-1)
     elif args.send:
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
-        t: PlytoTransmitter = client.transmitter()
+        t: NewHorizonTransmitter = client.transmitter()
         for _, event_str in enumerate(args.events):
             raw = loads(event_str)
             t.transmit(
                 name=args.name,
-                event=PlytoEvent(
+                event=NewHorizonEvent(
                     id=raw["id"],
                     event_id=raw["event-id"],
                     timestamp=datetime.now(timezone.utc),
@@ -102,14 +106,14 @@ def cli():
             terminate = True
 
         signal(SIGINT, signal_handler)
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
         r = client.receiver()
         while not terminate:
             try:
-                event: PlytoEvent = r.receive()
+                event: NewHorizonEvent = r.receive()
                 logger.info(
                     dumps(
                         {
@@ -120,7 +124,7 @@ def cli():
                         }
                     )
                 )
-            except PlytoNoEventAvailableExcpetion:
+            except NewHorizonNoEventAvailableException:
                 sleep(0.25)
         client.close()
     else:

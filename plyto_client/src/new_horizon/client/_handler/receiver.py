@@ -12,13 +12,13 @@ from typing import Iterator, Optional
 from requests import Response, get  # pylint: disable=import-error
 from typing_extensions import Self
 
-from ...exceptions import PlytoNoEventAvailableExcpetion  # pylint: disable=relative-beyond-top-level
-from ...types.event import PlytoEvent  # pylint: disable=relative-beyond-top-level
+from ...exceptions import NewHorizonNoEventAvailableException  # pylint: disable=relative-beyond-top-level
+from ...types.event import NewHorizonEvent  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlytoReceiver:
+class NewHorizonReceiver:
     """Handler for receiving events from a Pluto instance via HTTP streaming."""
 
     def __init__(self):
@@ -44,11 +44,11 @@ class PlytoReceiver:
             self.__response.close()
         return self
 
-    def receive(self) -> PlytoEvent:
+    def receive(self) -> NewHorizonEvent:
         """Receive the next event from the stream."""
         try:
             if self.__response_iter is None:
-                raise PlytoNoEventAvailableExcpetion
+                raise NewHorizonNoEventAvailableException
             chunk: bytes = next(self.__response_iter)
             self.__chunk = self.__chunk + chunk.decode()
             try:
@@ -61,7 +61,7 @@ class PlytoReceiver:
 
                 if line.startswith("data:"):
                     result = loads(b64decode(line[line.index("data:") + len("data:") : len(line)]))
-                    return PlytoEvent(
+                    return NewHorizonEvent(
                         id=result["id"],
                         event_id=result["event_id"],
                         timestamp=datetime.fromisoformat(result["timestamp"]),
@@ -69,11 +69,11 @@ class PlytoReceiver:
                     )
                 raise ValueError
             except ValueError as e:
-                raise PlytoNoEventAvailableExcpetion from e
-        except PlytoNoEventAvailableExcpetion as e:
+                raise NewHorizonNoEventAvailableException from e
+        except NewHorizonNoEventAvailableException as e:
             raise e
         except Exception as e:
-            raise PlytoNoEventAvailableExcpetion from e
+            raise NewHorizonNoEventAvailableException from e
 
     pass
 

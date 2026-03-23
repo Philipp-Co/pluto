@@ -5,27 +5,27 @@ Exception classes for the Plyto client library.
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlytoException(Exception):
+class NewHorizonException(Exception):
     """Base exception for all Plyto errors."""
 
 
-class PlytoNoEventAvailableExcpetion(PlytoException):
+class NewHorizonNoEventAvailableException(NewHorizonException):
     """Raised when no event is available to receive."""
 
 
-class PlytoPayloadToLargeException(PlytoException):
+class NewHorizonPayloadToLargeException(NewHorizonException):
     """Raised when an event payload exceeds the allowed size."""
 
 
-class PlytoTimestampException(PlytoException):
+class NewHorizonTimestampException(NewHorizonException):
     """Raised when an event timestamp is invalid or missing timezone information."""
 
 
-class PlytoAddressNotSetException(PlytoException):
+class NewHorizonAddressNotSetException(NewHorizonException):
     """Raised when no server address is configured."""
 
 
-class PlytoRequestFailedException(PlytoException):
+class NewHorizonRequestFailedException(NewHorizonException):
     """Raised when an HTTP request to the Pluto server fails."""
 
 

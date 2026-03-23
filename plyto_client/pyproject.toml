@@ -3,8 +3,8 @@ requires = ["setuptools >= 75"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Plyto"
-version = "0.0.0"
+name = "new-horizon"
+version = "0.0.1"
 authors = [
   { name="Philipp Kroll", email="pk@eample.com" },
 ]
@@ -14,6 +14,10 @@ requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.32.5",
+    "typing_extensions>=4.15.0",
 ]
 
 [project.license]
@@ -27,7 +31,7 @@ Issues = "https://github.com/Philipp-Co/pluto/issues"
 
 
 [project.scripts]
-plyto_admin = "plyto.cli.plyto_admin_cli:cli"
-plyto_admin_connect = "plyto.cli.plyto_admin_connect_cli:cli"
-plyto_admin_node = "plyto.cli.plyto_admin_node_cli:cli"
-plyto_event = "plyto.cli.plyto_event_cli:cli"
+nh_state = "new_horizon.cli.new_horizon_admin_cli:cli"
+nh_connect = "new_horizon.cli.new_horizon_admin_connect_cli:cli"
+nh_node = "new_horizon.cli.new_horizon_admin_node_cli:cli"
+nh_event = "new_horizon.cli.new_horizon_event_cli:cli"

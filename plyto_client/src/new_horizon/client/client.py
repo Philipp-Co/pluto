@@ -10,16 +10,19 @@ from typing import Optional
 
 from typing_extensions import Self
 
-from ..exceptions import PlytoAddressNotSetException, PlytoException  # pylint: disable=relative-beyond-top-level
-from ..types.event import PlytoEvent  # pylint: disable=unused-import, relative-beyond-top-level
-from ._handler.manager import PlytoManager
-from ._handler.receiver import PlytoReceiver
-from ._handler.transmitter import PlytoTransmitter
+from ..exceptions import (  # pylint: disable=relative-beyond-top-level
+    NewHorizonAddressNotSetException,
+    NewHorizonException,
+)
+from ..types.event import NewHorizonEvent  # pylint: disable=unused-import, relative-beyond-top-level
+from ._handler.manager import NewHorizonManager
+from ._handler.receiver import NewHorizonReceiver
+from ._handler.transmitter import NewHorizonTransmitter
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlytoClient:
+class NewHorizonClient:
     """Client for connecting to and interacting with a Pluto instance."""
 
     def __init__(self, logger: Optional[Logger] = None):
@@ -40,9 +43,9 @@ class PlytoClient:
                 self.__logger.info(f"Connect to Pluto ob Address {_address}:{_port}")
             self.__address = f"{_address}:{_port}"
         except KeyError as e:
-            raise PlytoAddressNotSetException from e
+            raise NewHorizonAddressNotSetException from e
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
         return self
 
     def close(self) -> Self:
@@ -50,26 +53,26 @@ class PlytoClient:
         try:
             pass
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
         return self
 
-    def manager(self) -> PlytoManager:
+    def manager(self) -> NewHorizonManager:
         """Return a manager handler for administrative operations."""
         if len(self.__address) > 0:
-            return PlytoManager().connect(self.__address)
-        raise PlytoException("Not Connected!")
+            return NewHorizonManager().connect(self.__address)
+        raise NewHorizonException("Not Connected!")
 
-    def transmitter(self) -> PlytoTransmitter:
+    def transmitter(self) -> NewHorizonTransmitter:
         """Return a transmitter handler for sending events."""
         if len(self.__address) > 0:
-            return PlytoTransmitter().connect(self.__address)
-        raise PlytoException("Not Connected!")
+            return NewHorizonTransmitter().connect(self.__address)
+        raise NewHorizonException("Not Connected!")
 
-    def receiver(self) -> PlytoReceiver:
+    def receiver(self) -> NewHorizonReceiver:
         """Return a receiver handler for receiving events."""
         if len(self.__address) > 0:
-            return PlytoReceiver().connect(self.__address)
-        raise PlytoException("Not Connected!")
+            return NewHorizonReceiver().connect(self.__address)
+        raise NewHorizonException("Not Connected!")
 
     pass
 

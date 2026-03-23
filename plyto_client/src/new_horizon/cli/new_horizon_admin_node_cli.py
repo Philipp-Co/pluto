@@ -1,6 +1,6 @@
 """
-CLI tool for managing connections between nodes of a Pluto instance.
-Supports connecting and disconnecting nodes.
+CLI tool for managing nodes of a Pluto instance.
+Supports adding and removing nodes.
 """
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -11,13 +11,13 @@ from os import environ
 from sys import argv
 from sys import exit as sys_exit
 
-from ..client.client import PlytoClient  # pylint: disable=relative-beyond-top-level
+from ..client.client import NewHorizonClient  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 def cli():
-    """Entry point for the plyto_admin_connect CLI tool."""
+    """Entry point for the plyto_admin_node CLI tool."""
     #
     # -----------------------------------------------------
     #
@@ -32,24 +32,36 @@ def cli():
     #
     parser: ArgumentParser = ArgumentParser()
     parser.add_argument(
-        "-c",
-        "--connect",
+        "-a",
+        "--add-node",
         action="store_true",
     )
     parser.add_argument(
-        "-d",
-        "--disconnect",
+        "-r",
+        "--remove-node",
         action="store_true",
     )
     parser.add_argument(
-        "-s",
-        "--source",
+        "-n",
+        "--name",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "-A",
+        "--path-to-archive",
         type=str,
         default=None,
     )
     parser.add_argument(
         "-t",
-        "--target",
+        "--top-level-package-name",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "-u",
+        "--user-arguments",
         type=str,
         default=None,
     )
@@ -69,28 +81,32 @@ def cli():
     #
     # -----------------------------------------------------
     #
-    client: PlytoClient
-    if args.connect and args.disconnect:
+    client: NewHorizonClient
+    if args.add_node and args.remove_node:
         logger.error("Only one operation at a time is allowed.")
         sys_exit(-1)
-    elif args.connect:
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+    elif args.add_node:
+        if args.path_to_archive is None:
+            logger.error("To add a new Node you have to specifiy a Path to the Python-Archive.")
+            sys_exit(-1)
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
-        client.manager().connect_nodes(
-            src=args.source,
-            dest=args.target,
+        client.manager().add_node(
+            name=args.name,
+            python_archive=args.path_to_archive,
+            top_level_package_name=args.top_level_package_name,
+            user_arguments=args.user_arguments,
         )
         client.close()
-    elif args.disconnect:
-        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
+    elif args.remove_node:
+        client = NewHorizonClient(logger.getChild(NewHorizonClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
-        client.manager().disconnect_nodes(
-            src=args.source,
-            dest=args.target,
+        client.manager().remove_node(
+            args.name,
         )
         client.close()
     else:

@@ -12,16 +12,16 @@ from requests import Response, post  # pylint: disable=import-error
 from typing_extensions import Self
 
 from ...exceptions.exceptions import (  # pylint: disable=relative-beyond-top-level
-    PlytoException,
-    PlytoPayloadToLargeException,
-    PlytoTimestampException,
+    NewHorizonException,
+    NewHorizonPayloadToLargeException,
+    NewHorizonTimestampException,
 )
-from ...types.event import PlytoEvent  # pylint: disable=relative-beyond-top-level
+from ...types.event import NewHorizonEvent  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class PlytoTransmitter:
+class NewHorizonTransmitter:
     """Handler for transmitting events to a Pluto instance via HTTP."""
 
     def __init__(self):
@@ -41,13 +41,13 @@ class PlytoTransmitter:
         """Close the connection."""
         return self
 
-    def transmit(self, name: str, event: PlytoEvent) -> None:
+    def transmit(self, name: str, event: NewHorizonEvent) -> None:
         """Transmit an event to the specified node."""
         try:
             if len(event.payload) > 48:
-                raise PlytoPayloadToLargeException
+                raise NewHorizonPayloadToLargeException
             if event.timestamp.tzinfo is None or event.timestamp.tzinfo != timezone.utc:
-                raise PlytoTimestampException
+                raise NewHorizonTimestampException
             response: Response = post(
                 url=f"http://{self.__address}/runtime/events/",
                 headers={
@@ -66,9 +66,9 @@ class PlytoTransmitter:
             )
 
             if HTTPStatus.OK != response.status_code:
-                raise PlytoException("Service Unavailable")
+                raise NewHorizonException("Service Unavailable")
         except Exception as e:
-            raise PlytoException from e
+            raise NewHorizonException from e
 
     pass
 
