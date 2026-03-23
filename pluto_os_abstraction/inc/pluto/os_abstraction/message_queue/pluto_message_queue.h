@@ -42,7 +42,6 @@ struct PLUTO_MsgBuf
 
 struct PLUTO_MessageQueueInternal
 {
-    PLUTO_Key_t *key;
 #ifdef PLUTO_MESSAGE_QUEUE_CUSTOM_0
     PLUTO_SharedMemory_t shared_memory;
 #endif

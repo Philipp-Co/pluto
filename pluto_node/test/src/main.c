@@ -1,4 +1,5 @@
 
+#include <pluto/application_layer/python/pluto_python.h>
 #include "pluto/pluto_config/pluto_config.h"
 #include <pluto/pluto_node/test/test_processor.h>
 #include <pluto/pluto_node/test/prepare.h>
@@ -32,14 +33,22 @@ int main(int argc, char **argv)
 
 void setUp(void)
 {
+    PLUTO_TEST_edge_logger = PLUTO_CreateLogger("test-edge");
+    PLUTO_TEST_processor_logger = PLUTO_CreateLogger("test-processor");
+    PLUTO_LoggerInfo(PLUTO_TEST_processor_logger, "Use Nodeconfig: %s", PLUTO_TEST_CONFIG);
+    TEST_ASSERT_TRUE(
+        PLUTO_InitializePython(
+            PLUTO_TEST_python_home,
+            PLUTO_TEST_python_path,
+            PLUTO_TEST_executable,
+            NULL,
+            NULL,
+            PLUTO_TEST_processor_logger 
+        )
+    );
 #if defined(PLUTO_TEST)
     PLUTO_MallocResetState();
 #endif
-    PLUTO_TEST_edge_logger = PLUTO_CreateLogger("test-edge");
-    PLUTO_TEST_processor_logger = PLUTO_CreateLogger("test-processor");
-
-    PLUTO_LoggerInfo(PLUTO_TEST_processor_logger, "Use Nodeconfig: %s", PLUTO_TEST_CONFIG);
-
     PLUTO_TEST_config = PLUTO_CreateConfig(
         PLUTO_TEST_CONFIG,
         PLUTO_TEST_name,
@@ -62,6 +71,7 @@ void tearDown(void)
     TEST_ASSERT_TRUE(PLUTO_MallocCountEqual());
     PLUTO_MallocResetState();
 #endif
+    PLUTO_DeinitializePython();
 }
 
 const char* PLUTO_TEST_name = "pluto-0_iq";

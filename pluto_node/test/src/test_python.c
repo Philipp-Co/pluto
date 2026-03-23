@@ -11,12 +11,14 @@ static void PLUTO_TEST_PythonDestroyProcessor(PLUTO_Processor_t processor);
 void PLUTO_TEST_PythonInitial(void)
 {
     PLUTO_Processor_t processor = PLUTO_TEST_PythonCreateProcessor();
+    TEST_ASSERT_NOT_NULL(processor);
     PLUTO_TEST_PythonDestroyProcessor(processor);
 }
 
 void PLUTO_TEST_PythonProcessEventWhenQueueIsEmpty(void)
 {
     PLUTO_Processor_t processor = PLUTO_TEST_PythonCreateProcessor();
+    TEST_ASSERT_NOT_NULL(processor);
     PLUTO_ProcessorProcess(processor);
     PLUTO_TEST_PythonDestroyProcessor(processor);
 }
@@ -24,6 +26,7 @@ void PLUTO_TEST_PythonProcessEventWhenQueueIsEmpty(void)
 void PLUTO_TEST_PythonProcessEventWhenQueueIsNotEmpty(void)
 {
     PLUTO_Processor_t processor = PLUTO_TEST_PythonCreateProcessor();
+    TEST_ASSERT_NOT_NULL(processor);
     PLUTO_EDGE_Edge_t node_input_edge = PLUTO_EDGE_CreateEdge(
         PLUTO_TEST_config->base_path,
         PLUTO_TEST_name,
@@ -71,14 +74,18 @@ void PLUTO_TEST_PythonProcessEventWhenQueueIsNotEmpty(void)
 
 PLUTO_Processor_t PLUTO_TEST_PythonCreateProcessor(void)
 {
-    PLUTO_InitializePython(
-        PLUTO_TEST_python_home,
-        PLUTO_TEST_python_path,
-        PLUTO_TEST_executable,
-        NULL,
-        NULL,
-        PLUTO_TEST_processor_logger 
+    /*
+    TEST_ASSERT_TRUE(
+        PLUTO_InitializePython(
+            PLUTO_TEST_python_home,
+            PLUTO_TEST_python_path,
+            PLUTO_TEST_executable,
+            NULL,
+            NULL,
+            PLUTO_TEST_processor_logger 
+        )
     );
+    */
     PLUTO_ProcessCallback_t callback = PLUTO_PY_ProcessCallback;
     PLUTO_Processor_t processor = PLUTO_CreateProcessor(
         PLUTO_TEST_config,
@@ -86,12 +93,13 @@ PLUTO_Processor_t PLUTO_TEST_PythonCreateProcessor(void)
         callback,
         PLUTO_TEST_processor_logger
     );
+    TEST_ASSERT_NOT_NULL(processor);
     return processor;
 }
 
 void PLUTO_TEST_PythonDestroyProcessor(PLUTO_Processor_t processor)
 {
     PLUTO_DestroyProcessor(&processor);
-    PLUTO_DeinitializePython();
+    //PLUTO_DeinitializePython();
 }
 

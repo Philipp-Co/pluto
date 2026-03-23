@@ -20,7 +20,14 @@ _pid_pluto_core=$!
 # Run the HTTP Interface.
 #
 (
-    cd /pluto_http_interface/ && . .venv/bin/activate && cd plyto_http_interface/ && gunicorn plyto_http_interface.wsgi:application --bind 0.0.0.0:8000 --workers 2 --worker-class gthread --threads 4
+    cd /pluto_http_interface/ && \
+        . .venv/bin/activate && \
+        cd plyto_http_interface/ && \
+        gunicorn plyto_http_interface.wsgi:application \
+            --bind 0.0.0.0:8000 \
+            --workers 2 \
+            --worker-class gthread \
+            --threads 4
 ) &
 _pid_http_interface=$!
 

@@ -155,7 +155,11 @@ bool PLUTO_InitializePython(
     PLUTO_Logger_t logger
 )
 {
-    (void)setup;
+    if(Py_IsInitialized())
+    {
+        PLUTO_LoggerWarning(logger, "Someone attempts to initialize the Python Interpreter, but it is already initialized.");
+        return false;
+    }
     //
     // https://docs.python.org/3/c-api/init_config.html
     //
@@ -172,7 +176,11 @@ bool PLUTO_InitializePython(
 
     PLUTO_LoggerInfo(logger, "Start Python configuration...");
     //PyImport_AppendInittab("pluto", &PyInit_emb_input);
-    PyImport_AppendInittab("pluto", &PLUTO_PythonInitPluto);
+    if(PyImport_AppendInittab("pluto", &PLUTO_PythonInitPluto) < 0)
+    {
+        PLUTO_LoggerError(logger, "Unable to append Module to built-in Registry...");
+        return false;
+    }
     PyConfig_InitIsolatedConfig(&config);
     config.isolated = 1;
     config.buffered_stdio = 0;
@@ -294,6 +302,7 @@ void PLUTO_DeinitializePython(void)
 
     if (Py_FinalizeEx() < 0) 
     {
+        printf("Error during Python destruction...");
     }
 }
 

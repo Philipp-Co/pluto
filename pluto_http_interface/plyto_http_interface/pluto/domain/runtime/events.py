@@ -187,7 +187,7 @@ class NodeEvents:
                     yield ": keepalive\n\n"
                 else:
                     for element in events:
-                        yield element + "\n\n"
+                        yield "data: " + base64.b64encode(element.encode()).decode() + "\n\n"
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.__logger.exception(e)
         finally:

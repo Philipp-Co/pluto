@@ -77,9 +77,9 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
         PLUTO_LoggerWarning(logger, "Unable to signal Semaphore.");
         goto error;
     }
-
-    queue->internal->key = PLUTO_Malloc(sizeof(PLUTO_Key_t));
-    if(!PLUTO_CreateKey(path, name, queue->internal->key, logger))
+    
+    PLUTO_Key_t key;
+    if(!PLUTO_CreateKey(path, name, &key, logger))
     {
         PLUTO_LoggerWarning(
             logger,
@@ -90,9 +90,9 @@ PLUTO_MessageQueue_t PLUTO_CreateMessageQueue(
         goto error;
     }
 
-    PLUTO_LoggerInfo(logger, "Create Queue with Key 0x%x", queue->internal->key->key);
+    PLUTO_LoggerInfo(logger, "Create Queue with Key 0x%x", key.key);
     const int identifier = msgget(
-        queue->internal->key->key,
+        key.key,
         IPC_CREAT | IPC_NOWAIT | MSG_NOERROR | permissions
     );
     queue->filedescriptor = identifier;
@@ -128,7 +128,6 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     queue->filedescriptor = -1;
     queue->internal->logger = NULL;
     queue->internal->semaphore = NULL;
-    queue->internal->key = NULL;
 
     char buffer[1024];
     snprintf(buffer, sizeof(buffer), "%s-sem", name);
@@ -144,22 +143,17 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
         PLUTO_LoggerWarning(logger, "Unable to signal Semaphore.");
         goto error;
     }
-
-    queue->internal->key = PLUTO_allocator.malloc(
-        sizeof(PLUTO_Key_t)
-    );//PLUTO_Malloc(sizeof(PLUTO_Key_t));
-    // queue->internal->key->file = NULL;
-    queue->internal->key->key = 0;
-    queue->internal->key->path_to_file = NULL;
-    if(!PLUTO_KeyGet(path, name, queue->internal->key, logger))
+  
+    PLUTO_Key_t key;
+    if(!PLUTO_KeyGet(path, name, &key, logger))
     {
         PLUTO_LoggerWarning(logger, "Unable to get Key on Path %s with Name %s", path, name);
         goto error;
     }
 
-    PLUTO_LoggerInfo(logger, "Get Queue with Key 0x%x", queue->internal->key->key);
+    PLUTO_LoggerInfo(logger, "Get Queue with Key 0x%x", key.key);
     queue->filedescriptor = msgget(
-        queue->internal->key->key, 0
+        key.key, 0
     );
     if(queue->filedescriptor < 0)
     {
@@ -173,7 +167,7 @@ PLUTO_MessageQueue_t PLUTO_MessageQueueGet(const char *path, const char *name, P
     PLUTO_LoggerInfo(
         logger,
         "Queue %s Ref. Count %i",
-        queue->internal->key->path_to_file != NULL ? queue->internal->key->path_to_file : "NULL",
+        key.path_to_file != NULL ? key.path_to_file : "NULL",
         semaphore_value
     );
     return queue;
@@ -186,7 +180,10 @@ error:
 
 void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
 {
+    assert(NULL != queue);
     assert(NULL != *queue);
+    assert(NULL != (*queue)->internal);
+
     if(*queue)
     {
         //
@@ -201,19 +198,8 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
                 result
             );
             const int32_t semaphore_value = PLUTO_SemaphoreValue((*queue)->internal->semaphore);
-            PLUTO_LoggerInfo(
-                (*queue)->internal->logger,
-                "Queue %s Ref. Count %i",
-                (*queue)->internal->key->path_to_file != NULL ? (*queue)->internal->key->path_to_file : "NULL",
-                semaphore_value
-            );
             if(semaphore_value <= 0)
             {
-                PLUTO_LoggerInfo(
-                    (*queue)->internal->logger,
-                    "Destroy Queue %s",
-                    (*queue)->internal->key->path_to_file != NULL ? (*queue)->internal->key->path_to_file : "NULL"
-                );
                 //
                 // Only destroy Queue if the Reference Count indicates,
                 // that this is the last Instance which holds a Queue.
@@ -232,16 +218,8 @@ void PLUTO_DestroyMessageQueue(PLUTO_MessageQueue_t *queue)
             }
             PLUTO_DestroySemaphore(&(*queue)->internal->semaphore);
         }
-        printf("Test\n");
-        if(NULL != (*queue)->internal->key)
-            PLUTO_DestroyKey((*queue)->internal->key);
-        printf("Test\n");
-        PLUTO_allocator.free((*queue)->internal->key);
         PLUTO_allocator.free((*queue)->internal);
         PLUTO_allocator.free(*queue);
-        //PLUTO_Free((*queue)->internal->key);
-        //PLUTO_Free((*queue)->internal);
-        //PLUTO_Free(*queue);
         *queue = NULL;
     }
 }

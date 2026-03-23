@@ -99,13 +99,27 @@ PLUTO_Processor_t PLUTO_CreateProcessor(
 void PLUTO_DestroyProcessor(PLUTO_Processor_t *processor)
 {
     assert(NULL != processor);
-    PLUTO_DestroyMessageQueue(&(*processor)->input_queue);
+    assert(NULL != *processor);
+
+    if((*processor)->input_queue)
+    {
+        PLUTO_DestroyMessageQueue(&(*processor)->input_queue);
+    }
     for(int32_t i=0;i<(*processor)->number_of_output_queues;++i)
     {
-        PLUTO_DestroyMessageQueue(&(*processor)->output_queues[i]);
+        if(NULL != (*processor)->output_queues[i])
+        {
+            PLUTO_DestroyMessageQueue(&(*processor)->output_queues[i]);
+        }
     }
-    PLUTO_Free((*processor)->output_queues);
-    PLUTO_DestroySystemEventHandler(&(*processor)->system_event_handler);
+    if((*processor)->output_queues)
+    {
+        PLUTO_Free((*processor)->output_queues);
+    }
+    if((*processor)->system_event_handler)
+    {
+        PLUTO_DestroySystemEventHandler(&(*processor)->system_event_handler);
+    }
     PLUTO_Free(*processor);
 }
 
