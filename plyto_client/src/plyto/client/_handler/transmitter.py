@@ -1,22 +1,31 @@
 """
 Handler for transmitting events to a Pluto instance via HTTP.
 """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
-from http import HTTPStatus
-from typing_extensions import Self
-from plyto.client.event import PlytoEvent
-from plyto.exceptions.exceptions import PlytoException
 from datetime import timezone
+from http import HTTPStatus
 from json import dumps
-from requests import post, Response
+
+from requests import Response, post  # pylint: disable=import-error
+from typing_extensions import Self
+
+from ...exceptions.exceptions import (  # pylint: disable=relative-beyond-top-level
+    PlytoException,
+    PlytoPayloadToLargeException,
+    PlytoTimestampException,
+)
+from ...types.event import PlytoEvent  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 class PlytoTransmitter:
+    """Handler for transmitting events to a Pluto instance via HTTP."""
 
     def __init__(self):
-        self.__address: str = ''
+        self.__address: str = ""
         pass
 
     def __delf__(self):
@@ -24,40 +33,44 @@ class PlytoTransmitter:
         pass
 
     def connect(self, address: str) -> Self:
+        """Connect to the Pluto server."""
         self.__address = address
         return self
 
     def close(self) -> Self:
+        """Close the connection."""
         return self
 
     def transmit(self, name: str, event: PlytoEvent) -> None:
+        """Transmit an event to the specified node."""
         try:
             if len(event.payload) > 48:
                 raise PlytoPayloadToLargeException
             if event.timestamp.tzinfo is None or event.timestamp.tzinfo != timezone.utc:
                 raise PlytoTimestampException
             response: Response = post(
-                    url=f'http://{self.__address}/runtime/events/',
+                url=f"http://{self.__address}/runtime/events/",
                 headers={
                     "Content-Type": "application/json",
                 },
                 data=dumps(
                     {
-                        'id': event.id,
-                        'event_id': event.event_id,
-                        'timestamp': event.timestamp.isoformat(),
-                        'payload': event.payload,
-                        'target_node_name' : name,
+                        "id": event.id,
+                        "event_id": event.event_id,
+                        "timestamp": event.timestamp.isoformat(),
+                        "payload": event.payload,
+                        "target_node_name": name,
                     }
                 ),
                 allow_redirects=False,
             )
 
             if HTTPStatus.OK != response.status_code:
-                raise PlytoException('Service Unavailable')
+                raise PlytoException("Service Unavailable")
         except Exception as e:
             raise PlytoException from e
 
     pass
+
 
 # ----------------------------------------------------------------------------------------------------------------------

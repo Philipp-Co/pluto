@@ -2,7 +2,7 @@
 
 Plyto is a Framework for writing Event driven Applications.
 
-# Prerequisits 
+# Prerequisits
 
 Plyto is a Wrapper around a Set of binary Executables and shared Libraries.
 You have to make sure, that these Executables and Libraries are installed properly before going of with Plyto.
@@ -35,15 +35,15 @@ This will package Plyto and store it in the directory dist/plyto-x.y.z.tar.gz
 
 # Useage
 
-Plyto reads some Environment Variables which are 
-    
-    PLUTO_WORKDIR 
+Plyto reads some Environment Variables which are
+
+    PLUTO_WORKDIR
     PLUTO_BINARYDIR
 
 If you want to customize Plytos behavior, assign your own values to these Variables.
 For each Meaning of the Variables see the Sections bellow.
 
-Copy the Packge to its destination and install this package using 
+Copy the Packge to its destination and install this package using
 
     pip install plyto-x.y.z.tar.gz
 
@@ -56,4 +56,3 @@ Pluto will store its Configuration Files in this Directory.
 
 This Variable defaults to '/usr/local/bin/'.
 Pluto trys to find the binary Executables in this Directory.
-

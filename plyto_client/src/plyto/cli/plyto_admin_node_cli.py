@@ -2,101 +2,94 @@
 CLI tool for managing nodes of a Pluto instance.
 Supports adding and removing nodes.
 """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 from argparse import ArgumentParser
-from logging import getLogger, Logger, StreamHandler, Formatter
-from plyto.client.client import PlytoClient
+from logging import Formatter, Logger, StreamHandler, getLogger
 from os import environ
 from sys import argv
+from sys import exit as sys_exit
+
+from ..client.client import PlytoClient  # pylint: disable=relative-beyond-top-level
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def cli():
+    """Entry point for the plyto_admin_node CLI tool."""
     #
     # -----------------------------------------------------
     #
     logger: Logger = getLogger()
-    log_level: str = environ.get(
-        'PLYTO_LOG_LEVEL',
-        'INFO'
-    )
+    log_level: str = environ.get("PLYTO_LOG_LEVEL", "INFO")
     logger.setLevel(log_level)
     logging_handler: StreamHandler = StreamHandler()
-    logging_handler.setFormatter(
-        Formatter()
-    )
-    logger.addHandler(
-        logging_handler
-    )
+    logging_handler.setFormatter(Formatter())
+    logger.addHandler(logging_handler)
     #
     # -----------------------------------------------------
     #
     parser: ArgumentParser = ArgumentParser()
     parser.add_argument(
-        '-a',
-        '--add-node',
-        action='store_true',
+        "-a",
+        "--add-node",
+        action="store_true",
     )
     parser.add_argument(
-        '-r',
-        '--remove-node',
-        action='store_true',
+        "-r",
+        "--remove-node",
+        action="store_true",
     )
     parser.add_argument(
-        '-n',
-        '--name',
+        "-n",
+        "--name",
         type=str,
         default=None,
     )
     parser.add_argument(
-        '-A',
-        '--path-to-archive',
+        "-A",
+        "--path-to-archive",
         type=str,
         default=None,
     )
     parser.add_argument(
-        '-t',
-        '--top-level-package-name',
+        "-t",
+        "--top-level-package-name",
         type=str,
         default=None,
     )
     parser.add_argument(
-        '-u',
-        '--user-arguments',
+        "-u",
+        "--user-arguments",
         type=str,
         default=None,
     )
     parser.add_argument(
-        '-i',
-        '--ip-address',
+        "-i",
+        "--ip-address",
         type=str,
         default=None,
     )
     parser.add_argument(
-        '-p',
-        '--port',
+        "-p",
+        "--port",
         type=int,
         default=None,
     )
-    args = parser.parse_args(argv[1:len(argv)])
+    args = parser.parse_args(argv[1 : len(argv)])
     #
     # -----------------------------------------------------
     #
+    client: PlytoClient
     if args.add_node and args.remove_node:
-        logger.error(
-            'Only one operation at a time is allowed.'
-        )
-        exit(-1)
+        logger.error("Only one operation at a time is allowed.")
+        sys_exit(-1)
     elif args.add_node:
         if args.path_to_archive is None:
-            logger.error(
-                'To add a new Node you have to specifiy a Path to the Python-Archive.'
-            )
-            exit(-1)
-        client: PlytoClient = PlytoClient(logger.getChild(
-            PlytoClient.__name__)
-        ).connect(
+            logger.error("To add a new Node you have to specifiy a Path to the Python-Archive.")
+            sys_exit(-1)
+        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
@@ -108,9 +101,7 @@ def cli():
         )
         client.close()
     elif args.remove_node:
-        client: PlytoClient = PlytoClient(logger.getChild(
-            PlytoClient.__name__)
-        ).connect(
+        client = PlytoClient(logger.getChild(PlytoClient.__name__)).connect(
             address=args.ip_address,
             port=args.port,
         )
@@ -119,13 +110,12 @@ def cli():
         )
         client.close()
     else:
-        logger.error(
-            'Nothing to do...'
-        )
-        exit(-1)
-    exit(0)
+        logger.error("Nothing to do...")
+        sys_exit(-1)
+    sys_exit(0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     cli()
 
 # ----------------------------------------------------------------------------------------------------------------------

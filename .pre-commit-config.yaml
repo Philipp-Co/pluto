@@ -29,7 +29,7 @@ repos:
     rev: v3.3.0
     hooks:
       - id: pylint
-        args: ["--max-line-length=120", "--disable=unnecessary-pass,duplicate-code,wrong-import-order"]
+        args: ["--max-line-length=120", "--disable=unnecessary-pass,duplicate-code,wrong-import-order", "--ignore-patterns=^__init__\\.py$"]
         files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
         additional_dependencies:
           - django
@@ -40,7 +40,9 @@ repos:
     rev: v1.14.0
     hooks:
       - id: mypy
+        args: ["--check-untyped-defs"]
         files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
         additional_dependencies:
           - django-stubs
           - djangorestframework-stubs
+          - types-requests

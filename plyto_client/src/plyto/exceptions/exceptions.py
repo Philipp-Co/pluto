@@ -1,25 +1,32 @@
 """
 Exception classes for the Plyto client library.
 """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 class PlytoException(Exception):
-    pass
+    """Base exception for all Plyto errors."""
+
 
 class PlytoNoEventAvailableExcpetion(PlytoException):
-    pass
+    """Raised when no event is available to receive."""
+
 
 class PlytoPayloadToLargeException(PlytoException):
-    pass
+    """Raised when an event payload exceeds the allowed size."""
+
 
 class PlytoTimestampException(PlytoException):
-    pass
+    """Raised when an event timestamp is invalid or missing timezone information."""
+
 
 class PlytoAddressNotSetException(PlytoException):
-    pass
+    """Raised when no server address is configured."""
+
 
 class PlytoRequestFailedException(PlytoException):
-    pass
+    """Raised when an HTTP request to the Pluto server fails."""
+
 
 # ----------------------------------------------------------------------------------------------------------------------
