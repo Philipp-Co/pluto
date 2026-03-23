@@ -219,10 +219,10 @@ class PlytoManager:
             if response.status_code == HTTPStatus.OK:
                 result = loads(response.content.decode())
                 mat: Dict[str, List[str]] = {}
+                for node in result["nodes"]:
+                    mat[node] = []
                 for i in range(len(result["connections"])):
                     connection = result["connections"][i]
-                    if connection["source"] not in mat:
-                        mat[connection["source"]] = []
                     mat[connection["source"]].append(connection["target"])
                 return mat
         except Exception as e:
