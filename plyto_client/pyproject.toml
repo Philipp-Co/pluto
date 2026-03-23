@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools >= 75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Plyto"
+version = "0.0.0"
+authors = [
+  { name="Philipp Kroll", email="pk@eample.com" },
+]
+description = "A Client Library for Interaction with Pluto."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.license]
+file = "LICENSE"
+license = "MIT"
+license-files = ["LICENSE"]
+
+[project.urls]
+Homepage = "https://github.com/Philipp-Co/pluto"
+Issues = "https://github.com/Philipp-Co/pluto/issues"
+
+
+[project.scripts]
+plyto_admin = "plyto.cli.plyto_admin_cli:cli"
+plyto_event = "plyto.cli.plyto_event_cli:cli"
