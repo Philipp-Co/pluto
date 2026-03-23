@@ -3,34 +3,34 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
       - id: end-of-file-fixer
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
       - id: check-yaml
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
       - id: check-added-large-files
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
 
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
         args: ["--line-length", "120"]
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
     hooks:
       - id: isort
         args: ["--profile", "black", "--line-length", "120"]
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
 
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.3.0
     hooks:
       - id: pylint
         args: ["--max-line-length=120", "--disable=unnecessary-pass,duplicate-code,wrong-import-order"]
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
         additional_dependencies:
           - django
           - djangorestframework
@@ -40,7 +40,7 @@ repos:
     rev: v1.14.0
     hooks:
       - id: mypy
-        files: ^pluto_http_interface/
+        files: ^(pluto_http_interface|plyto_client|pluto_internal_nodes)/
         additional_dependencies:
           - django-stubs
           - djangorestframework-stubs
